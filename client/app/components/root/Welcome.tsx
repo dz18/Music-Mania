@@ -18,7 +18,7 @@ export default function Welcome () {
             className="ml-4 text-teal-500 hover:text-shadow-[0_0_10px_rgba(0,255,255,0.5)] transition-all"
             href='/home'
           >
-            Rhythm
+            Ambient Analytics
           </Link>
           <Music size={40}/>  
         </h1>

@@ -1,4 +1,15 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## About Music Mania
+
+Music Mania is a platform where music enthusiasts can share their opinions on songs, albums, and artists. Users can leave reviews, rate music, and explore metrics that offer a more analytical view of trends and audience engagement. It’s a space to connect with others who enjoy discussing music on a deeper level, beyond just listening.
+
+### Features:
+- Reviews: Write and read reviews on songs, albums, and artists.
+- Metrics: Access music data like popularity, trends, and listener demographics.
+- Community: Discuss, share, and debate music with others who share your interests.
+
+It’s about engaging with music in a more thoughtful way, whether you’re just listening or looking to dive into the numbers behind the tunes.
+
+---
 
 ## Getting Started
 
