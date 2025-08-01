@@ -2,14 +2,21 @@
 
 import { FormEvent, useState } from "react"
 
-export default function LoginForm () {
+export default function RegisterForm () {
 
   const [email, setEmail] = useState('')
+  const [confirmEmail, setConfirmEmail] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
 
   const login = (e : FormEvent<HTMLFormElement  >) => {
     e.preventDefault()
-    alert(`Email: ${email}\nPassword: ${password}`)
+    alert(`
+      Email: ${email}
+      Confirm Email: ${confirmEmail}
+      Phone Number: ${phoneNumber}
+      Password: ${password}
+    `)
   }
 
   return (
@@ -23,6 +30,28 @@ export default function LoginForm () {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+        />
+      </div>
+      <div className="flex flex-col mb-1">
+        <label htmlFor="" className="text-sm">Confirm Email:</label>
+        <input 
+          type="email" 
+          placeholder="Confirm Email"
+          className="py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all"
+          value={confirmEmail}
+          onChange={(e) => setConfirmEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="flex flex-col mb-1">
+        <label htmlFor="" className="text-sm">Phone Number:</label>
+        <input 
+          type="tel" 
+          placeholder="Phone Number"
+          className="py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          
         />
       </div>
       <div className="flex flex-col mb-1">
