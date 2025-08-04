@@ -1,3 +1,5 @@
+'use client'
+
 export default function Google({size = 24}: {size?: number}) {
   return (
     <svg

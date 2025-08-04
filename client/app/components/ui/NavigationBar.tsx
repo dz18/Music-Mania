@@ -1,6 +1,9 @@
+'use client'
+
 import { AudioLines } from "lucide-react"
 import Link from "next/link"
 import SearchBar from "./navigationBar/SearchBar"
+import { useSession } from "next-auth/react"
 
 const links = [
   {label : 'Home', href : '/home'},
@@ -10,6 +13,9 @@ const links = [
 ]
 
 export default function Nav() {
+
+  const {data : session} = useSession()
+
   return (
     <nav className="absolute top-0 left-0 w-full z-50 px-6 py-3">
       <div className="flex items-center text-lg gap-6">
@@ -40,13 +46,20 @@ export default function Nav() {
             </Link>
           ))}
 
-          
-          <Link 
-            className="bg-teal-500 text-black hover:shadow-[0_0_10px_rgba(0,255,255,0.5)] transition px-2 py-1 rounded text-sm font-bold cursor-pointer font-mono active:bg-teal-500/50"
-            href='/login'
-          >
-            Login
-          </Link>
+          {session ?
+            <div onClick={() => console.log(session)} >
+              {session.user?.username}
+              user is logged in
+            </div>
+          :
+            <Link 
+              className="bg-teal-500 text-black hover:shadow-[0_0_10px_rgba(0,255,255,0.5)] transition px-2 py-1 rounded text-sm font-bold cursor-pointer font-mono active:bg-teal-500/50"
+              href='/login'
+            >
+              Login
+            </Link>
+
+          }
 
         </div>
 
