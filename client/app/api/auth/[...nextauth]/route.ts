@@ -46,6 +46,9 @@ const handler = NextAuth({
   jwt: {
     secret: process.env.NEXTAUTH_SECRET
   },
+  pages: {
+    signIn: '/login'
+  },
   callbacks: {
     async jwt({ user, token }) {
       if (user) {
@@ -58,31 +61,32 @@ const handler = NextAuth({
     async session({ session, token }) {
       try {
         if (session.user && token?.id) {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/find?id=${token.id}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
+          const user = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/find`, {
+            params: {
+              userId : token.id
             }
           });
 
-          if (!res.ok) {
-            console.warn("Fetch find user failed with status:", res.status);
-            return session;
+          if (!user) {
+            console.warn("Fetch find user failed with status:")
+            return session
           }
 
-          const data = await res.json();
+          const data = user.data
 
-          session.user.id = data.id;
-          session.user.username = data.username;
+          session.user.id = data.id
+          session.user.username = data.username
+          session.user.image = data.image
+          session.user.phoneNumber = data.phone_number
         }
       } catch (e) {
-        console.warn("Session fetch failed:", e);
+        console.warn("Session fetch failed:", e)
       }
 
-      return session;
+      return session
     }
   }
 })
 
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST }

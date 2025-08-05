@@ -4,11 +4,11 @@ import "next-auth";
 declare module "next-auth" {
   interface Session {
     user: {
-      name?: string | null;
-      email?: string | null;
+      email: string | null;
+      username: string | null;
       image?: string | null;
-      username?: string | null;
       id?: string | null
+      phoneNumber?: string | null
     };
   }
 

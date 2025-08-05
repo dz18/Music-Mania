@@ -46,7 +46,6 @@ export default function Login () {
 
         </div>
       </Container>
-      <Footer/>
     </div>
   )
 }

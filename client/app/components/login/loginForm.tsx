@@ -23,16 +23,13 @@ export default function LoginForm () {
     try {
       setSubmitting(true)
       const result = await signIn("credentials", {
-        redirect: false,
         email, 
         password
       })
 
       if (result?.error) {
         alert('error')
-      } else (
-        router.push('/home')
-      )
+      } 
 
     } catch (error) {
       alert(`Email: ${email}\nPassword: ${password}`)
