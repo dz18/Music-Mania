@@ -12,7 +12,7 @@ export default function SearchBar () {
   }
 
   return (
-    <form className="w-full" onSubmit={submit}>
+    <form className="w-full max-w-[500px]" onSubmit={submit}>
       <div className="relative">
         <button 
           className="absolute left-2 bottom-0 top-0 items-center cursor-pointer"
