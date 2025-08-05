@@ -23,8 +23,10 @@ export default function AlertsDropdown () {
     <div className="relative inline-block" ref={dropdownRef}>
 
       <div
+        className="cursor-pointer hover:bg-white/10 p-2 rounded-full"
         onClick={() => setOpen(prev => !prev)}
         ref={dropdownRef}
+        title='Alerts'
       >
         <Bell/>
       </div>
