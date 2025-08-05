@@ -1,6 +1,14 @@
-import { AudioLines } from "lucide-react"
+'use client'
+
+import { AudioLines, User, User2, UserCircle, UserCircle2 } from "lucide-react"
 import Link from "next/link"
 import SearchBar from "./navigationBar/SearchBar"
+import { signOut, useSession } from "next-auth/react"
+import UserDropdown from "./navigationBar/UserDropdown"
+import { useEffect } from "react"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import AlertsDropdown from "./navigationBar/AlertsDropdown"
 
 const links = [
   {label : 'Home', href : '/home'},
@@ -10,6 +18,10 @@ const links = [
 ]
 
 export default function Nav() {
+
+  const {data : session} = useSession()
+  const router = useRouter()
+
   return (
     <nav className="absolute top-0 left-0 w-full z-50 px-6 py-3">
       <div className="flex items-center text-lg gap-6">
@@ -40,7 +52,14 @@ export default function Nav() {
             </Link>
           ))}
 
-          
+        </div>
+
+        {session ?
+          <>
+            <AlertsDropdown/>
+            <UserDropdown/>
+          </>
+        :
           <Link 
             className="bg-teal-500 text-black hover:shadow-[0_0_10px_rgba(0,255,255,0.5)] transition px-2 py-1 rounded text-sm font-bold cursor-pointer font-mono active:bg-teal-500/50"
             href='/login'
@@ -48,8 +67,7 @@ export default function Nav() {
             Login
           </Link>
 
-        </div>
-
+        }
 
 
       </div>

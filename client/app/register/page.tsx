@@ -45,7 +45,6 @@ export default function Register () {
         </div>
         
       </Container>
-      <Footer/>
     </div>
   )
 }

@@ -1,15 +1,41 @@
 'use client'
 
+import { Loader } from "lucide-react"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { FormEvent, useState } from "react"
 
 export default function LoginForm () {
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const router = useRouter()
 
-  const login = (e : FormEvent<HTMLFormElement  >) => {
+  const [email, setEmail] = useState('zuniga18dz@gmail.com')
+  const [password, setPassword] = useState('asd')
+  const [submitting, setSubmitting] = useState(false)
+
+  const login = async (e : FormEvent<HTMLFormElement  >) => {
     e.preventDefault()
-    alert(`Email: ${email}\nPassword: ${password}`)
+
+    if (!email || !password) {
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const result = await signIn("credentials", {
+        email, 
+        password
+      })
+
+      if (result?.error) {
+        alert('error')
+      } 
+
+    } catch (error) {
+      alert(`Email: ${email}\nPassword: ${password}`)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -19,7 +45,7 @@ export default function LoginForm () {
         <input 
           type="email" 
           placeholder="Email"
-          className="py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all"
+          className="py-1 px-2 border-1 text-sm rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -30,14 +56,23 @@ export default function LoginForm () {
         <input 
           type="password" 
           placeholder="Password"
-          className="py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all"
+          className="py-1 px-2 border-1 text-sm rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
       </div>
-      <button className="bg-white text-black px-1 py-2 rounded cursor-pointer font-mono hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] text-sm active:shadow-[0_0_20px_rgba(255,255,255,0.5)] active:bg-white/80 transition-all">
-        Submit
+      <button 
+        className="bg-white text-black px-1 py-2 rounded cursor-pointer font-mono hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] text-sm active:shadow-[0_0_20px_rgba(255,255,255,0.5)] active:bg-white/80 transition-all"
+        disabled={submitting}
+      >
+        {submitting ? 
+          <div className="flex justify-center">
+            <Loader size={19} className="animate-spin"/> 
+          </div>
+        : 
+          'Submit'
+        }
       </button>
     </form>
   )

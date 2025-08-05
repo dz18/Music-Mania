@@ -25,7 +25,6 @@ export default function Footer () {
             <StatusLink label='New Releases' status="na"/>
             <StatusLink label='Trending' status="na"/>
             <StatusLink label='Statistics' status="na"/>
-            <StatusLink label='Profile' status='wip' path="/profile"/>
           </div>
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-bold">Resources</h1>
@@ -37,21 +36,21 @@ export default function Footer () {
           </div>
           <div className="flex flex-col gap-1 text-sm">
             <h1 className="text-xl font-bold">Social Media</h1>
-            <Link href="">
+            <a href="">
               Twitter
-            </Link>
-            <Link href="">
+            </a>
+            <a href="">
               Instagram
-            </Link>
-            <Link href="">
+            </a>
+            <a href="https://github.com//dz18" target="_blank">
               GitHub
-            </Link>
-            <Link href="">
+            </a>
+            <a href="">
               Youtube
-            </Link>
-            <Link href="">
+            </a>
+            <a href="">
               LinkedIn
-            </Link>
+            </a>
           </div>
           <div className="flex flex-col gap-2 text-sm">
             <h1 className="text-xl font-bold">Newsletter</h1>

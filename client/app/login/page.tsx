@@ -13,7 +13,7 @@ export default function Login () {
       <Container>
         <div className="flex flex-col min-h-screen items-center justify-center">
 
-          <Link className="text-4xl flex gap-2 mb-10 items-center justify-center font-mono" href="/">
+          <Link className="text-4xl flex gap-2 mb-10 items-center justify-center font-mono transition-all hover:text-shadow-[0_0_10px_rgba(255,255,255,0.5)]" href="/">
             <AudioLines className="text-teal-500" size={36}/>
             Music Mania
           </Link>
@@ -46,7 +46,6 @@ export default function Login () {
 
         </div>
       </Container>
-      <Footer/>
     </div>
   )
 }
