@@ -1,6 +1,6 @@
 'use client'
 
-import { AudioLines, Plus } from "lucide-react"
+import { AudioLines, Plus, Search } from "lucide-react"
 import Link from "next/link"
 import SearchBar from "./navigationBar/SearchBar"
 import { useSession } from "next-auth/react"
@@ -13,21 +13,26 @@ export default function Nav() {
 
   return (
     <nav className="absolute top-0 left-0 w-full z-50 px-6 py-3 max-h-15 h-full items-center">
-      <div className="flex items-center text-lg gap-6 justify-between h-full">
+      <div className="flex items-center gap-3 justify-between h-full">
 
-        <div className="flex items-center gap-6">
+        <div className="items-center gap-6 text-lg flex">
           <Link 
-            className="flex gap-2 items-center hover:[text-shadow-0_0_10px_rgba(255,255,255,0.5)] font-mono whitespace-nowrap"
+            className="flex gap-2 items-center hover:[text-shadow-0_0_10px_rgba(255,255,255,0.5)] font-mono whitespace-nowrap hover:text-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
             href='/'
           >
-            <AudioLines className="text-teal-500"/>
-            Music Mania
+            <AudioLines className="text-teal-500" size={32}/>
+            <p className="sm:flex hidden">Music Mania</p>
           </Link>
 
         </div>
 
-
         <SearchBar/>
+
+        <div className="block sm:hidden">
+          <button>
+            <Search/>
+          </button>
+        </div>
 
         {session ?
           <div className="flex items-center gap-2">
