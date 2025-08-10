@@ -20,9 +20,10 @@ model User {
   username      String @unique
   password      String
   createdAt     DateTime @default(now())
+  updatedAt     DateTime
   image         String?
   phoneNumber   String? @unique
-  role          Role
+  role          Role @default(USER)
 
   favArtist     String[]
   favRecordings String[]
@@ -34,7 +35,7 @@ model User {
 }
 
 model Playlist {
-  id            String @unique @default(cuid())
+  id            String @id @default(cuid())
   userId        String
   title         String
   description   String?
@@ -42,16 +43,17 @@ model Playlist {
   status        Status
   coverArt      String?
   comments      Comment[]
+  rating        Decimal
+  tags          Tag[]
 
   user          User @relation(fields: [userId], references: [id])
 }
 
 model Comment {
-  id            String @unique @default(cuid())
+  id            String @id @default(cuid())
   userId        String
   playlistId    String
   comment       String
-  tags          String[]
 
   user          User @relation(fields: [userId], references: [id])
   playlist      Playlist @relation(fields: [playlistId], references: [id])
@@ -59,15 +61,26 @@ model Comment {
 
 model Review {
   id            String @id @default(cuid())
-  userId        String 
-  type          String
+  userId        String
+  type          Type
+  itemId        String
   rating        Decimal
   comment       String
   createAt      DateTime @default(now())
   updatedAt     DateTime @updatedAt
   status        Status @default(DRAFT)
+  tags          Tag[]
 
   user          User @relation(fields: [userId], references: [id])
+}
+
+model Tag {
+  id            String @id @default(cuid())
+  name          String @unique
+  createdAt     DateTime @default(now())
+  
+  playlists     Playlist[]
+  reviews       Review[]
 }
 
 enum Role {
@@ -78,5 +91,11 @@ enum Role {
 enum Status {
   DRAFT
   PUBLISHED
+}
+
+enum Type {
+  ARTIST
+  RECORDING
+  RELEASE
 }
 
