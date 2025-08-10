@@ -10,30 +10,30 @@ const register = async (req, res) => {
     phoneNumber 
   } = req.body
 
-  logApiCall(req.method. req.originalUrl)
+  logApiCall(req.method, req.originalUrl)
 
   if (!email || !password) {
-    errorApiCall(req.method. req.originalUrl, 'Missing email or password')
+    errorApiCall(req.method, req.originalUrl, 'Missing email or password')
     return res.status(400).json({ error: 'Email and password are required' })
   }
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
-      errorApiCall(req.method. req.originalUrl, 'Email already in use')
+      errorApiCall(req.method, req.originalUrl, 'Email already in use')
       return res.status(400).json({ error: 'Email already in use' })
     }
 
     const existingUsername = await prisma.user.findUnique({ where: { username } })
     if (existingUsername) {
-      errorApiCall(req.method. req.originalUrl, 'Username already in use')
+      errorApiCall(req.method, req.originalUrl, 'Username already in use')
       return res.status(400).json({ error: 'Username already in use' })
     }
 
     if (phoneNumber) {
-      const existingPhoneNumber = await prisma.user.findUnique({ where: { phone_number: phoneNumber } })
+      const existingPhoneNumber = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber } })
       if (existingPhoneNumber) {
-        errorApiCall(req.method. req.originalUrl, 'Phone Number already in use')
+        errorApiCall(req.method, req.originalUrl, 'Phone Number already in use')
         return res.status(400).json({ error: 'Phone Number already in use' })
       }
     }
@@ -45,13 +45,17 @@ const register = async (req, res) => {
         email,
         username, 
         password: hashedPassword, 
-        phone_number: phoneNumber || ''
+        phoneNumber: phoneNumber || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        role: 'USER'
       },
     })
 
-    successApiCall(req.method. req.originalUrl)
+    successApiCall(req.method, req.originalUrl)
     return res.status(201).json({ message: 'User created', user: { id: user.id, email: user.email } })
-  } catch (err) {
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
     return res.status(500).json({ error: 'Signup failed' })
   }
 
