@@ -29,13 +29,12 @@ export default function UserDropdown() {
 
       <div
         onClick={() => setOpen(prev => !prev)}
+        className="flex"
       >
         <img 
           src='/default-avatar.jpg'
-          alt="source"
-          width={32}
-          height={32}
-          className="rounded-full cursor-pointer shrink-0"
+          alt="Avatar"
+          className="w-10 h-10 rounded-full cursor-pointer shrink-0  min-w-10"
         />
       </div>
 

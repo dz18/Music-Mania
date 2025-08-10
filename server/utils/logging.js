@@ -3,6 +3,11 @@ export function logApiCall(method, route) {
   console.log(`\x1b[34m[API CALL]\x1b[0m -> ${method.toUpperCase()} ${route} @ ${new Date().toLocaleString()}`);
 }
 
+export function TestApiCall(method, route) {
+  console.log(route)
+  console.log(`\x1b[35m[API TEST CALL]\x1b[0m -> ${method.toUpperCase()} ${route} @ ${new Date().toLocaleString()}`);
+}
+
 export function errorApiCall(method, route, error) {
   // Log the actual error message or stack trace
   console.error(`\x1b[31m[API ERROR]\x1b[0m -> ${method.toUpperCase()} ${route} @ ${new Date().toLocaleString()}`);
