@@ -2,7 +2,7 @@
 
 import { AudioLines, Plus, Search } from "lucide-react"
 import Link from "next/link"
-import SearchBar from "./navigationBar/SearchBar"
+import SearchBar from "./searchBar/SearchBar"
 import { useSession } from "next-auth/react"
 import UserDropdown from "./navigationBar/UserDropdown"
 import AlertsDropdown from "./navigationBar/AlertsDropdown"
@@ -37,7 +37,7 @@ export default function Nav() {
         {session ?
           <div className="flex items-center gap-2">
             <button 
-              className="flex gap-1 text-base items-center font-mono border-1 border-white px-2 py-1 rounded-xl cursor-pointer hover:bg-white/10"
+              className="flex gap-1 text-sm items-center font-mono border-1 border-white px-2 py-1 rounded-xl cursor-pointer hover:bg-white/10"
               onClick={() => alert('go to create page')}
               title="Create"
             >
