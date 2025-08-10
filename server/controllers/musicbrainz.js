@@ -21,9 +21,22 @@ const artists = async (req, res) => {
     })
     const data = await query.json()
 
-    console.log('Total Results:', data.artists.length)
+    // Sort & Filter
+    const artists = []
+    for (const artist of data.artists) {
+      console.log(artist)
+      const filtered = {
+        id : artist.id,
+        type : artist.type,
+        name : artist.name,
+        disambiguation : artist.disambiguation
+      }
+      artists.push(filtered)
+    }
+    console.log('results ========')
+
     successApiCall(req.method, req.originalUrl)
-    return res.json(data.artists)
+    return res.json(artists)
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
@@ -49,9 +62,22 @@ const recordings = async (req, res) => {
     })
     const data = await query.json()
 
-    console.log('Total Results:', data.recordings.length)
+    // Sort & Filter
+    const recordings = []
+    for (const recording of data.recordings) {
+      const filtered = {
+        id : recording.id,
+        title : recording.title,
+        length : recording['length'] || null,
+        artistCredit: recording["artist-credit"],
+        firstReleaseDate: recording["first-release-date"] || null,
+        disambiguation : recording.disambiguation || null
+      }
+      recordings.push(filtered)
+    }
+    console.log('Total Results:', recordings.length)
     successApiCall(req.method, req.originalUrl)
-    return res.json(data.recordings)
+    return res.json(recordings)
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
@@ -85,8 +111,28 @@ const releases = async (req, res) => {
     const data = await query.json()
 
     console.log('Total Results:', data.releases.length)
+
+    // Sort & Filter
+    const releases = []
+    const exists = new Set()
+    for (const release of data.releases) {
+      const releaseGroup = release['release-group']
+      if (exists.has(releaseGroup.id) || releaseGroup['primary-type'] === 'Single') continue
+
+      console.log(release)
+
+      exists.add(releaseGroup.id)
+      const filtered = {
+        id : release.id,
+        title: release.title,
+        artistCredit: release['artist-credit'],
+        type : releaseGroup['primary-type'],
+        date : release.date
+      }
+      releases.push(filtered)
+    }
     successApiCall(req.method, req.originalUrl)
-    return res.json(data.releases)
+    return res.json(releases)
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
