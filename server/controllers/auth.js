@@ -14,29 +14,36 @@ const register = async (req, res) => {
 
   if (!email || !password) {
     errorApiCall(req.method, req.originalUrl, 'Missing email or password')
-    return res.status(400).json({ error: 'Email and password are required' })
   }
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
       errorApiCall(req.method, req.originalUrl, 'Email already in use')
-      return res.status(400).json({ error: 'Email already in use' })
     }
 
     const existingUsername = await prisma.user.findUnique({ where: { username } })
     if (existingUsername) {
       errorApiCall(req.method, req.originalUrl, 'Username already in use')
-      return res.status(400).json({ error: 'Username already in use' })
     }
 
+    let existingPhoneNumber
     if (phoneNumber) {
-      const existingPhoneNumber = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber } })
+      existingPhoneNumber = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber } })
       if (existingPhoneNumber) {
         errorApiCall(req.method, req.originalUrl, 'Phone Number already in use')
-        return res.status(400).json({ error: 'Phone Number already in use' })
       }
     }
+
+    if (existingUser || existingUsername || existingPhoneNumber) {
+      errorApiCall(req.method, req.originalUrl, 'Username already in use')
+      return res.status(409).json({ error: {
+        email : existingUser ? 'Email already in use' : null,
+        username : existingUsername ? 'Username already in use' : null,
+        phoneNumber : existingPhoneNumber ? 'Phone Number already in use' : null
+      } })
+    }
+
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -45,7 +52,7 @@ const register = async (req, res) => {
         email,
         username, 
         password: hashedPassword, 
-        phoneNumber: phoneNumber || '',
+        phoneNumber: phoneNumber || null,
         createdAt: new Date(),
         updatedAt: new Date(),
         role: 'USER'
@@ -56,12 +63,12 @@ const register = async (req, res) => {
     return res.status(201).json({ message: 'User created', user: { id: user.id, email: user.email } })
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
-    return res.status(500).json({ error: 'Signup failed' })
+    return res.status(500).json({ error: 'registering account failed' })
   }
 
 } 
 
-const login = async (req, res) => {
+const signIn = async (req, res) => {
   const {email, password} = req.body
 
   logApiCall(req.method, req.originalUrl)
@@ -72,7 +79,7 @@ const login = async (req, res) => {
   }
   
   try {
-    console.log(`Attempting login into ${email}`)
+    console.log(`Attempting Sign In into ${email}`)
     console.log(`pw: ${password}`)
 
     const user = await prisma.user.findUnique({ where: { email } })
@@ -104,5 +111,5 @@ const login = async (req, res) => {
 
 module.exports = {
   register,
-  login,
+  signIn,
 }

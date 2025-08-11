@@ -49,9 +49,9 @@ export default function Nav() {
         :
           <Link 
             className="bg-teal-500 text-black hover:shadow-[0_0_10px_rgba(0,255,255,0.5)] transition px-2 py-1 rounded text-sm font-bold cursor-pointer font-mono active:bg-teal-500/50"
-            href='/login'
+            href='/sign-in'
           >
-            Login
+            Sign In
           </Link>
         }
 

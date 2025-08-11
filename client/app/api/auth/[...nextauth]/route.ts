@@ -16,7 +16,7 @@ const handler = NextAuth({
       async authorize(credentials) {
         // Add logic here to look up the user from the credentials supplied
         try {
-          const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+          const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in`, {
             email: credentials?.email,
             password: credentials?.password
           })
@@ -29,13 +29,10 @@ const handler = NextAuth({
               username: data.username,
               email: data.email
             }
-          } else {
-            return null
           }
-        } catch (error) {
-          // TypeScript error handling: check if error is an AxiosError
-          console.error("Authorize error:", error)
-          return null
+        } catch (error: any) {
+          const message = error.response?.data?.error || "Sign In failed"
+          throw new Error(message)
         }
       }
     })
@@ -47,7 +44,7 @@ const handler = NextAuth({
     secret: process.env.NEXTAUTH_SECRET
   },
   pages: {
-    signIn: '/login'
+    signIn: '/sign-in'
   },
   callbacks: {
     async jwt({ user, token }) {
