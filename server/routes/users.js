@@ -6,5 +6,6 @@ const userController = require('../controllers/users')
 // Returns all the users in the current db
 router.get('/users', userController.getUsers)
 router.get('/find', userController.findUserById)
+router.get('/preview', userController.preview)
 
 module.exports = router

@@ -23,13 +23,18 @@ const handler = NextAuth({
 
           const data = res.data
 
-          if (data) {
-            return {
-              id : data.id,
-              username: data.username,
-              email: data.email
-            }
+          if (!data) return null
+
+          return {
+            id: data.id,
+            username: data.username,
+            email: data.email,
+            image: data.image,
+            phoneNumber: data.phoneNumber,
+            createdAt: data.createdAt,
+            role: data.role,
           }
+
         } catch (error: any) {
           const message = error.response?.data?.error || "Sign In failed"
           throw new Error(message)
@@ -52,6 +57,10 @@ const handler = NextAuth({
         token.id = user.id,
         token.username = user.username
         token.email = user.email
+        token.image = token.image
+        token.phoneNumber = user.phoneNumber
+        token.createdAt = user.createdAt
+        token.role = user.role
       }
       return token
     },
@@ -75,6 +84,8 @@ const handler = NextAuth({
           session.user.username = data.username
           session.user.image = data.image
           session.user.phoneNumber = data.phone_number
+          session.user.createdAt = data.createdAt
+          session.user.role = data.role
         }
       } catch (e) {
         console.warn("Session fetch failed:", e)

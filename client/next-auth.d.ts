@@ -7,13 +7,20 @@ declare module "next-auth" {
       email: string | null;
       username: string | null;
       image?: string | null;
-      id?: string | null
-      phoneNumber?: string | null
+      id?: string | null;
+      phoneNumber?: string | null;
+      createdAt: Date | null;
+      role: string;
     };
   }
 
   interface User {
     username?: string | null;
-    id?: string | null
+    id?: string | null;
+    image?: string | null;
+    id?: string | null;
+    phoneNumber?: string | null;
+    createdAt: Date | null;
+    role: string;
   }
 }
