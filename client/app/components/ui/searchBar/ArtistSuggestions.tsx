@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function ArtistSuggestions ({
@@ -5,6 +6,8 @@ export default function ArtistSuggestions ({
 } : {
   suggestions : Artist[]
 }) {
+
+  const router = useRouter()
 
   useEffect(() => {
     console.log(suggestions)
@@ -17,6 +20,7 @@ export default function ArtistSuggestions ({
         <div 
           key={item.id} 
           className="hover:bg-white/20 transition-colors duration-200 cursor-pointer"
+          onClick={() => router.push(`/artist/${item.id}`)}
         >
           <div className="border-t-1 border-gray-500 mx-2 py-2">
             <div className="flex items-center justify-between gap-3">
