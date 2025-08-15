@@ -30,6 +30,7 @@ const handler = NextAuth({
               email: data.email
             }
           }
+          return null
         } catch (error: any) {
           const message = error.response?.data?.error || "Sign In failed"
           throw new Error(message)
@@ -73,7 +74,7 @@ const handler = NextAuth({
 
           session.user.id = data.id
           session.user.username = data.username
-          session.user.image = data.image
+          session.user.avatar = data.avatar
           session.user.phoneNumber = data.phone_number
         }
       } catch (e) {

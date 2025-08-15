@@ -15,5 +15,8 @@
     "start": "node --watch server.js",
     "seedTags": "node ./prisma/seed/insertChapterTags.js",
     "addBooks": "node ./prisma/seed/insertFakeData.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }
