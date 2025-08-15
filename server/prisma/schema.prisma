@@ -20,10 +20,15 @@ model User {
   username      String @unique
   password      String
   createdAt     DateTime @default(now())
-  updatedAt     DateTime
-  image         String?
+  updatedAt     DateTime @default(now())
+  avatar         String?
   phoneNumber   String? @unique
+  aboutMe       String?
+
   role          Role @default(USER)
+
+  followers     Follow[] @relation("followers")
+  following     Follow[] @relation("following")
 
   favArtist     String[]
   favRecordings String[]
@@ -34,9 +39,19 @@ model User {
   comments      Comment[]
 }
 
+model Follow {
+  id            String @id @unique  
+  follower      User @relation("following", fields: [followerId], references: [id])
+  followerId    String
+  following     User @relation("followers", fields: [followingId], references: [id])
+  followingId   String
+  createdAt     DateTime @default(now())
+}
+
 model Playlist {
   id            String @id @default(cuid())
   userId        String
+  user          User @relation(fields: [userId], references: [id])
   title         String
   description   String?
   recordIds     String[]
@@ -45,8 +60,6 @@ model Playlist {
   comments      Comment[]
   rating        Decimal
   tags          Tag[]
-
-  user          User @relation(fields: [userId], references: [id])
 }
 
 model Comment {
