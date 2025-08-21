@@ -15,7 +15,7 @@ export default function Welcome () {
         <h1 className="text-5xl font-bold flex  text-center items-center justify-center gap-3">
           Welcome to 
           <Link 
-            className="ml-4 text-teal-500 hover:text-shadow-[0_0_10px_rgba(0,255,255,0.5)] transition-all"
+            className="ml-4 hover:[text-shadow:0_0_10px_rgb(20_184_166_/_0.3),0_0_20px_rgb(56_189_248_/_0.3),0_0_30px_rgb(244_114_182_/_0.3)] transition-all bg-gradient-to-r from-teal-500 via-sky-300 to-pink-300 bg-clip-text text-transparent"
             href='/home'
           >
             Music Mania

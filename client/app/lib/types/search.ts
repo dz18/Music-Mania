@@ -1,11 +1,11 @@
-type Artist = {
+type ArtistQuery = {
   id: string,
   type: string,
   name: string,
   disambiguation: string
 }
 
-type Recording = {
+type RecordingQuery = {
   id: string,
   title: string,
   length: string | null
@@ -17,7 +17,7 @@ type Recording = {
   disambiguation: string | null
 }
 
-type Release = {
+type ReleaseQuery = {
   id: string,
   title: string,
   artistCredit : {

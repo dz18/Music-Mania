@@ -8,7 +8,7 @@ export default function RecordingSuggestions ({
 
   return (
     <>
-      {suggestions.map((item : Recording) => (
+      {suggestions.map((item : RecordingQuery) => (
         <div
           key={item.id}
           className="hover:bg-white/20 transition-colors duration-200 cursor-pointer"

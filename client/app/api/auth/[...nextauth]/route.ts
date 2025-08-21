@@ -22,12 +22,13 @@ const handler = NextAuth({
           })
 
           const data = res.data
+          console.log(data)
 
           if (data) {
             return {
               id : data.id,
               username: data.username,
-              email: data.email
+              email: data.email,
             }
           }
           return null
@@ -75,7 +76,13 @@ const handler = NextAuth({
           session.user.id = data.id
           session.user.username = data.username
           session.user.avatar = data.avatar
-          session.user.phoneNumber = data.phone_number
+          session.user.phoneNumber = data.phoneNumber
+          session.user.favArtists = data.favArtists
+
+          console.log(session)
+          return session
+          // session.user.favSong = data.favSong
+          //session.user.favAlbums = data.favAlbums
         }
       } catch (e) {
         console.warn("Session fetch failed:", e)

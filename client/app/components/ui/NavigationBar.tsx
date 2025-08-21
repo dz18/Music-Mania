@@ -21,7 +21,7 @@ export default function Nav() {
             href='/'
           >
             <AudioLines className="text-teal-500" size={32}/>
-            <p className="sm:flex hidden">Music Mania</p>
+            <p className="sm:flex hidden font-bold bg-gradient-to-r from-teal-500 via-sky-300 to-pink-300 bg-clip-text text-transparent">Music Mania</p>
           </Link>
 
         </div>

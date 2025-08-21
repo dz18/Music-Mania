@@ -99,7 +99,8 @@ const signIn = async (req, res) => {
     successApiCall(req.method, req.originalUrl)
     return res.json({ 
       id: user.id, 
-      email: user.email 
+      email: user.email ,
+      username: user.username,
     })
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)

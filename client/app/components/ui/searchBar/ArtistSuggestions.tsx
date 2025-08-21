@@ -4,7 +4,7 @@ import { useEffect } from "react"
 export default function ArtistSuggestions ({
   suggestions
 } : {
-  suggestions : Artist[]
+  suggestions : ArtistQuery[]
 }) {
 
   const router = useRouter()
@@ -16,7 +16,7 @@ export default function ArtistSuggestions ({
 
   return (
     <>
-      {suggestions.map((item : Artist) => (
+      {suggestions.map((item : ArtistQuery) => (
         <div 
           key={item.id} 
           className="hover:bg-white/20 transition-colors duration-200 cursor-pointer"

@@ -10,7 +10,7 @@ export default function SearchBar () {
   const [query, setQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(Boolean)
 
-  const [suggestions, setSuggestions] = useState<Artist[] | Recording[] | Release[]>([])
+  const [suggestions, setSuggestions] = useState<ArtistQuery[] | RecordingQuery[] | ReleaseQuery[]>([])
   const [selectedType, setSelectedType] = useState('artists')
   const dropdownRef = useRef<HTMLDivElement>(null)
 

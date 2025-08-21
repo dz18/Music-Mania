@@ -3,8 +3,11 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/users')
 
-// Returns all the users in the current db
-router.get('/users', userController.getUsers)
+router.get('/total', userController.getUsers)
 router.get('/find', userController.findUserById)
+router.get('/favorites', userController.getFavorites)
+
+router.patch('/addFavoriteArtist', userController.addFavoriteArtist)
+router.patch('/removeFavoriteArtist', userController.removeFavoriteArtist)
 
 module.exports = router

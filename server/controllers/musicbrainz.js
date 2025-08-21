@@ -144,16 +144,33 @@ const releases = async (req, res) => {
 }
 
 // Retrieve Item Functions
-
 const getArtist = async (req, res) => {
   const { id } = req.query
 
-  TestApiCall(req.method, req.originalUrl)
+  logApiCall(req.method, req.originalUrl)
 
   if (!id) {
     errorApiCall(req.method, req.originalUrl, 'Missing query parameter')
     return res.status(400).json({error : 'Missing query parameter'})
   }
+
+  const validURLTypes = [
+    'allmusic',
+    'IMDb',
+    'myspace',
+    'official homepage',
+    'social network',
+    'songkick',
+    'soundcloud',
+    'streaming',
+    'video channel',
+    'wikidata',
+    'wikipedia',
+    'youtube',
+    'youtube music',
+    'lyrics',
+    'image'
+  ]
 
   try {
 
@@ -163,22 +180,21 @@ const getArtist = async (req, res) => {
     //   }
     // })
 
-    const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels&fmt=json`, {
-      headers: {
-        'User-Agent' : userAgent
-      }
-    })
-
-    const fetchDiscography = await fetch(`https://musicbrainz.org/ws/2/release-group?artist=${id}&fmt=json&limit=100`, {
+    const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels+url-rels&fmt=json`, {
       headers: {
         'User-Agent' : userAgent
       }
     })
 
     const artistData = await fetchArtist.json()
-    const discographyData = await fetchDiscography.json()
+    // console.log(artistData)
+
+    if (!artistData) {
+      errorApiCall(req.method, req.originalUrl, 'Musicbrainz API failed')
+    }
 
     const membersOfband = []
+    const URLRelations = []
     const membersSet = new Set()
     for(const relation of artistData.relations) {
       if(relation.type.includes('member')) {
@@ -201,53 +217,136 @@ const getArtist = async (req, res) => {
         })
 
         membersSet.add(relation.artist.id)
-      } 
-    }
-
-    const discography = {
-      singles: [],
-      albums: [],
-      ep: []
-    }
-    const discogDupes = new Set()
-    for (const release of discographyData['release-groups']) {
-      if (discogDupes.has(release.id)) continue
-
-      const obj = {
-        type: release['primary-type'],
-        id: release.id,
-        releaseDate: release['first-release-date'],
-        disambiguation: release.disambiguation,
-        title: release.title,
+      } else if (validURLTypes.includes(relation.type) && relation.url) {
+        if (relation.type === 'social network') {
+          if (relation.url.resource.includes('instagram') ) {
+            URLRelations.push({
+              type: 'instagram',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('twitter')) {
+            URLRelations.push({
+              type: 'twitter',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('myspace')) {
+            URLRelations.push({
+              type: 'myspace',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('google')) {
+            URLRelations.push({
+              type: 'google',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('tiktok')) {
+            URLRelations.push({
+              type: 'tiktok',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('snapchat')) {
+            URLRelations.push({
+              type: 'snapchat',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('vk')) {
+            URLRelations.push({
+              type: 'vk',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('facebook')) {
+            URLRelations.push({
+              type: 'facebook',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('threads')) {
+            URLRelations.push({
+              type: 'threads',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('weibo')) {
+            URLRelations.push({
+              type: 'threads',
+              url: relation.url.resource
+            })
+          } else {
+            URLRelations.push({
+              type: 'social network',
+              url: relation.url.resource
+            })
+          }
+        } else if (relation.type === 'streaming') {
+          if (relation.url.resource.includes('amazon')) {
+            URLRelations.push({
+              type: 'amazon',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('spotify')) {
+            URLRelations.push({
+              type: 'spotify',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('napster')) {
+            URLRelations.push({
+              type: 'napster',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('apple')) {
+            URLRelations.push({
+              type: 'apple',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('tidal')) {
+            URLRelations.push({
+              type: 'tidal',
+              url: relation.url.resource
+            })
+          } else {
+            URLRelations.push({
+              type: 'streaming',
+              url: relation.url.resource
+            })
+          }
+        } else if (relation.type === 'lyrics') {
+          if (relation.url.resource.includes('genius')) {
+            URLRelations.push({
+              type: 'genius',
+              url: relation.url.resource
+            })
+          } else {
+            URLRelations.push({
+              type: 'lyrics',
+              url: relation.url.resource
+            })
+          }
+        } else if (relation.type === 'video channel'){
+          if (relation.url.resource.includes('dailymotion')) {
+            URLRelations.push({
+              type: 'dailymotion',
+              url: relation.url.resource
+            })
+          } else if (relation.url.resource.includes('vimeo')){
+            URLRelations.push({
+              type: 'vimeo',
+              url: relation.url.resou
+            })
+          } else {
+            URLRelations.push({
+              type: 'video channel',
+              url: relation.url.resource
+            })
+          }
+        } else {
+          URLRelations.push({
+            type: relation.type,
+            url: relation.url.resource
+          })
+        }
       }
-      if (obj.type === 'Single') {
-        discography.singles.push(obj)
-      } else if (obj.type === 'Album') {
-        discography.albums.push(obj)
-      } else if (obj.type === 'EP') {
-        discography.ep.push(obj)
-      }
-
-      discogDupes.add(release.id)
     }
-
-    const sorted = discography.albums.sort((a, b) => {
-      const parseDate = (d) => {
-        if (!d) return new Date(0); // fallback for missing date
-        const parts = d.split("-");
-        const year = parseInt(parts[0]);
-        const month = parts[1] ? parseInt(parts[1]) - 1 : 0; // 0-indexed
-        const day = parts[2] ? parseInt(parts[2]) : 1;
-        return new Date(year, month, day);
-      };
-
-      return parseDate(a.date).getTime() - parseDate(b.date).getTime(); // ascending
-    });
-
-
-    console.log(sorted)
 
     const artist = {
+      id: artistData.id,
       gender: artistData.gender,
       name: artistData.name,
       lifeSpan: artistData['life-span'],
@@ -260,7 +359,7 @@ const getArtist = async (req, res) => {
       aliases: artistData.aliases,
       genres: artistData.genres,
       membersOfband: membersOfband,
-      discography : discography
+      urls: URLRelations
     }
 
     // console.log(data)
@@ -271,12 +370,101 @@ const getArtist = async (req, res) => {
     return res.status(400).json({error : 'Error fetching suggested releases'})
   }
 
-  
+}
+
+const discography = async (req, res) => {
+  const { artistId, type } = req.query
+  let offset = Number(req.query.offset) || 0
+
+  logApiCall(req.method, req.originalUrl)
+  console.log('Fetching artists discography...')
+
+  if (!artistId) {
+    errorApiCall(req.method, req.originalUrl, 'Missing artistId')
+    res.status(400).json({error: 'Missing parameters'})
+    return
+  }
+
+  if (type !== 'album' && type !== 'single' && type !==  'ep') {
+    errorApiCall(req.method, req.originalUrl, 'Incorrect type')
+    res.status(400).json({error: 'Incorrect type'})
+    return
+  }
+
+  try {
+    
+    const start = new Date()
+
+    const releases = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=25&release-group-status=website-default&offset=${offset}`, {
+      headers: {
+        'User-Agent' : userAgent
+      }
+    }) 
+
+    const releasesData = await releases.json()
+    
+    const releaseGroups = releasesData['release-groups']
+    const sorted = await Promise.all(
+      [...releaseGroups].sort((a, b) => {
+        const lenA = a['secondary-types']?.length || 0
+        const lenB = b['secondary-types']?.length || 0
+        return lenA - lenB
+      }).map(async (releaseGroup) => {
+        
+        const nums = await prisma.review.aggregate({
+          where: {itemId: releaseGroup.id},
+          _avg: {rating: true},
+          _count: {rating: true}
+        })
+
+        return {
+          type: releaseGroup['secondary-types']?.join(' + ') || releaseGroup['primary-type'] || "Unknown",
+          id: releaseGroup.id,
+          firstReleaseDate: releaseGroup['first-release-date'] || "",
+          disambiguation: releaseGroup.disambiguation || "",
+          title: releaseGroup.title,
+          averageRating: nums._avg.rating ?? 0,
+          totalReviews: nums._count.rating ?? 0,
+        }
+      }
+    )) 
+    // !! Debug !!
+    // const seen = new Set()
+    // let i = 1
+    // sorted.forEach(releaseGroup => {
+    //   const key = releaseGroup['secondary-types'].join(' + ') // empty string if no types
+
+    //   if (!seen.has(key)) {
+    //     console.log(key || `${type}s`) // handle empty array
+    //     i = 1
+    //     seen.add(key)
+    //   }
+
+    //   console.log(`${i}. ${releaseGroup.title}`)
+    //   i += 1
+    // })
+
+    const end = new Date()
+    const duration = (end.getTime() - start.getTime()) / 1000
+    console.log('=====================================================')
+    console.log('Count:', releasesData['release-group-count'])
+    console.log('Total:', releasesData['release-groups'].length)
+    console.log('Time:', duration, 'seconds')
+
+    res.json({
+      data: sorted, 
+      count: releasesData['release-group-count']
+    })
+
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 module.exports = {
   artists,
   recordings,
   releases,
-  getArtist
+  getArtist,
+  discography
 }

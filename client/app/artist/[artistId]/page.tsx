@@ -1,61 +1,18 @@
 'use client'
 
+import About from "@/app/components/artist/About"
+import ArtistReview from "@/app/components/artist/review"
+import ReviewBar from "@/app/components/artist/ReviewBar"
 import Container from "@/app/components/ui/Container"
 import Footer from "@/app/components/ui/Footer"
+import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar"
 import Nav from "@/app/components/ui/NavigationBar"
+import { ReviewResponse } from "@/app/lib/types/api"
+import type { Artist } from "@/app/lib/types/artist"
 import axios from "axios"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { Loader } from "lucide-react"
+import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
-
-type Release = {
-  type: string,
-  id: string,
-  releaseDate: string,
-  disambiguation: string,
-  title: string,
-}
-
-type Artist = {
-  gender: string,
-  name: string,
-  lifeSpan: {
-    begin: string,
-    end: string,
-    ended: boolean
-  },
-  type: string,
-  country: string,
-  disambiguation: string,
-  relations: string
-  genres: {
-    name: string
-    disambiguation: string
-    id: string
-  }[]
-  aliases: {
-    name: string
-    type: string
-  }[]
-  membersOfband: {
-    lifeSpan: {
-      begin: string,
-      end: string,
-      ended: boolean
-    },
-    artist: {
-      type: string,
-      id: string,
-      name: string,
-      country: string,
-      disambiguation: string
-    }
-  }[],
-  discography : {
-    singles: Release[]
-    albums: Release[]
-    ep: Release[]
-  }
-}
 
 export default function Artist ({
   params
@@ -64,37 +21,45 @@ export default function Artist ({
 }) {
 
   const { artistId } = use(params)
+  const { data: session } = useSession()
 
   const [artist, setArtist] = useState<Artist | null>(null)
-  const [aliases, setAliases] = useState<string[]>([])
-  const [imageUrl, setImageUrl] = useState('')
-  const [showDiscog, setShowDiscog] = useState({
-    albums: true,
-    ep: false,
-    singles: false
-  })
+  const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     
-    const fetchArtist = async () => {
+    const fetchData = async () => {
       try {
-        const artist = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
-          params : {id : artistId}
-        })
+        setIsLoading(true)
+        const [artist, reviews] = await Promise.allSettled([
+          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
+            params : {id : artistId}
+          }),
+          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`, {
+            params: {type: 'ARTIST', id: artistId}
+          })
+        ])
 
-        const data = artist.data
-        const relations = data.relations
+        if (artist.status === "fulfilled") {
+          setArtist(artist.value.data)
+        } else {
+          console.error("Artist fetch failed", artist.reason)
+        }
 
-        for(const alias of data.aliases) setAliases(prev => [...prev, alias.name])
+        if (reviews.status === "fulfilled") {
+          setReviews(reviews.value.data)
+        } else {
+          console.error("Reviews fetch failed", reviews.reason)
+        }
 
-        console.log(relations)
-        setArtist(data)
       } catch (error) {
-        console.log(error)
+        console.error(error)
+      } finally {
+        setIsLoading(false)
       }
     }
-
-    fetchArtist()
+    fetchData()
   }, [])
 
   return (
@@ -103,161 +68,40 @@ export default function Artist ({
       <Container>
         <div className="mt-20 min-h-screen mb-5">
           
-          {/* Left */}
-          <div className="flex gap-10">
-            <div className="w-100">
-              <img src="/default-avatar.jpg" alt="Artist" className="w-100"/>
-              
-              <div className="w-100 border-1 bg-gray-800 mt-4">
-                <div className="bg-gray-700 border-b-1">
-                  <p className="text-lg font-bold font-mono px-2 py-1">Discography</p>
-                </div>
-                
-                <div className="flex flex-col gap-2 px-2 py-1">
+          <div className="gap-10">
 
-                  {/* Albums */}
-                  <div>
-                    <div 
-                      className="font-mono font-bold flex items-center cursor-pointer"
-                      onClick={() => setShowDiscog(prev => ({albums: !prev.albums, singles: false, ep: false}))}
-                    >
-                      <ChevronDown size={18} className={`${showDiscog.albums && 'rotate-180'} mr-1 transform transition-all`}/>Albums
-                    </div>
-                    <div className={`${showDiscog.albums ? 'flex' : 'hidden'} flex-col gap-1`}>
-                      {artist?.discography.albums.map(album => (
-                        <div 
-                          className="hover:underline cursor-pointer"
-                          onClick={() => alert(album.id)}
-                        >
-                          <p className="text-baseline truncate">{album.title}</p>
-                          <p className="text-sm text-gray-500">{album.releaseDate}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* EP's */}
-                  <div>
-                    <div 
-                      className="font-mono font-bold flex items-center cursor-pointer"
-                      onClick={() => setShowDiscog(prev => ({albums: false, singles: false, ep: !prev.ep}))}
-                    >
-                      <ChevronDown size={18} className={`${showDiscog.ep && 'rotate-180'} mr-1 transform transition-all`}/>EP
-                    </div>
-                    <div className={`${showDiscog.ep ? 'flex' : 'hidden'} flex-col gap-1`}>
-                      {artist?.discography.ep.map(ep => (
-                        <div 
-                          className="hover:underline cursor-pointer"
-                          onClick={() => alert(ep.id)}
-                        >
-                          <p className="text-baseline truncate">{ep.title}</p>
-                          <p className="text-sm text-gray-500">{ep.releaseDate}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Singles */}
-                  <div>
-                    <div 
-                      className="font-mono font-bold flex items-center cursor-pointer"
-                      onClick={() => setShowDiscog(prev => ({albums: false, singles: !prev.singles, ep: false}))}
-                    >
-                      <ChevronDown size={18} className={`${showDiscog.singles && 'rotate-180'} mr-1 transform transition-all`}/>Singles
-                    </div>
-                    <div className={`${showDiscog.singles ? 'flex' : 'hidden'} flex-col gap-1 transition ease-in-out`}>
-                      {artist?.discography.singles.map(single => (
-                        <div 
-                          className="hover:underline cursor-pointer"
-                          onClick={() => alert(single.id)}
-                        >
-                          <p className="text-baseline truncate">{single.title}</p>
-                          <p className="text-sm text-gray-500">{single.releaseDate}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-            
-            {/* Right */}
-            <div className="flex flex-col w-full">
-
+            <div className="flex gap-10">
               {/* About */}
-              <div className="flex flex-col gap-4">
-                <div className="font-mono">
-                  <p className="text-2xl font-bold">{artist?.name}</p>
-                  <p className="text-sm">{artist?.disambiguation}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-bold">
-                    {artist?.type === 'Person' ? 'Born' : 'Formed'}
-                  </p>
-                  <p>{artist?.lifeSpan.begin}</p>
-                </div>
-                {artist?.lifeSpan.ended &&
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold">
-                      {artist?.type === 'Person' ? 'Died' : 'Disbanded'}
-                    </p>
-                    <p>{artist.lifeSpan.end}</p>
-                  </div>
-                }
-                {artist?.membersOfband.length !== 0 &&
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold">
-                      {artist?.type === 'Person' ? 'Member of' : 'Members'}
-                    </p>
-                    {artist?.membersOfband.map((member, i) => (
-                      <span
-                        key={i} 
-                        onClick={() => alert(member.artist.id)}
-                      >
-                        <span  
-                          className="hover:underline cursor-pointer"
-                        >
-                          {member.artist.name}
-                        </span>
-                        {i < artist.membersOfband.length - 1 && ', '}
-                      </span>
-                    ))}
-                  </div>
-                }
-                {artist?.aliases.length !== 0 &&
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold">Aliases</p>
-                    <p>{aliases.join(', ')}</p>
-                  </div>
-                }
-                {artist?.genres &&
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold">Genres</p>
-                    {artist?.genres.map((genre, i) => (
-                      <span 
-                        key={genre.id}
-                        onClick={() => alert(genre.id)}
-                      > 
-                        <span 
-                          className="hover:underline cursor-pointer"
-                        >
-                          {genre.name}
-                        </span>
-                        {i < artist.genres.length - 1 && ', '}
-                      </span>
-                    ))}
-                  </div>
-                }
-              </div>
-
-              {/* Reviews */}
-              <div className="mt-[2rem] font-bold font-mono text-lg">
-                <p>Reviews</p>
-              </div>
+              <About artist={artist} avgRating={reviews?.avgRating ?? 0}/>
 
             </div>
+
+            <div className="border-b-1 border-gray-500 my-2"/>
+
+            {/* Make a Review */}
+            {session && !isLoading &&
+              <>
+                <ReviewBar artist={artist}/>
+                <div className="border-b-1 border-gray-500 my-2"/>
+              </>
+            }
+
+            <div className="font-mono flex mt-2 justify-between items-center">
+                {!isLoading ? 
+                  <p className="text-xl font-bold mb-2">{reviews?.reviews.length} {reviews?.reviews.length === 1 ? 'Review' : 'Reviews'}</p>  
+                : 
+                  <p className="text-xl font-bold mb-2 text-gray-500 flex items-center gap-1">
+                    <Loader className="animate-spin" size={18}/> Loading Reviews
+                  </p>
+                }
+            </div>
+            {isLoading &&
+              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+            }
+            {reviews &&
+              <ArtistReview reviews={reviews.reviews} artist={artist}/>
+            }
+
               
           </div>
 
