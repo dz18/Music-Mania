@@ -13,8 +13,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --watch server.js",
-    "seedTags": "node ./prisma/seed/insertChapterTags.js",
-    "addBooks": "node ./prisma/seed/insertFakeData.js"
+    "artistAlbums": "node ./tests/musicbrainz/musicbrainz-albums.js",
+    "artistEPs": "node ./tests/musicbrainz/EPs.js",
+    "artist": "node ./tests/musicbrainz/artist.js",
+    "coverArt" : "node ./tests/musicbrainz/coverArt.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

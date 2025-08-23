@@ -30,7 +30,7 @@ model User {
   followers     Follow[] @relation("followers")
   following     Follow[] @relation("following")
 
-  favArtist     String[]
+  favArtists    String[]
   favRecordings String[]
   favReleases   String[]
 

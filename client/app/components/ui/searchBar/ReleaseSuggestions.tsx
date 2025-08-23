@@ -5,7 +5,7 @@ export default function ReleaseSuggestions ({
 }) {
   return (
     <>
-      {suggestions.map((item : Release) => (
+      {suggestions.map((item : ReleaseQuery) => (
         <div 
           key={item.id} 
           className="hover:bg-white/20 transition-colors duration-200 cursor-pointer"
