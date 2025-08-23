@@ -7,5 +7,6 @@ router.get('/recordings', musicBrainzController.recordings)
 router.get('/releases', musicBrainzController.releases)
 router.get('/getArtist', musicBrainzController.getArtist)
 router.get('/discography', musicBrainzController.discography)
+router.get('/getAlbum', musicBrainzController.getAlbum)
 
 module.exports = router

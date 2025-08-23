@@ -15,7 +15,8 @@
     "start": "node --watch server.js",
     "artistAlbums": "node ./tests/musicbrainz/musicbrainz-albums.js",
     "artistEPs": "node ./tests/musicbrainz/EPs.js",
-    "artist": "node ./tests/musicbrainz/artist.js"
+    "artist": "node ./tests/musicbrainz/artist.js",
+    "coverArt" : "node ./tests/musicbrainz/coverArt.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

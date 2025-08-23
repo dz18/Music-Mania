@@ -1,5 +1,6 @@
 'use client'
 
+import DiscographyTable from "@/app/components/artist/DiscographyTable";
 import Pagination from "@/app/components/artist/Pagination";
 import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
@@ -9,7 +10,7 @@ import UnderConstruction from "@/app/lib/fallback/UnderConstruction";
 import { ReleaseGroup } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
 import axios from "axios";
-import { ChevronsLeft, ChevronsRight, Image, ImageOff, Loader, Type } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, FileX2, Image, ImageOff, Loader, Type } from "lucide-react";
 import { Preahvihear } from "next/font/google";
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
@@ -92,7 +93,7 @@ export default function Discography ({
     <div>
       <Nav/>
       <Container>
-        <div className="min-w-full min-h-screen mt-15 mb-10">
+        <div className="min-w-full min-h-screen mt-15 mb-10 flex flex-col">
 
           <div className="mb-2">
             <p className="font-mono font-bold text-2xl">Discography</p>
@@ -129,59 +130,32 @@ export default function Discography ({
               {count} total results
             </p>
           </div>
-
-
-          <table className="table-auto w-full">
-            <thead>
-              <tr className="text-sm bg-gray-800">
-                <th className="border border-y-white p-1 whitespace-nowrap">Release Date</th>
-                <th className="border border-y-white p-1 whitespace-nowrap text-left">Title</th>
-                <th className="border border-y-white p-1 whitespace-nowrap">Rating</th>
-                <th className="border border-y-white p-1 whitespace-nowrap">Reviews</th>
-              </tr>
-            </thead>
-            {!tableLoad &&
-              <>
-                <tbody className="text-sm">
-                  {discography.map((item, i) => (
-                    <tr key={item.id} className={`${i % 2 === 0 ? 'bg-gray-700' : 'bg-gray-800'}`}>
-                      
-                      <td className="border border-white p-1">
-                        {item.firstReleaseDate ? item.firstReleaseDate : 'N/A'}
-                      </td>
-                      <td className="border border-white p-1 w-full">
-                        <Link href='' className="hover:underline flex items-center gap-1" onClick={() => alert(item.id)}>
-                          <Image className="text-gray-500 inline-block"/>
-                          <p>{item.title}</p>
-                        </Link>
-                      </td>
-                      <td className="border border-white p-1">{item.averageRating ? `${item.averageRating}` : 'N/A'}</td>
-                      <td className="border border-white p-1">{item.totalReviews}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </>
-            }
-          </table>
-          {tableLoad &&
+          
+          
+          {!tableLoad ?
+            discography.length !== 0 ?
+              <DiscographyTable discography={discography} active={active}/>
+            :
+              <div className="flex items-center justify-center font-mono mt-[5rem] gap-2 text-gray-500">
+                <FileX2/> No data found
+              </div>
+          :
             <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
           }
 
-          <div className="my-3">
-            <Pagination
-              artistId={artistId}
-              active={active}
-              offset={offset}
-              count={count}
-              fetchDiscog={fetchDiscog}
-              loading={tableLoad}
-            />
-          </div>
+          {discography.length !== 0 &&
+            <div className="my-3">
+              <Pagination
+                artistId={artistId}
+                active={active}
+                offset={offset}
+                count={count}
+                fetchDiscog={fetchDiscog}
+                loading={tableLoad}
+              />
+            </div>
+          }
 
-          <div className="text-gray-500 text-sm text-center mt-3">
-            <p>Data provided by Musicbrainz</p>
-            <p>MusicBrainz Foundation, licensed under CC0</p>
-          </div>
           
           
         </div>
