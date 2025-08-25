@@ -93,7 +93,7 @@ export default function Discography ({
     <div>
       <Nav/>
       <Container>
-        <div className="min-w-full min-h-screen mt-15 mb-10 flex flex-col">
+        <div className="min-w-full min-h-screen mt-20 mb-10 flex flex-col">
 
           <div className="mb-2">
             <p className="font-mono font-bold text-2xl">Discography</p>

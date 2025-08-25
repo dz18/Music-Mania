@@ -2,7 +2,7 @@
 
 import About from "@/app/components/artist/About"
 import ArtistReview from "@/app/components/artist/review"
-import ReviewBar from "@/app/components/artist/ReviewBar"
+import ReviewBar from "@/app/components/reviews/ReviewBar"
 import Container from "@/app/components/ui/Container"
 import Footer from "@/app/components/ui/Footer"
 import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar"
@@ -76,30 +76,27 @@ export default function Artist ({
 
             </div>
 
-            <div className="border-b-1 border-gray-500 my-2"/>
-
             {/* Make a Review */}
             {session && !isLoading &&
               <>
-                <ReviewBar artist={artist}/>
-                <div className="border-b-1 border-gray-500 my-2"/>
+                <ReviewBar item={artist} type="artist"/>
               </>
             }
 
             <div className="font-mono flex mt-2 justify-between items-center">
-                {!isLoading ? 
-                  <p className="text-xl font-bold mb-2">{reviews?.reviews.length} {reviews?.reviews.length === 1 ? 'Review' : 'Reviews'}</p>  
-                : 
-                  <p className="text-xl font-bold mb-2 text-gray-500 flex items-center gap-1">
-                    <Loader className="animate-spin" size={18}/> Loading Reviews
-                  </p>
-                }
+            {!isLoading ? 
+              <p className="text-xl font-bold mb-2">{reviews?.reviews.length} {reviews?.reviews.length === 1 ? 'Review' : 'Reviews'}</p>  
+            : 
+              <p className="text-xl font-bold mb-2 text-gray-500 flex items-center gap-1">
+                <Loader className="animate-spin" size={18}/> Loading Reviews
+              </p>
+            }
             </div>
             {isLoading &&
               <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
             }
             {reviews &&
-              <ArtistReview reviews={reviews.reviews} artist={artist}/>
+              <ArtistReview reviews={reviews.reviews}/>
             }
 
               

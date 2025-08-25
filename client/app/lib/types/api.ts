@@ -21,6 +21,26 @@ export type ReleaseGroup = {
   totalReviews: number
 }
 
+export interface Album {
+  releaseId: string
+  id: string
+  title: string
+  coverArtArchive: Object
+  disambiguation: string
+  date: string
+  tracks: Track[]
+  format: string
+  trackCount: number
+  artistCredit: ArtistCredit[]
+  language: string
+  type: string[]
+  genres: {
+    id: string
+    name: string
+    disambiguation: string
+  }[]
+}
+
 export interface Release {
   
 }
