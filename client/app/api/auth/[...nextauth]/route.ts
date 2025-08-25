@@ -78,6 +78,8 @@ const handler = NextAuth({
           session.user.avatar = data.avatar
           session.user.phoneNumber = data.phoneNumber
           session.user.favArtists = data.favArtists
+          session.user.favSongs = data.favSongs
+          session.user.favReleases = data.favReleases
 
           console.log(session)
           return session

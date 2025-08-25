@@ -502,8 +502,6 @@ const getAlbum = async (req, res) => {
       return aLength - bLength
     })
     .map(album => {
-      console.log('============================')
-      console.log(album['release-group'])
       const media = album.media[0]
 
       return {

@@ -2,16 +2,19 @@ const { faker } = require('@faker-js/faker');
 const artistIDs = require('./seed/artistIDs.json')
 const albumIDs = require('./seed/albumIDs.json')
 const prisma = require('./client');
+const bcrypt = require('bcrypt')
 
 const ratingOptions = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+
 
 async function main() {
 
   // Create Admin User
+  const hashedPassword = await bcrypt.hash(process.env.PASSWORD, 10)
   await prisma.user.create({
     data: {
       email: process.env.EMAIL,
-      password: process.env.PASSWORD,
+      password: hashedPassword,
       username: process.env.USERNAME
     }
   })

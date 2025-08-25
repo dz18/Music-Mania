@@ -1,7 +1,7 @@
 'use client'
 
 import About from "@/app/components/artist/About"
-import ArtistReview from "@/app/components/artist/review"
+import Reviews from "@/app/components/reviews/Reviews"
 import ReviewBar from "@/app/components/reviews/ReviewBar"
 import Container from "@/app/components/ui/Container"
 import Footer from "@/app/components/ui/Footer"
@@ -84,19 +84,12 @@ export default function Artist ({
             }
 
             <div className="font-mono flex mt-2 justify-between items-center">
-            {!isLoading ? 
-              <p className="text-xl font-bold mb-2">{reviews?.reviews.length} {reviews?.reviews.length === 1 ? 'Review' : 'Reviews'}</p>  
-            : 
-              <p className="text-xl font-bold mb-2 text-gray-500 flex items-center gap-1">
-                <Loader className="animate-spin" size={18}/> Loading Reviews
-              </p>
-            }
             </div>
             {isLoading &&
               <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
             }
             {reviews &&
-              <ArtistReview reviews={reviews.reviews}/>
+              <Reviews reviews={reviews.reviews}/>
             }
 
               

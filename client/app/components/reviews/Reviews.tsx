@@ -2,7 +2,7 @@ import { Review } from "@/app/lib/types/artist"
 import { Star, StarHalf } from "lucide-react"
 import Link from "next/link"
 
-export default function ArtistReview ({
+export default function Reviews ({
   reviews,
 } : {
   reviews: Review[] | null
@@ -10,13 +10,13 @@ export default function ArtistReview ({
 
   return (
     <>
+      <p className="text-xl font-bold mb-2">{reviews?.length} {reviews?.length === 1 ? 'Review' : 'Reviews'}</p>  
       {reviews?.length !== 0 ?
         <div className="bg-gray-800 border-1">
           {reviews?.map((review, i) => (
             <div className={`${i % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'} p-2`} key={review.id}>
               <div className="flex justify-between">
                 <div className="flex gap-2 items-end">
-                  
                   <Link 
                     className="font-bold hover:underline flex gap-1 items-end"
                     href={`/profile/${review.user.id}`}

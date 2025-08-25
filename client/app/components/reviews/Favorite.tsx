@@ -18,8 +18,18 @@ export default function Favorite ({
   const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {
-    setFavorites(session?.user?.favArtists ?? [])
-  }, [session?.user.favArtists])
+    switch (type) {
+      case 'artist' : 
+        setFavorites(session?.user?.favArtists ?? [])
+        break
+      case 'release' : 
+        setFavorites(session?.user?.favReleases ?? [])
+        break
+      case 'song' : 
+        setFavorites(session?.user?.favSongs ?? [])
+        break
+    }
+  }, [type, session?.user.favArtists, session?.user?.favReleases, session?.user?.favSongs])
 
   const isFavorite = useMemo(() => (
     item ? favorites.includes(item.id) : false
@@ -39,33 +49,40 @@ export default function Favorite ({
     if (!session?.user?.id  || !item) return
 
     const originalFavorites = [...favorites];
+    console.log(isFavorite)
     const action = isFavorite ? 'remove' : 'add';
-    const endpoint = isFavorite ? 'removeFavoriteArtist' : 'addFavoriteArtist';
 
+    console.log(originalFavorites)
+    console.log(action)
     updateFavorites(item.id, action)
 
     startTransition(async () => {
       try {
-        if (type === 'artist') {
-          await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${endpoint}`, {
-            userId: session.user.id,
-            artistId: item.id,
-            type: 'artist'
-          })
-        }
-
+        await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/favorite`, {
+          userId: session.user.id,
+          id: item.id,
+          type: type,
+          action: action
+        })
+ 
         const newFavorites = action === 'add' 
           ? [...originalFavorites, item.id]
           : originalFavorites.filter(id => id !== item.id);
 
         // console.log(newFavArtists)
-        if (type === 'artist') {
-          await update({...session, user: {...session.user, favArtists: newFavorites}})
-        } else if (type === 'release') {
-          await update({...session, user: {...session.user, favReleases: newFavorites}})
-        } else if (type === 'song') {
-          await update({...session, user: {...session.user, favSongs: newFavorites}})
+        switch (type) {
+          case 'artist': 
+            await update({...session, user: {...session.user, favArtists: newFavorites}})
+            break
+          case 'release': 
+            await update({...session, user: {...session.user, favReleases: newFavorites}})
+            break
+          case 'song': 
+            await update({...session, user: {...session.user, favSongs: newFavorites}})
+            break
         }
+
+        setFavorites(newFavorites)
 
       } catch (error) {
         console.error(`Failed to ${action} favorite artist:`, error);

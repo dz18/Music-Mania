@@ -1,6 +1,6 @@
 'use client'
 
-import ArtistReview from "@/app/components/artist/review";
+import Reviews from "@/app/components/reviews/Reviews";
 import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
@@ -157,7 +157,7 @@ export default function AlbumPage ({
             <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
           }
           {reviews &&
-            <ArtistReview reviews={reviews.reviews}/>
+            <Reviews reviews={reviews.reviews}/>
           }
 
         </div>
