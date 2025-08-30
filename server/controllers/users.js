@@ -3,10 +3,17 @@ const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 
 // Gets all users
 const getUsers = async (req, res) => {
+
+  logApiCall(req.method, req.originalUrl)
+
   try {
+    const users = await prisma.user.count()
 
+    successApiCall(req.method, req.originalUrl)
+    return res.json(users)
   } catch (error) {
-
+    errorApiCall(req.method, req.originalUrl, error)
+    return res.status(500).json({error: 'Counting users failed.'})
   }
 }
 
@@ -53,6 +60,7 @@ const findUserById = async (req, res) => {
   }
 }
 
+// Get all favorites by user
 const getFavorites = async (res, req) => {
   const { userId } = req.query
 
@@ -81,14 +89,25 @@ const getFavorites = async (res, req) => {
   }
 }
 
+// Add or remove a favorite
 const favorite = async (req, res) => {
   const { id, userId, type, action } = req.body
 
   logApiCall(req.method, req.originalUrl)
 
+  if (type !== 'release' && type !== 'artist' && type !== 'song') {
+    errorApiCall(req.method, req.originalUrl, 'Missing Id')
+    return res.status(400).json({error: 'Invalid type'})
+  }
+
+  if (action !== 'add' && action !== 'remove') {
+    errorApiCall(req.method, req.originalUrl, 'Invalid action')
+    return res.status(400).json({error: 'Invalid action'})
+  }
+
   if (!id || !userId) {
     errorApiCall(req.method, req.originalUrl, 'Missing Id')
-    return
+    return res.status(400).json({error: 'Missing id'})
   }
 
   try {

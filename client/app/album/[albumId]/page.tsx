@@ -8,7 +8,7 @@ import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar
 import Nav from "@/app/components/ui/NavigationBar";
 import { Album, ReviewResponse } from "@/app/lib/types/api";
 import axios from "axios";
-import { Axis3D, DiscAlbum, ImageOff, Loader, Star, StarHalf } from "lucide-react";
+import { ImageOff, Loader, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react"
@@ -20,12 +20,13 @@ export default function AlbumPage ({
 }) {
 
   const { albumId } = use(params)
-  const { data: session, update} = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
   const [coverArt, setCoverArt] = useState('')
   const [album, setAlbum] = useState<Album | null>(null)
   const [loading, setLoading] = useState(false)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [active, setActive] = useState('reviews')
   
   useEffect(() => {
     const fetchData = async () => {
@@ -39,8 +40,6 @@ export default function AlbumPage ({
             params: {type: 'RELEASE', id: albumId}
           })
         ])
-        console.log(album.data)
-        console.log(reviews.data)
         setCoverArt(album.data.coverArtUrl)
         setAlbum(album.data.album)
         setReviews(reviews.data)
@@ -54,8 +53,20 @@ export default function AlbumPage ({
   }, [])
 
   const totalLength = useMemo(() => {
-    return Math.floor(((album?.tracks.reduce((sum, track) => sum + (track.length || 0), 0) ?? 0)/1000)/60)
+    return (album?.tracks.reduce((sum, track) => sum + (track.length || 0), 0) ?? 0) / 1000
   }, [album])
+
+  const hours = useMemo(() => {
+    return Math.floor(totalLength / 3600)
+  }, [totalLength])
+
+  const minutes = useMemo(() => {
+    return Math.floor((totalLength % 3600) / 60)
+  }, [totalLength])
+
+  const seconds = useMemo(() => {
+    return Math.floor(totalLength % 60)
+  }, [totalLength])
 
   return (
     <div>
@@ -123,7 +134,7 @@ export default function AlbumPage ({
               
               <div className="flex gap-2 flex-col">
                 <p className="font-bold text-sm text-gray-500">Total Length</p>
-                <p>{totalLength} mins</p>
+                <p>{hours !== 0 && `${hours} hrs`} {minutes} mins {!hours && `${seconds} secs`}</p>
               </div>
 
               <div className="flex gap-2 flex-col">
@@ -131,8 +142,6 @@ export default function AlbumPage ({
                 {album?.language && 
                   new Intl.DisplayNames(['en'], { type: 'language' }).of(album?.language)
                 }
-                <p>
-                </p>
               </div>
 
             </div>
@@ -152,12 +161,73 @@ export default function AlbumPage ({
           {session && 
             <ReviewBar item={album} type="release"/>
           }
-          
-          {loading &&
-            <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+
+          <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1">
+            <li 
+              className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'reviews' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
+              onClick={() => setActive('reviews')}
+            >Reviews</li>
+            <li
+              className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'tracklist' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
+              onClick={() => setActive('tracklist')}
+            >Tracklist</li>
+          </ul>
+
+          {active === 'reviews' &&
+            <>
+            {loading &&
+              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+            }
+            {reviews &&
+              <Reviews reviews={reviews.reviews}/>
+            }
+            </>
           }
-          {reviews &&
-            <Reviews reviews={reviews.reviews}/>
+
+          {active === 'tracklist' &&
+            <>
+            {loading &&
+              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+            }
+            {album &&
+              <div>
+                <p className="font-bold text-xl mb-2">{album.trackCount} {album.trackCount === 1 ? 'Track' : 'Tracks'}</p>
+                <table className="border-1 w-full">
+                  <thead>
+                    <tr className="bg-gray-800 border-b border-">
+                      <th className="p-1">Pos.</th>
+                      <th className="text-left">Title</th>
+                      <th className="">length</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {album.tracks.map((track, i) => (
+                      <tr
+                        key={track.id}
+                        className={`${i % 2 === 0 ? 'bg-gray-700 hover:bg-gray-700/80' : 'bg-gray-800 hover:bg-gray-800/80'} border-b border-white group `}
+                        onClick={() => alert(track.id)}
+                      >
+                        <td className="px-3 py-2 text-right text-gray-400">{track.position}.</td>
+                        <td className="px-3 py-2 flex gap-1 cursor-pointer">
+                          <p 
+                            className="font-semibold truncate group-hover:underline cursor-pointer" 
+                          >{track.title}</p>
+                          {track["artist-credit"].length > 1 &&
+                            <p className="text-gray-300 text-sm items-end flex truncate"> ft. 
+                              {track["artist-credit"].map((artist, i) => (
+                                i !== 0 && `${artist.name} ${artist.joinphrase}` 
+                              ))}
+                            </p>
+                          }
+                        </td>
+                        <td className="px-3 py-2">{track.length}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            }
+            </>
           }
 
         </div>
