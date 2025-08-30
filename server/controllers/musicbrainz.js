@@ -26,7 +26,7 @@ const artists = async (req, res) => {
     // Sort & Filter
     const artists = []
     for (const artist of data.artists) {
-      console.log(artist)
+      // console.log(artist)
       const filtered = {
         id : artist.id,
         type : artist.type,
@@ -174,12 +174,6 @@ const getArtist = async (req, res) => {
 
   try {
 
-    // const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=url-rels&fmt=json`, {
-    //   headers: {
-    //     'User-Agent' : userAgent
-    //   }
-    // })
-
     const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels+url-rels&fmt=json`, {
       headers: {
         'User-Agent' : userAgent
@@ -187,7 +181,6 @@ const getArtist = async (req, res) => {
     })
 
     const artistData = await fetchArtist.json()
-    // console.log(artistData)
 
     if (!artistData) {
       errorApiCall(req.method, req.originalUrl, 'Musicbrainz API failed')
@@ -218,7 +211,7 @@ const getArtist = async (req, res) => {
 
         membersSet.add(relation.artist.id)
       } else if (validURLTypes.includes(relation.type) && relation.url) {
-        console.log(relation.url.resource)
+        // console.log(relation.url.resource)
         if (relation.type === 'social network') {
           if (relation.url.resource.includes('instagram') ) {
             URLRelations.push({

@@ -81,7 +81,7 @@ const getFavorites = async (res, req) => {
       }
     })
 
-    console.log(favorites)
+    // console.log(favorites)
     successApiCall(req.method, req.originalUrl)
     res.json(favorites)
   } catch (error) {

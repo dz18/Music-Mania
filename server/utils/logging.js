@@ -15,6 +15,7 @@ export function errorApiCall(method, route, error) {
   // Check if the error is an object (e.g., Error object) and log its message or stack trace
   if (error instanceof Error) {
     console.error(`Error Message: ${error.message}`);
+    console.error(error)
   } else {
     // If it's not an instance of Error, just log the error directly
     console.error(`Error: ${error}`);
