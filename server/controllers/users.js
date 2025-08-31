@@ -3,10 +3,17 @@ const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 
 // Gets all users
 const getUsers = async (req, res) => {
+
+  logApiCall(req.method, req.originalUrl)
+
   try {
+    const users = await prisma.user.count()
 
+    successApiCall(req.method, req.originalUrl)
+    return res.json(users)
   } catch (error) {
-
+    errorApiCall(req.method, req.originalUrl, error)
+    return res.status(500).json({error: 'Counting users failed.'})
   }
 }
 
@@ -43,7 +50,9 @@ const findUserById = async (req, res) => {
       id: user.id,
       avatar: user.avatar,
       phoneNumber: user.phoneNumber,
-      favArtists: user.favArtists
+      favArtists: user.favArtists,
+      favSongs: user.favSongs,
+      favReleases: user.favReleases
     })
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
@@ -51,6 +60,7 @@ const findUserById = async (req, res) => {
   }
 }
 
+// Get all favorites by user
 const getFavorites = async (res, req) => {
   const { userId } = req.query
 
@@ -71,7 +81,7 @@ const getFavorites = async (res, req) => {
       }
     })
 
-    console.log(favorites)
+    // console.log(favorites)
     successApiCall(req.method, req.originalUrl)
     res.json(favorites)
   } catch (error) {
@@ -79,91 +89,91 @@ const getFavorites = async (res, req) => {
   }
 }
 
-const addFavoriteArtist = async (req, res) => {
-  const { artistId, userId } = req.body
+// Add or remove a favorite
+const favorite = async (req, res) => {
+  const { id, userId, type, action } = req.body
 
   logApiCall(req.method, req.originalUrl)
 
-  if (!artistId || !userId) {
+  if (type !== 'release' && type !== 'artist' && type !== 'song') {
     errorApiCall(req.method, req.originalUrl, 'Missing Id')
-    return
+    return res.status(400).json({error: 'Invalid type'})
+  }
+
+  if (action !== 'add' && action !== 'remove') {
+    errorApiCall(req.method, req.originalUrl, 'Invalid action')
+    return res.status(400).json({error: 'Invalid action'})
+  }
+
+  if (!id || !userId) {
+    errorApiCall(req.method, req.originalUrl, 'Missing Id')
+    return res.status(400).json({error: 'Missing id'})
   }
 
   try {
+    const fieldMap = {
+      release: 'favReleases',
+      artist: 'favArtists',
+      song: 'favSongs',
+    }
+    const field = fieldMap[type]
+
     const user = await prisma.user.findUnique({
       where: {id: userId},
-      select: { favArtists: true }
-    })
-
-    if (user.favArtists.length === 10) {
-      return res.status(400).json({error : 'Max amount of favorite artist reached. (10 Max)'})
-    }
-
-    if (user.favArtists.includes(artistId)) {
-      return res.status(400).json({error : 'Artist already set as favorite'})
-    }
-
-    await prisma.user.update({
-      where: {id : userId},
-      data: {
-        favArtists: [...user.favArtists, artistId]
+      select: { 
+        favArtists: true,
+        favReleases: true,
+        favSongs: true
       }
     })
 
+    console.log(`${field}:`, user[field].length)
+    if (user[field].length >= 10) {
+      errorApiCall(req.method, req.originalUrl, `${field} maxed out`)
+      return res.status(400).json({error : 'Max amount of favorite artist reached. (10 Max)'})
+    }
+
+    if (user[field].includes(id) && type === 'add') {
+      errorApiCall(req.method, req.originalUrl, `${field} already includes id`)
+      return res.status(400).json({error : 'Artist already set as favorite'})
+    }
+
+    
+    if (!user[field].includes(id) && type === 'remove') {
+      errorApiCall(req.method, req.originalUrl, `${field} does not include the id`)
+      return res.status(400).json({error : 'Artist already set as favorite'})
+    }
+    
+    if (action === 'add') {
+      await prisma.user.update({
+        where: {id : userId},
+        data: {
+          [field]: [...(user[field]), id]
+        }
+      })
+    }
+
+    if (action === 'remove') {
+      let fav = user[field].filter(f => f !== id)
+      await prisma.user.update({
+        where: {id : userId},
+        data: {
+          [field]: fav
+        }
+      })
+    }
+
     successApiCall(req.method, req.originalUrl)
-    return res.json({message: 'Artist added to favorites'})
+    return res.json({message: `Artist ${action}ed to favorites`})
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
   
 }
 
-const removeFavoriteArtist = async (req, res) => {
-  const { userId, artistId } = req.body
-
-  logApiCall(req.method, req.originalUrl)
-
-  if (!userId || !artistId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing parameters')
-    return
-  }
-
-  try {
-    
-    const user = await prisma.user.findUnique({
-      where: {id: userId},
-      select: { favArtists: true }
-    })
-
-    if (user.favArtists.length === 10) {
-      return res.status(400).json({error : 'Max amount of favorite artist reached. (10 Max)'})
-    }
-
-    if (!user.favArtists.includes(artistId)) {
-      return res.status(400).json({error : 'Artist not set as Favorite'})
-    }
-
-    let favArtists = user.favArtists.filter(id => id !== artistId)
-    console.log(favArtists)
-    await prisma.user.update({
-      where: {id : userId},
-      data: {
-        favArtists: favArtists
-      }
-    })
-
-    successApiCall(req.method, req.originalUrl)
-    return res.json({message: 'Removed Artist Successfully.'})
-
-  } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
-  }
-}
-
 module.exports = {
   getUsers,
   findUserById,
-  addFavoriteArtist,
   getFavorites,
-  removeFavoriteArtist
+  favorite
 };

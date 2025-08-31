@@ -26,6 +26,9 @@ const reviews = async (req, res) => {
             },
           },
         },
+        orderBy: {
+          rating: 'desc'
+        }
       }),
       prisma.review.aggregate({
         where: {

@@ -26,7 +26,7 @@ const artists = async (req, res) => {
     // Sort & Filter
     const artists = []
     for (const artist of data.artists) {
-      console.log(artist)
+      // console.log(artist)
       const filtered = {
         id : artist.id,
         type : artist.type,
@@ -174,12 +174,6 @@ const getArtist = async (req, res) => {
 
   try {
 
-    // const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=url-rels&fmt=json`, {
-    //   headers: {
-    //     'User-Agent' : userAgent
-    //   }
-    // })
-
     const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels+url-rels&fmt=json`, {
       headers: {
         'User-Agent' : userAgent
@@ -187,7 +181,6 @@ const getArtist = async (req, res) => {
     })
 
     const artistData = await fetchArtist.json()
-    // console.log(artistData)
 
     if (!artistData) {
       errorApiCall(req.method, req.originalUrl, 'Musicbrainz API failed')
@@ -218,7 +211,7 @@ const getArtist = async (req, res) => {
 
         membersSet.add(relation.artist.id)
       } else if (validURLTypes.includes(relation.type) && relation.url) {
-        console.log(relation.url.resource)
+        // console.log(relation.url.resource)
         if (relation.type === 'social network') {
           if (relation.url.resource.includes('instagram') ) {
             URLRelations.push({
@@ -418,13 +411,16 @@ const discography = async (req, res) => {
           _count: {rating: true}
         })
 
+        
+        const average = nums._avg.rating
+        const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
         return {
           type: releaseGroup['secondary-types']?.join(' + ') || releaseGroup['primary-type'] || "Unknown",
           id: releaseGroup.id,
           firstReleaseDate: releaseGroup['first-release-date'] || "",
           disambiguation: releaseGroup.disambiguation || "",
           title: releaseGroup.title,
-          averageRating: nums._avg.rating ?? 0,
+          averageRating: avgRounded ?? 0,
           totalReviews: nums._count.rating ?? 0,
         }
       }
@@ -468,7 +464,7 @@ const getAlbum = async (req, res) => {
   logApiCall(req.method, req.originalUrl)
 
   try {
-    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${albumId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups&fmt=json&limit=100&offset=40`, {
+    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${albumId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups&fmt=json&limit=100&offset=0`, {
       headers: {
         'User-Agent' : userAgent
       }
@@ -479,7 +475,9 @@ const getAlbum = async (req, res) => {
 
     const formatPriority = ["CD", "Digital Media"]
     const disambiguationPriority = ["clean", "explicit", ""]
-    const sorted = [...albumData].sort((a, b) => {
+    const filteredAlbums = albumData.filter(a => a.title === a['release-group'].title)
+    const sorted = [...filteredAlbums].sort((a, b) => {
+      
       const aFormat = formatPriority.indexOf(a.media[0]?.format || "")
       const bFormat = formatPriority.indexOf(b.media[0]?.format || "")
       if (aFormat !== bFormat) return bFormat - aFormat
@@ -497,21 +495,22 @@ const getAlbum = async (req, res) => {
       return aLength - bLength
     })
     .map(album => {
-      // console.log(album)
       const media = album.media[0]
 
       return {
-        id: album.id,
-        title: album.title,
+        releaseId: album.id,
+        id: album['release-group'].id,
+        title: album['release-group'].title,
         coverArtArchive: album['cover-art-archive'].artwork,
         disambiguation: album.disambiguation,
-        date: album.date,
+        date: album['release-group']['first-release-date'],
         tracks: media.tracks,
         format: media.format,
         trackCount: media['track-count'],
         artistCredit: album['artist-credit'],
         language: album['text-representation'].language,
-        type: album['release-group']['secondary-types'].length !== 0 ? album['release-group']['secondary-types'] : album['release-group']['primary-type']
+        type: album['release-group']['secondary-types'].length !== 0 ? album['release-group']['secondary-types'] : [album['release-group']['primary-type']],
+        genres: album['release-group']['genres']
       }
     })
 
@@ -521,13 +520,15 @@ const getAlbum = async (req, res) => {
     const coverArtJSON = await FetchCoverArt.json()
     const coverArt = coverArtJSON.images.filter(img => img.front === true)
 
+    //console.log(sorted)
+    successApiCall(req.method, req.originalUrl)
     return res.json({
       album: first,
       coverArtUrl: coverArt[0].image
     })
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl)
+    errorApiCall(req.method, req.originalUrl, error)
   }
 }
 

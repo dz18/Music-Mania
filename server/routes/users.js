@@ -7,7 +7,6 @@ router.get('/total', userController.getUsers)
 router.get('/find', userController.findUserById)
 router.get('/favorites', userController.getFavorites)
 
-router.patch('/addFavoriteArtist', userController.addFavoriteArtist)
-router.patch('/removeFavoriteArtist', userController.removeFavoriteArtist)
+router.patch('/favorite', userController.favorite)
 
 module.exports = router

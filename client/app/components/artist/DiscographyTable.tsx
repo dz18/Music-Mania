@@ -53,8 +53,8 @@ export default function DiscographyTable ({
                       <p>{rg.title}</p>
                     </Link>
                   </td>
-                  <td className="border border-white p-1">{rg.averageRating ? `${rg.averageRating}` : 'N/A'}</td>
-                  <td className="border border-white p-1">{rg.totalReviews}</td>
+                  <td className="border border-white p-1 text-center">{rg.averageRating ? `${rg.averageRating}` : 'N/A'}</td>
+                  <td className="border border-white p-1 text-center  ">{rg.totalReviews}</td>
                 </tr>
               ))}
             </tbody>

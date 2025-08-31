@@ -1,10 +1,18 @@
 'use client'
 
+import Reviews from "@/app/components/reviews/Reviews";
+import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
+import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar";
 import Nav from "@/app/components/ui/NavigationBar";
+import { Album, ReviewResponse } from "@/app/lib/types/api";
 import axios from "axios";
-import { use, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { use, useEffect, useMemo, useState } from "react"
+import Tracklist from "@/app/components/album/Tracklist";
+import TextContent from "@/app/components/album/TextContent";
 
 export default function AlbumPage ({
   params
@@ -13,16 +21,32 @@ export default function AlbumPage ({
 }) {
 
   const { albumId } = use(params)
+  const { data: session } = useSession()
+  const [coverArt, setCoverArt] = useState('')
+  const [album, setAlbum] = useState<Album | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [active, setActive] = useState('reviews')
   
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const album = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getAlbum`, {
-          params: {albumId: albumId}
-        })
-        console.log(album.data)
+        setLoading(true)
+        const [album, reviews] = await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getAlbum`, {
+            params: {albumId: albumId}
+          }),
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,{
+            params: {type: 'RELEASE', id: albumId}
+          })
+        ])
+        setCoverArt(album.data.coverArtUrl)
+        setAlbum(album.data.album)
+        setReviews(reviews.data)
       } catch (error) {
         console.error(error)
+      } finally {
+        setLoading(false)
       }
     }
     fetchData()
@@ -32,10 +56,54 @@ export default function AlbumPage ({
     <div>
       <Nav/>
       <Container>
-        <div className="min-w-full min-h-screen mt-15 mb-10 flex flex-col">
-          <div>
-
+        <div className="min-w-full min-h-screen mt-20 mb-10 flex flex-col">
+          <div className="flex justify-between">
+            {/* Text content */}
+            <TextContent
+              album={album}
+              reviews={reviews}
+              coverArt={coverArt}
+              loading={loading}
+            />
           </div>
+
+          {session && 
+            <ReviewBar item={album} type="release"/>
+          }
+
+          <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1 mb-2">
+            <li 
+              className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'reviews' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
+              onClick={() => setActive('reviews')}
+            >Reviews</li>
+            <li
+              className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'tracklist' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
+              onClick={() => setActive('tracklist')}
+            >Tracklist</li>
+          </ul>
+
+          {active === 'reviews' &&
+            <>
+            {loading &&
+              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+            }
+            {reviews &&
+              <Reviews reviews={reviews.reviews}/>
+            }
+            </>
+          }
+
+          {active === 'tracklist' &&
+            <>
+            {loading &&
+              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+            }
+            {album &&
+              <Tracklist album={album}/>
+            }
+            </>
+          }
+
         </div>
       </Container>
       <Footer/>

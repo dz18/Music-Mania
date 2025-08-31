@@ -10,6 +10,8 @@ declare module "next-auth" {
       id?: string | null
       phoneNumber?: string | null
       favArtists?: string[] | null
+      favSongs?: string[] | null
+      favReleases?: string[] | null
     };
   }
 
