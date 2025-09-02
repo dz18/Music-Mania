@@ -1,8 +1,10 @@
 import { ReleaseGroup } from "@/app/lib/types/api"
+import axios from "axios"
 import { table } from "console"
 import { Image } from "lucide-react"
 import Link from "next/link"
-import { useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
 
 export default function DiscographyTable ({
   discography,
@@ -11,6 +13,9 @@ export default function DiscographyTable ({
   discography: ReleaseGroup[]
   active: 'album' | 'single' | 'ep'
 }) {
+
+  const router = useRouter()
+  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({})
 
   const grouped = useMemo(() => {
     const map: Record<string, ReleaseGroup[]> = {}
@@ -21,6 +26,27 @@ export default function DiscographyTable ({
     })
     return map
   }, [])
+
+  const handleClick = async (rg: ReleaseGroup) => {
+    if (loadingMap[rg.id]) return
+    setLoadingMap(prev => ({ ...prev, [rg.id]: true }))
+
+    if (active === 'single') {
+      try {
+        const single = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/findSingleId`, {
+          params: {rgId : rg.id}
+        })
+        
+        router.push(`/song/${single.data}`)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoadingMap(prev => ({ ...prev, [rg.id]: false }))
+      }
+    } else {
+      router.push(`/${active}/${rg.id}`)
+    }
+  }
 
   return (
     <>
@@ -46,12 +72,13 @@ export default function DiscographyTable ({
                     {rg.firstReleaseDate ? rg.firstReleaseDate : 'N/A'}
                   </td>
                   <td className="border border-white p-1 w-full">
-                    <Link 
+                    <button 
                       className="hover:underline flex rgs-center gap-1"
-                      href={active === 'single' ? `/song/${rg.id}` : `/${active}/${rg.id}`}>
+                      onClick={() => handleClick(rg)}
+                    >
                       <Image className="text-gray-500 inline-block"/>
                       <p>{rg.title}</p>
-                    </Link>
+                    </button>
                   </td>
                   <td className="border border-white p-1 text-center">{rg.averageRating ? `${rg.averageRating}` : 'N/A'}</td>
                   <td className="border border-white p-1 text-center  ">{rg.totalReviews}</td>
