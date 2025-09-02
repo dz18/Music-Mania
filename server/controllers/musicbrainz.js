@@ -532,11 +532,97 @@ const getAlbum = async (req, res) => {
   }
 }
 
+const getSong = async (req, res) => {
+  const { songId } = req.query
+
+  logApiCall(req.method, req.originalUrl)
+
+  if (!songId) {
+    errorApiCall(req.method, req.originalUrl, 'Missing songId')
+    return res.status(400).json({error : 'Missing songId'})
+  }
+
+  try {
+
+    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups`, {
+      headers: {
+        'User-Agent': userAgent
+      }
+    })
+
+    const song = await fetchSong.json()
+    // console.log(song)
+
+    song.releases.sort((a, b) => {
+      const weight = (r) => r['release-group']?.["primary-type"] === 'Single' ? 0 : 1
+      return weight(a) - weight(b) 
+    })
+
+    // console.log(song.releases.length)
+    // console.log(song.releases.map(r => r['release-group']['primary-type']))
+
+    let coverArtUrl = ''
+    if (song.releases.length !== 0) {
+      const albumId = song.releases[0]['release-group'].id
+      const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${albumId}`)
+      const coverArtJSON = await FetchCoverArt.json()
+      const coverArt = coverArtJSON.images.filter(img => img.front === true)
+      coverArtUrl = coverArt[0].image
+    }
+
+    console.log(coverArtUrl)
+    successApiCall(req.method, req.originalUrl)
+    return res.json({
+      song, 
+      coverArtUrl
+    })
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+}
+
+const findSingleId = async (req, res) => {
+  const { rgId } = req.query
+
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+    const fetchSingle = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${rgId}&status=official&type=single&inc=release-groups+recordings&fmt=json`, {
+      headers: {
+        'User-Agent': userAgent
+      } 
+    })
+
+    const single = await fetchSingle.json()
+
+    if (single['release-count'] === 0) {
+      res.status(404).json({error : 'No Recordings found'})
+    }
+    // console.log(single)
+   
+    const media = single.releases.map(r => r.media)
+    const recording = media.map(m => m[0].tracks[0].recording)
+
+    recording.sort((a, b) => (
+      a.disambiguation.length - b.disambiguation.length
+    ))
+
+
+    successApiCall(req.method, req.originalUrl)
+    return res.json(recording[0].id)
+
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+}
+
 module.exports = {
   artists,
   recordings,
   releases,
   getArtist,
   discography,
-  getAlbum
+  getAlbum,
+  getSong,
+  findSingleId
 }

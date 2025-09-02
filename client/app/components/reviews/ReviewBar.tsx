@@ -7,7 +7,7 @@ export default function ReviewBar ({
   item, 
   type
 } : {
-  item: Artist | Album | null,
+  item: Artist | Album | Song | null,
   type: 'artist' | 'release' | 'song'
 }) {
 

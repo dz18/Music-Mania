@@ -69,7 +69,7 @@ export interface ArtistCredit {
 export interface Recording {
   id: string
   title: string
-  length?: number
+  length: number
   disambiguation?: string
   video: boolean
   "artist-credit": ArtistCredit[]
