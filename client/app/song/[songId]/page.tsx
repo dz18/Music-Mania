@@ -150,7 +150,7 @@ export default function Song ({
           </div>
 
           {status !== 'unauthenticated' &&
-            <ReviewBar item={song} type="song"/>
+            <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews}/>
           }
           
           {loading &&

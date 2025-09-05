@@ -62,7 +62,7 @@ export type Review = {
   type: 'ARTIST' | 'RECORDING' | 'RELEASE',
   itemId: string
   rating: number,
-  comment: string
+  review: string
   createAt: Date
   updatedAt: Date
   status: 'DRAFT' | 'PUBLISHED',

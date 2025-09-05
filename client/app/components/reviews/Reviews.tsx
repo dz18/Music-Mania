@@ -37,11 +37,11 @@ export default function Reviews ({
                   
                 </div>
               </div>
-              {review.comment &&
+              {review.review &&
                 <>
                   <div className="border-t-1 border-gray-500 mb-1"/>
                   <p className="text-sm">
-                    {review.comment}
+                    {review.review}
                   </p>
                 </>
               }

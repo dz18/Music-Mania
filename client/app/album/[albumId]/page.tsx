@@ -68,7 +68,7 @@ export default function AlbumPage ({
           </div>
 
           {session && 
-            <ReviewBar item={album} type="release"/>
+            <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews}/>
           }
 
           <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1 mb-2">
