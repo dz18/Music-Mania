@@ -44,7 +44,7 @@ export default function DiscographyTable ({
         setLoadingMap(prev => ({ ...prev, [rg.id]: false }))
       }
     } else {
-      router.push(`/${active}/${rg.id}`)
+      router.push(`/album/${rg.id}`)
     }
   }
 

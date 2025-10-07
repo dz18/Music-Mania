@@ -4,13 +4,15 @@ import axios from "axios"
 import { Search } from "lucide-react"
 import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
+import IndeterminateLoadingBar from "../IndeterminateLoadingBar"
 
 export default function SearchBar () {
 
   const [query, setQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(Boolean)
+  const [loading, setLoading] = useState(false)
 
-  const [suggestions, setSuggestions] = useState<ArtistQuery[] | RecordingQuery[] | ReleaseQuery[]>([])
+  const [suggestions, setSuggestions] = useState<ArtistQuery[] | UserQuery[] | ReleaseQuery[] | null>(null)
   const [selectedType, setSelectedType] = useState('artists')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -19,16 +21,29 @@ export default function SearchBar () {
       const fetchSuggestions = async () => {
         if (query.trim() && query) {
           try {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedType}`, {
-              params: {q : query}
-            })
+            setLoading(true)
+            let res
+            if (selectedType === 'artists' || selectedType === 'releases') {
+              res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedType}`, {
+                params: { q: query }
+              })
+            } else if (selectedType === 'users') {
+              res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/query`, {
+                params: { q: query }
+              })
+            } else {
+              throw new Error('Unknown Type')
+            }
 
             const data = res.data
+            console.log(data)
             setSuggestions(data || [])
             setShowDropdown(true)
           } catch (error) {
             console.error('Error fetching suggestions:', error)
             setSuggestions([])
+          } finally {
+            setLoading(false)
           }
         } 
       }
@@ -52,9 +67,6 @@ export default function SearchBar () {
     }
   }, [])
 
-  useEffect(() => {
-    setSuggestions([])
-  }, [selectedType])
 
   const submit = (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -91,6 +103,8 @@ export default function SearchBar () {
         type={selectedType} 
         setType={setSelectedType}
         suggestions={suggestions}
+        setSuggestions={setSuggestions}
+        loading={loading}
       />
 
     </div>

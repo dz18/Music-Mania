@@ -171,9 +171,44 @@ const favorite = async (req, res) => {
   
 }
 
+const queryUsers = async (req, res) => {
+  const { q } = req.query
+
+  if (q.length === 0) {
+    errorApiCall(req.method, req.originalUrl, 'Query term length 0')
+    return res.status(400).json({error: 'Query term length 0'})
+  }
+
+  try {
+
+    const query = await prisma.user.findMany({
+      where: {
+        username: {
+          contains: q,
+          mode: 'insensitive'
+        }
+      },
+      select: {
+        username: true,
+        id: true,
+        createdAt: true
+      },
+      take: 25
+    })
+
+    console.log(query.map(q => q))
+    successApiCall(req.method, req.originalUrl)
+    res.json(query)
+
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+}
+
 module.exports = {
   getUsers,
   findUserById,
   getFavorites,
-  favorite
+  favorite,
+  queryUsers
 };

@@ -17,7 +17,8 @@
     "artistEPs": "node ./tests/musicbrainz/EPs.js",
     "artist": "node ./tests/musicbrainz/artist.js",
     "coverArt" : "node ./tests/musicbrainz/coverArt.js",
-    "song" : "node ./tests/musicbrainz/song.js"
+    "song" : "node ./tests/musicbrainz/song.js",
+    "searchReleases": "node ./tests/musicbrainz/SearchSong.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

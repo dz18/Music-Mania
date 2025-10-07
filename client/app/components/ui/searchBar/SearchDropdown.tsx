@@ -1,29 +1,38 @@
 import { Dispatch, JSX, SetStateAction, useEffect } from "react"
 import ArtistSuggestions from "./ArtistSuggestions"
-import RecordingSuggestions from "./RecordingSuggestions"
-import ReleaseSuggestions from "./ReleaseSuggestions"  
+import UserSuggestions from "./UserSuggestions"
+import ReleaseSuggestions from "./ReleaseSuggestions"
+import IndeterminateLoadingBar from "../IndeterminateLoadingBar"
 
 
 export default function SearchDropdown ({
   open,
   type,
   setType,
-  suggestions
+  suggestions,
+  setSuggestions,
+  loading,
 } : {
   open : boolean
   type : string
   setType : Dispatch<SetStateAction<string>>
   suggestions: any
+  setSuggestions: Dispatch<SetStateAction<ArtistQuery[] | UserQuery[] | ReleaseQuery[] | null>>
+  loading: boolean
 }) {
 
-  const searchTypes = ['artists', 'recordings', 'releases'] as const
+  const searchTypes = ['artists', 'releases', 'users'] as const
   type SearchTypes = (typeof searchTypes)[number]
 
   const suggestionComponents: Record<SearchTypes, JSX.Element> = {
     artists: <ArtistSuggestions suggestions={suggestions}/>,
-    recordings: <RecordingSuggestions suggestions={suggestions}/>,
     releases: <ReleaseSuggestions suggestions={suggestions}/>,
+    users: <UserSuggestions suggestions={suggestions}/>
   }
+
+  useEffect(() => {
+    setSuggestions(null)
+  }, [type])
 
   if (!open) return
 
@@ -46,7 +55,7 @@ export default function SearchDropdown ({
             {t}
           </li>
         ))}
-        {suggestions.length !== 0 &&
+        {suggestions &&
           <>
             <li className="flex grow"/>
             <li className="text-gray-500 text-sm">{suggestions.length} results</li>
@@ -54,7 +63,11 @@ export default function SearchDropdown ({
         }
       </ul>
 
-      {suggestions.length !== 0 && (
+      {loading &&
+        <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+      }
+
+      {suggestions && (
         <>
           {suggestionComponents[type as SearchTypes]}
         </>

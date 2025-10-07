@@ -5,25 +5,19 @@ type ArtistQuery = {
   disambiguation: string
 }
 
-type RecordingQuery = {
+type UserQuery = {
   id: string,
-  title: string,
-  length: string | null
-  artistCredit : {
-    joinphrase?: string
-    name: string,
-  }[] | null
-  firstReleaseDate: string | null
-  disambiguation: string | null
+  username: string,
+  createdAt: Date
 }
 
 type ReleaseQuery = {
   id: string,
   title: string,
-  artistCredit : {
+  'artist-credit' : {
     joinphrase?: string
     name: string,
   }[] | null
   type: string
-  date: string,
+  'first-release-date': string,
 }

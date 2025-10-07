@@ -46,52 +46,10 @@ const artists = async (req, res) => {
   }
 }
 
-const recordings = async (req, res) => {
-  const { q } = req.query
-
-  logApiCall(req.method, req.originalUrl)
-
-  if (!q) {
-    errorApiCall(req.method, req.originalUrl, 'Missing query parameters')
-    return res.status(400).json({error : 'Missing query parameters'})
-  }
-
-  try {
-    const query = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${q}&fmt=json`, {
-      headers: {
-        'User-Agent' : userAgent
-      }
-    })
-    const data = await query.json()
-
-    // Sort & Filter
-    const recordings = []
-    for (const recording of data.recordings) {
-      const filtered = {
-        id : recording.id,
-        title : recording.title,
-        length : recording['length'] || null,
-        artistCredit: recording["artist-credit"],
-        firstReleaseDate: recording["first-release-date"] || null,
-        disambiguation : recording.disambiguation || null
-      }
-      recordings.push(filtered)
-    }
-    console.log('Total Results:', recordings.length)
-    successApiCall(req.method, req.originalUrl)
-    return res.json(recordings)
-
-  } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
-    return res.status(400).json({error : 'Error fetching suggested artists'})
-  }
-
-}
-
 const releases = async (req, res) => {
   const { q } = req.query
 
-  TestApiCall(req.method, req.originalUrl)
+  logApiCall(req.method, req.originalUrl)
 
   if (!q) {
     errorApiCall(req.method, req.originalUrl, 'Missing query parameter')
@@ -99,11 +57,13 @@ const releases = async (req, res) => {
   }
 
   try {
-    const query = await fetch(`https://musicbrainz.org/ws/2/release/?query=${q}&fmt=json`, {
+
+    const query = await fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND (primarytype:album OR primarytype:ep)&inc=artist-credits&fmt=json`, {
       headers: {
         'User-Agent' : userAgent
       }
     })
+
 
     if (!query.ok) {
       errorApiCall(req.method, req.originalUrl, 'Query Failed')
@@ -112,29 +72,10 @@ const releases = async (req, res) => {
 
     const data = await query.json()
 
-    console.log('Total Results:', data.releases.length)
 
-    // Sort & Filter
-    const releases = []
-    const exists = new Set()
-    for (const release of data.releases) {
-      const releaseGroup = release['release-group']
-      if (exists.has(releaseGroup.id) || releaseGroup['primary-type'] === 'Single') continue
-
-      console.log(release)
-
-      exists.add(releaseGroup.id)
-      const filtered = {
-        id : release.id,
-        title: release.title,
-        artistCredit: release['artist-credit'],
-        type : releaseGroup['primary-type'],
-        date : release.date
-      }
-      releases.push(filtered)
-    }
+    console.log(data['release-groups'][0] ?? [])
     successApiCall(req.method, req.originalUrl)
-    return res.json(releases)
+    return res.json(data['release-groups'])
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
@@ -618,7 +559,6 @@ const findSingleId = async (req, res) => {
 
 module.exports = {
   artists,
-  recordings,
   releases,
   getArtist,
   discography,
