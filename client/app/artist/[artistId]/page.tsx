@@ -13,6 +13,7 @@ import axios from "axios"
 import { Loader } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
+import ReviewModal from "@/app/components/reviews/ReviewModal"
 
 export default function Artist ({
   params
@@ -26,6 +27,7 @@ export default function Artist ({
   const [artist, setArtist] = useState<Artist | null>(null)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [openReview, setOpenReview] = useState(false)
 
   useEffect(() => {
     
@@ -79,7 +81,7 @@ export default function Artist ({
             {/* Make a Review */}
             {session && !isLoading &&
               <>
-                <ReviewBar item={artist} type="artist"/>
+                <ReviewBar item={artist} type="artist" reviews={reviews?.reviews} setReviews={setReviews}/>
               </>
             }
 

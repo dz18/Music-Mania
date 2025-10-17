@@ -77,14 +77,17 @@ model Review {
   userId        String
   type          Type
   itemId        String
+  title         String?
   rating        Decimal
-  comment       String
+  review        String
   createAt      DateTime @default(now())
   updatedAt     DateTime @updatedAt
   status        Status @default(DRAFT)
   tags          Tag[]
 
   user          User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, itemId])
 }
 
 model Tag {

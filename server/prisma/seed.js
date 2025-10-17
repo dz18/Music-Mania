@@ -47,14 +47,14 @@ async function main() {
         if (artistSet.has(randomArtist)) continue
 
         const rating = ratingOptions[Math.floor(Math.random() * ratingOptions.length)]
-        const comment = faker.lorem.sentences({min: 0, max: 10})
+        const review = faker.lorem.sentences({min: 0, max: 10})
 
         reviewPromises.push(
           prisma.review.create({
             data: {
               itemId: randomArtist,
               userId: user.id,
-              comment: comment,
+              review: review,
               rating: rating,
               type: 'ARTIST',
               status: 'PUBLISHED'
@@ -82,14 +82,14 @@ async function main() {
         if (albumSet.has(randomAlbum)) continue
 
         const rating = ratingOptions[Math.floor(Math.random() * ratingOptions.length)]
-        const comment = faker.lorem.sentences({min: 0, max: 10})
+        const review = faker.lorem.sentences({min: 0, max: 10})
 
         reviewPromises.push(
           prisma.review.create({
             data: {
               itemId: randomAlbum,
               userId: user.id,
-              comment: comment,
+              review: review,
               rating: rating,
               type: 'RELEASE',
               status: 'PUBLISHED'
