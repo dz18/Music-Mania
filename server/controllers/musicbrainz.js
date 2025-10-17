@@ -1,5 +1,5 @@
 const prisma = require('../prisma/client')
-const { logApiCall, errorApiCall, successApiCall, TestApiCall } = require('../utils/logging')
+const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 
 const userAgent = 'MusicMania/0.1.0 (dylan18zuniga@gmail.com)'
 
@@ -401,7 +401,7 @@ const discography = async (req, res) => {
 
 const getAlbum = async (req, res) => {
   const { albumId } = req.query
-
+  
   logApiCall(req.method, req.originalUrl)
 
   try {

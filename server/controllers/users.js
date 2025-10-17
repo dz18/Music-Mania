@@ -171,7 +171,8 @@ const favorite = async (req, res) => {
   
 }
 
-const queryUsers = async (req, res) => {
+// Get a batch of users
+const query = async (req, res) => {
   const { q } = req.query
 
   if (q.length === 0) {
@@ -210,5 +211,5 @@ module.exports = {
   findUserById,
   getFavorites,
   favorite,
-  queryUsers
+  query
 };

@@ -20,4 +20,5 @@ type ReleaseQuery = {
   }[] | null
   type: string
   'first-release-date': string,
+  'primary-type': string
 }
