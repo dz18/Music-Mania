@@ -6,7 +6,7 @@ import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
 import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar";
 import Nav from "@/app/components/ui/NavigationBar";
-import { Album, ReviewResponse } from "@/app/lib/types/api";
+import { Release, ReviewResponse } from "@/app/lib/types/api";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -17,13 +17,13 @@ import TextContent from "@/app/components/album/TextContent";
 export default function AlbumPage ({
   params
 } : {
-  params: Promise<{albumId : string}>
+  params: Promise<{releaseId : string}>
 }) {
 
-  const { albumId } = use(params)
+  const { releaseId } = use(params)
   const { data: session } = useSession()
   const [coverArt, setCoverArt] = useState('')
-  const [album, setAlbum] = useState<Album | null>(null)
+  const [album, setAlbum] = useState<Release | null>(null)
   const [loading, setLoading] = useState(false)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [active, setActive] = useState('reviews')
@@ -33,11 +33,11 @@ export default function AlbumPage ({
       try {
         setLoading(true)
         const [album, reviews] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getAlbum`, {
-            params: {albumId: albumId}
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getRelease`, {
+            params: {releaseId: releaseId}
           }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,{
-            params: {type: 'RELEASE', id: albumId}
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/release`,{
+            params: {id: releaseId}
           })
         ])
         setCoverArt(album.data.coverArtUrl)

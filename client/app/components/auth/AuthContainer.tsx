@@ -28,7 +28,7 @@ export default function AuthContainer({
 
         <Link 
           className="hover:bg-white/10 active:bg-white/30 p-1 rounded-full inline-flex items-center cursor-pointer"
-          href='/home'
+          href='/'
         >
           <ChevronLeft size={18}/>
         </Link>

@@ -1,14 +1,14 @@
-import { Album, ReviewResponse } from "@/app/lib/types/api";
-import { Artist, Review} from "@/app/lib/types/artist";
+import { Release, ReviewResponse } from "@/app/lib/types/api";
+import { Artist } from "@/app/lib/types/artist";
 import { NotebookText, Star } from "lucide-react";
 import Favorite from "./Favorite";
-import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
+import { Song } from "@/app/lib/types/song";
 
 const ReviewModal = dynamic(() => import("./ReviewModal"), {
   ssr: false, 
-  loading: () => null, // you can put a spinner here if you want
+  loading: () => null,
 })
 
 export default function ReviewBar ({
@@ -17,9 +17,9 @@ export default function ReviewBar ({
   reviews,
   setReviews
 } : {
-  item: Artist | Album | Song | null,
+  item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song',
-  reviews?: Review[]
+  reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
 }) {
 

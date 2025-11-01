@@ -1,44 +1,73 @@
+const e = require('express')
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 
-const reviews = async (req, res) => {
-  const {type, id} = req.query
-
+const artistReviews = async(req, res) => {
+  const { id } = req.query
+  
   logApiCall(req.method, req.originalUrl)
 
-  if (!type || !id) {
-    errorApiCall(req.method, req.originalUrl, 'Missing parameters')
-    res.status(400).json({error : 'Missing parameters'})
+  try {
+    if (!id) {
+      errorApiCall(req.method, req.originalUrl, 'Missing parameters')
+      res.status(400).json({error : 'Missing parameters'})
+    }
+
+    const [reviews, rating, artistStats] = await Promise.all([
+      prisma.userArtistReviews.findMany({
+        where: { artistId: id, status: 'PUBLISHED' },
+        include: { user: { omit: { password: true } } },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.userArtistReviews.aggregate({
+        where: { artistId: id, status: 'PUBLISHED' },
+        _avg: { rating: true }
+      }),
+      prisma.userArtistReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: id }
+      })
+    ])
+
+    const average = rating._avg.rating
+    const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+
+    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
+    for (const group of [...artistStats]) {
+      starCount[group.rating] += group._count.rating
+    }
+    const starStats = Object.entries(starCount)
+      .map(([rating, count]) => ({ rating: +rating, count }))
+      .sort((a, b) => b.rating - a.rating)
+
+    successApiCall(req.method, req.originalUrl)
+    res.json({reviews, avgRating: avgRounded ?? 0, starStats})
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
   }
+}
+
+const releaseReviews = async(req, res) => {
+  const { id } = req.query
+  
+  logApiCall(req.method, req.originalUrl)
 
   try {
+    if (!id) {
+      errorApiCall(req.method, req.originalUrl, 'Missing parameters')
+      res.status(400).json({error : 'Missing parameters'})
+    }
+
     const [reviews, rating] = await Promise.all([
-      prisma.review.findMany({
-        where: {
-          itemId: id,
-          status: 'PUBLISHED',
-          type: type
-        },
-        include: {
-          user: {
-            omit: {
-              password: true
-            },
-          },
-        },
-        orderBy: {
-          rating: 'desc'
-        }
+      prisma.userReleaseReviews.findMany({
+        where: { releaseId: id, status: 'PUBLISHED' },
+        include: { user: { omit: { password: true } } },
+        orderBy: { createdAt: 'asc' }
       }),
-      prisma.review.aggregate({
-        where: {
-          itemId: id,
-          status: 'PUBLISHED',
-          type: type
-        },
-        _avg: {
-          rating: true
-        }
+      prisma.userReleaseReviews.aggregate({
+        where: { releaseId: id, status: 'PUBLISHED' },
+        _avg: { rating: true }
       })
     ])
 
@@ -49,25 +78,66 @@ const reviews = async (req, res) => {
     res.json({reviews, avgRating: avgRounded ?? 0})
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
-    res.status(400).json({error: 'Error fetching reviews'})
   }
+  
+}
+
+const songReviews = async(req, res) => {
+  const { id } = req.query
+  
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+    if (!id) {
+      errorApiCall(req.method, req.originalUrl, 'Missing parameters')
+      res.status(400).json({error : 'Missing parameters'})
+    }
+
+    const [reviews, rating] = await Promise.all([
+      prisma.userSongReviews.findMany({
+        where: { songId: id, status: 'PUBLISHED' },
+        include: { user: { omit: { password: true } } },
+        orderBy: { createdAt: 'asc' }
+      }),
+      prisma.userSongReviews.aggregate({
+        where: { songId: id, status: 'PUBLISHED' },
+        _avg: { rating: true }
+      })
+    ])
+
+    const average = rating._avg.rating
+    const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+
+    successApiCall(req.method, req.originalUrl)
+    res.json({reviews, avgRating: avgRounded ?? 0})
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+
 }
 
 const user = async (req, res) => {
-  const {userId, itemId} = req.query
+  const {userId, itemId, type} = req.query
 
   logApiCall(req.method, req.originalUrl)
 
   try {
-    const review = await prisma.review.findUnique({
-      where: {
-        userId_itemId: {
-          userId,
-          itemId
-        }
-      }
-    })
+    let review
+    if (type === 'artist') {
+      review = await prisma.userArtistReviews.findUnique({
+        where: { userId_artistId: { userId, artistId: itemId}}
+      })
+    } else if (type === 'release') {
+      review = await prisma.userReleaseReviews.findUnique({
+        where: { userId_releaseId: { userId, releaseId: itemId}}
+      })
+    } else if (type === 'song') {
+      review = await prisma.userSongReviews.findUnique({
+        where: { userId_songId: { userId, songId: itemId}}
+      })
+    }
 
+    console.log(review)
     successApiCall(req.method, req.originalUrl)
     return res.json(review)
   } catch (error) {
@@ -76,7 +146,12 @@ const user = async (req, res) => {
 }
 
 const publishOrDraft = async (req, res) => {
-  const {userId, itemId, title, rating, review, type, status} = req.body
+  const {
+    userId, itemId, title, 
+    rating, review, type, 
+    status, itemName, itemTitle, 
+    artistCredit 
+  } = req.body
   
   logApiCall(req.method, req.originalUrl)
 
@@ -87,47 +162,88 @@ const publishOrDraft = async (req, res) => {
 
   try {
 
-    const published = await prisma.review.upsert({
-      where : {     
-        userId_itemId: {
-          userId,
-          itemId
-        }
-      },
-      update: {
-        title: title,
-        rating: rating,
-        review: review,
-        status: status,
-        updatedAt: new Date()
-      },
-      create: {
-        userId: userId,
-        itemId: itemId,
-        title: title,
-        rating: rating,
-        review: review,
-        type: type,
-        status: status,
-      },
-      include: {
-        user: {
-          omit: {
-            password: true
-          }
-        },
-      },
-    })
+    const updateData = {
+      title: title,
+      rating: rating,
+      review: review,
+      status: status,
+      updatedAt: new Date()
+    }
+    const createData = {
+      userId: userId,
+      title: title,
+      rating: rating,
+      review: review,
+      status: status,
+    }
 
-    const action = published.createAt.getTime() === published.updatedAt.getTime() ? 'CREATED' : 'UPDATED'
+    let published
+    let newAvg
+    if (type === 'ARTIST') {
+      await prisma.artist.upsert({
+        where: { id: itemId },
+        update: {},
+        create: { id: itemId, name: itemName}
+      });
 
-    const newAvg = await prisma.review.aggregate({
-      where: { itemId, status: 'PUBLISHED' },
-      _avg: { rating: true }
-    })
+      [published, newAvg] = await Promise.all([
+        prisma.userArtistReviews.upsert({
+          where : { userId_artistId: { userId, artistId: itemId } },
+          update: updateData,
+          create: {...createData, artistId: itemId},
+          include: { user: { omit: { password: true } }, },
+        }),
+        prisma.userArtistReviews.aggregate({
+          where: { artistId: itemId, status: 'PUBLISHED' },
+          _avg: { rating: true }
+        })
+      ])
+    } else if (type === 'RELEASE') {
+      await prisma.release.upsert({
+        where: { id: itemId },
+        update: {},
+        create: { id: itemId, title: itemTitle, artistCredit}
+      });
+
+      [published, newAvg] = await Promise.all([
+        prisma.userReleaseReviews.upsert({
+          where : { userId_releaseId: { userId, releaseId: itemId } },
+          update: updateData,
+          create: {...createData, releaseId: itemId},
+          include: { user: { omit: { password: true } }, },
+        }),
+        prisma.userReleaseReviews.aggregate({
+          where: { releaseId: itemId, status: 'PUBLISHED' },
+          _avg: { rating: true }
+        })
+      ])
+    } else if (type === 'SONG') {
+      await prisma.song.upsert({
+        where: { id: itemId },
+        update: {},
+        create: { id: itemId, title: itemTitle, artistCredit}
+      });
+      [published, newAvg] = await Promise.all([
+        prisma.userSongReviews.upsert({
+          where : { userId_songId: { userId, songId: itemId } },
+          update: updateData,
+          create: {...createData, songId: itemId},
+          include: { user: { omit: { password: true } }, },
+        }),
+        prisma.userSongReviews.aggregate({
+          where: { songId: itemId, status: 'PUBLISHED' },
+          _avg: { rating: true }
+        })
+      ])
+    }
+
+    const action = published.createdAt.getTime() === published.updatedAt.getTime() ? 'CREATED' : 'UPDATED'
+    
+    const average = newAvg._avg.rating
+    const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
 
     successApiCall(req.method, req.originalUrl)
-    return res.json({action: action, review: published, avg: newAvg._avg.rating.toFixed(2)})
+    return res.json({action: action, review: published, avg: avgRounded ?? 0 })
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
@@ -135,20 +251,39 @@ const publishOrDraft = async (req, res) => {
 }
 
 const deleteReview = async (req, res) => {
-  const { userId, itemId, id } = req.query
+  const { userId, itemId, type } = req.query
 
   logApiCall(req.method, req.originalUrl)
 
   try {
 
-    const deleted = await prisma.review.delete({
-      where: {userId, id, itemId},
-    })
-
-    const newAvg = await prisma.review.aggregate({
-      where: {itemId, status: 'PUBLISHED'},
-      _avg: {rating: true}
-    })
+    let deleted
+    let newAvg
+    if (type === 'artist') {
+      deleted = await prisma.userArtistReviews.delete({
+        where: { userId_artistId: { userId, artistId: itemId } }
+      })
+      newAvg = await prisma.userArtistReviews.aggregate({
+        where: { artistId: itemId, status: 'PUBLISHED'},
+        _avg: { rating: true}
+      })
+    } else if (type === 'release') {
+      deleted = await prisma.userReleaseReviews.delete({
+        where: { userId_releaseId: { userId, releaseId: itemId } }
+      })
+      newAvg = await prisma.userReleaseReviews.aggregate({
+        where: { releaseId: itemId, status: 'PUBLISHED'},
+        _avg: { rating: true}
+      })
+    } else if (type === 'song') {
+      deleted = await prisma.userSongReviews.delete({
+        where: { userId_songId: { userId, songId: itemId } }
+      })
+      newAvg = await prisma.userSongReviews.aggregate({
+        where: { songId: itemId, status: 'PUBLISHED'},
+        _avg: { rating: true}
+      })
+    }
 
     successApiCall(req.method, req.originalUrl)
     return res.json({action: 'DELETED', review: deleted, avg: newAvg._avg.rating})
@@ -159,8 +294,10 @@ const deleteReview = async (req, res) => {
 }
 
 module.exports = {
-  reviews,
   user,
   publishOrDraft,
-  deleteReview
+  deleteReview,
+  artistReviews,
+  releaseReviews,
+  songReviews
 }

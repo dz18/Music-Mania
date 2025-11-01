@@ -6,7 +6,7 @@ router.get('/artists', musicBrainzController.artists)
 router.get('/releases', musicBrainzController.releases)
 router.get('/getArtist', musicBrainzController.getArtist)
 router.get('/discography', musicBrainzController.discography)
-router.get('/getAlbum', musicBrainzController.getAlbum)
+router.get('/getRelease', musicBrainzController.getRelease)
 router.get('/getSong', musicBrainzController.getSong)
 router.get('/findSingleId', musicBrainzController.findSingleId)
 

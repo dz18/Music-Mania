@@ -1,7 +1,6 @@
-import { Review } from "./artist"
 
 export type ReviewResponse = {
-  reviews: Review[]
+  reviews: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
   avgRating: number
 }
 
@@ -21,7 +20,7 @@ export type ReleaseGroup = {
   totalReviews: number
 }
 
-export interface Album {
+export interface Release {
   releaseId: string
   id: string
   title: string
@@ -41,9 +40,6 @@ export interface Album {
   }[]
 }
 
-export interface Release {
-  
-}
 
 export interface Track {
   length: number,

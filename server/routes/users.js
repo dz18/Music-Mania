@@ -7,6 +7,7 @@ router.get('/total', userController.getUsers)
 router.get('/find', userController.findUserById)
 router.get('/favorites', userController.getFavorites)
 router.get('/query', userController.query)
+router.get('/profile', userController.profile)
 
 router.patch('/favorite', userController.favorite)
 

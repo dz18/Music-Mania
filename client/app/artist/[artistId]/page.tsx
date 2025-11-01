@@ -10,10 +10,8 @@ import Nav from "@/app/components/ui/NavigationBar"
 import { ReviewResponse } from "@/app/lib/types/api"
 import type { Artist } from "@/app/lib/types/artist"
 import axios from "axios"
-import { Loader } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
-import ReviewModal from "@/app/components/reviews/ReviewModal"
 
 export default function Artist ({
   params
@@ -27,7 +25,6 @@ export default function Artist ({
   const [artist, setArtist] = useState<Artist | null>(null)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [openReview, setOpenReview] = useState(false)
 
   useEffect(() => {
     
@@ -38,8 +35,8 @@ export default function Artist ({
           await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
             params : {id : artistId}
           }),
-          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`, {
-            params: {type: 'ARTIST', id: artistId}
+          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
+            params: {id: artistId}
           })
         ])
 

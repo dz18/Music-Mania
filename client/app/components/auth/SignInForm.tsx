@@ -47,7 +47,7 @@ export default function SignInForm () {
       }
       
       if (result?.ok) {
-        router.push('/home')
+        router.push('/')
       }
 
     } catch (error) {

@@ -22,7 +22,7 @@ export default function ReleaseSuggestions ({
             <div 
               key={item.id} 
               className="hover:bg-white/20 transition-colors duration-200 cursor-pointer"
-              onClick={() => router.push(`/album/${item.id}`)}
+              onClick={() => router.push(`/release/${item.id}`)}
             >
               <div className="border-t-1 border-gray-500 mx-2 py-2 flex justify-between">
                 <div className="">

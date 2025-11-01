@@ -1,13 +1,3 @@
-import { User } from "./users"
-
-export type Release = {
-  type: string,
-  id: string,
-  releaseDate: string,
-  disambiguation: string,
-  title: string,
-}
-
 export type Artist = {
   id: string
   gender: string,
@@ -54,17 +44,4 @@ export type Artist = {
     url: string,
     type: string
   }[]
-}
-
-export type Review = {
-  id: string,
-  userId: string,
-  type: 'ARTIST' | 'RECORDING' | 'RELEASE',
-  itemId: string
-  rating: number,
-  review: string
-  createAt: Date
-  updatedAt: Date
-  status: 'DRAFT' | 'PUBLISHED',
-  user: User
 }

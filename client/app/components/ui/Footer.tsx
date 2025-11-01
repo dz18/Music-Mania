@@ -20,8 +20,7 @@ export default function Footer () {
         <div className="grid grid-cols-4 gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-bold">Navigation</h1>
-            <StatusLink label='Welcome' status="wip" path="/"/>
-            <StatusLink label='Home' status="wip" path="/home"/>
+            <StatusLink label='Home' status="wip" path="/"/>
             <StatusLink label='New Releases' status="na"/>
             <StatusLink label='Trending' status="na"/>
             <StatusLink label='Statistics' status="na"/>

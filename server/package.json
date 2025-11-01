@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@faker-js/faker": "^10.1.0",
     "@prisma/client": "^6.13.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -16,8 +17,8 @@
     "artistAlbums": "node ./tests/musicbrainz/musicbrainz-albums.js",
     "artistEPs": "node ./tests/musicbrainz/EPs.js",
     "artist": "node ./tests/musicbrainz/artist.js",
-    "coverArt" : "node ./tests/musicbrainz/coverArt.js",
-    "song" : "node ./tests/musicbrainz/song.js",
+    "coverArt": "node ./tests/musicbrainz/coverArt.js",
+    "song": "node ./tests/musicbrainz/song.js",
     "searchReleases": "node ./tests/musicbrainz/SearchSong.js"
   },
   "prisma": {
