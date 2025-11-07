@@ -10,10 +10,9 @@ import Nav from "@/app/components/ui/NavigationBar"
 import { ReviewResponse } from "@/app/lib/types/api"
 import type { Artist } from "@/app/lib/types/artist"
 import axios from "axios"
-import { Loader } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
-import ReviewModal from "@/app/components/reviews/ReviewModal"
+import Statistics from "@/app/components/profile/statistics"
 
 export default function Artist ({
   params
@@ -26,8 +25,8 @@ export default function Artist ({
 
   const [artist, setArtist] = useState<Artist | null>(null)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [avgRating, setAvgRating] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [openReview, setOpenReview] = useState(false)
 
   useEffect(() => {
     
@@ -38,8 +37,8 @@ export default function Artist ({
           await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
             params : {id : artistId}
           }),
-          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`, {
-            params: {type: 'ARTIST', id: artistId}
+          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
+            params: {id: artistId}
           })
         ])
 
@@ -74,14 +73,28 @@ export default function Artist ({
 
             <div className="flex gap-10">
               {/* About */}
-              <About artist={artist} avgRating={reviews?.avgRating ?? 0}/>
+              <About artist={artist} reviews={reviews}/>
 
             </div>
+
+            {reviews?.starStats &&
+              <div className={`
+                border-t pt-3 mt-2 border-gray-500
+                ${!session && 'pb-2 border-b mb-2'}
+              `}>
+                <Statistics stats={reviews.starStats}/>
+              </div>
+            }
 
             {/* Make a Review */}
             {session && !isLoading &&
               <>
-                <ReviewBar item={artist} type="artist" reviews={reviews?.reviews} setReviews={setReviews}/>
+                <ReviewBar 
+                  item={artist} 
+                  type="artist" 
+                  reviews={reviews?.reviews} 
+                  setReviews={setReviews} 
+                />
               </>
             }
 

@@ -1,15 +1,21 @@
+import { Release } from "./api"
 
-interface Song {
-  "artist-credit" : ArtistCredit[]
+export interface Song {
+  artistCredit : ArtistCredit[]
   disambiguation: string
-  "first-release-date": string
+  firstReleaseDate: string
   genres: Genre[]
   id: string
   length: number
   relations: Relation[]
   title: string
   video: boolean
-  releases: Release[]
+  releases: Release
+  partOf: {
+    type: string,
+    id: string,
+    name: string
+  }[]
 }
 
 interface ArtistCredit {
@@ -50,20 +56,6 @@ interface Genre {
   disambiguation: string
   id: string
   name: string
-}
-
-interface Release {
-  "artist-credit": ArtistCredit[]
-  barcode: string
-  country: string
-  date: string
-  disambiguation: string
-  genres: Genre[]
-  id: string
-  packaging: string
-  "packaging-id": string
-  quality: string
-  "release-group": ReleaseGroup
 }
 
 interface ReleaseGroup {

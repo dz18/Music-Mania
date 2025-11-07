@@ -1,19 +1,15 @@
-import Welcome from "./components/root/Welcome";
-import Container from "./components/ui/Container";
-import Footer from "./components/ui/Footer";
+'use client'
 
-export default function Home() {
+import Footer from "./components/ui/Footer";
+import Nav from "./components/ui/NavigationBar";
+import Welcome from "./components/root/Welcome";
+
+export default function Index () {
   return (
     <div>
-      <Container>
-
-        <section>
-          <Welcome/>
-        </section>
-
-      </Container>
-        
+      <Nav/>
+      <Welcome/>
       <Footer/>
     </div>
-  );
+  )
 }

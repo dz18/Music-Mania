@@ -24,79 +24,137 @@ model User {
   avatar        String?
   phoneNumber   String? @unique
   aboutMe       String?
+  age           Int?
 
   role          Role @default(USER)
+  
+  following     Follow[] @relation("Following")
+  followers     Follow[] @relation("Follower")
 
-  followers     Follow[] @relation("followers")
-  following     Follow[] @relation("following")
+  favArtists    UserFavArtist[]
+  favReleases   UserFavRelease[]
+  favSongs      UserFavSong[]
 
-  favArtists    String[]
-  favSongs      String[]
-  favReleases   String[]
+  artistReviews   UserArtistReviews[]
+  releaseReviews  UserReleaseReviews[]
+  songReviews     UserSongReviews[]
 
-  reviews       Review[]
-  playlists     Playlist[]
-  comments      Comment[]
 }
 
 model Follow {
-  id            String @id @unique  
-  follower      User @relation("following", fields: [followerId], references: [id])
+  id            String  @id @default(cuid())
   followerId    String
-  following     User @relation("followers", fields: [followingId], references: [id])
   followingId   String
+
+  follower      User @relation("Following", fields: [followerId], references: [id])
+  following     User @relation("Follower", fields: [followingId], references: [id])
+
   createdAt     DateTime @default(now())
+
+  @@unique([followerId, followingId])
 }
 
-model Playlist {
-  id            String @id @default(cuid())
-  userId        String
-  user          User @relation(fields: [userId], references: [id])
+model Artist {
+  id            String @id
+  name          String
+
+  favorited     UserFavArtist[]
+  reviews       UserArtistReviews[]
+}
+
+model Release {
+  id            String @id
   title         String
-  description   String?
-  recordIds     String[]
-  status        Status
+  artistCredit  Json
   coverArt      String?
-  comments      Comment[]
-  rating        Decimal
-  tags          Tag[]
+
+  favorited     UserFavRelease[]
+  reviews       UserReleaseReviews[]
 }
 
-model Comment {
-  id            String @id @default(cuid())
-  userId        String
-  playlistId    String
-  comment       String
+model Song {
+  id            String @id
+  title         String
+  artistCredit  Json
+  coverArt      String?
 
-  user          User @relation(fields: [userId], references: [id])
-  playlist      Playlist @relation(fields: [playlistId], references: [id])
+  favorited     UserFavSong[]
+  reviews       UserSongReviews[]
 }
 
-model Review {
-  id            String @id @default(cuid())
-  userId        String
-  type          Type
-  itemId        String
-  title         String?
-  rating        Decimal
-  review        String
-  createAt      DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  status        Status @default(DRAFT)
-  tags          Tag[]
+model UserFavArtist {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  artist Artist @relation(fields: [artistId], references: [id])
+  artistId String
+  since DateTime @default(now())
 
-  user          User @relation(fields: [userId], references: [id])
-
-  @@unique([userId, itemId])
+  @@id([userId, artistId])
 }
 
-model Tag {
-  id            String @id @default(cuid())
-  name          String @unique
-  createdAt     DateTime @default(now())
-  
-  playlists     Playlist[]
-  reviews       Review[]
+model UserFavRelease {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  release Release @relation(fields: [releaseId], references: [id])
+  releaseId String
+  since DateTime @default(now())
+
+  @@id([userId, releaseId])
+}
+
+model UserFavSong {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  song Song @relation(fields: [songId], references: [id])
+  songId String
+  since DateTime @default(now())
+
+  @@id([userId, songId])
+}
+
+model UserArtistReviews {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  artist Artist @relation(fields: [artistId], references: [id])
+  artistId String
+  rating Decimal
+  title String?
+  review String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status  Status
+
+  @@id([userId, artistId])
+}
+
+model UserReleaseReviews {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  release Release @relation(fields: [releaseId], references: [id])
+  releaseId String
+  rating Decimal
+  title String?
+  review String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status  Status
+
+  @@id([userId, releaseId])
+}
+
+model UserSongReviews {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  song Song @relation(fields: [songId], references: [id])
+  songId String
+  rating Decimal
+  title String?
+  review String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status  Status
+
+  @@id([userId, songId])
 }
 
 enum Role {

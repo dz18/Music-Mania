@@ -1,26 +1,28 @@
-import { Album, ReviewResponse } from "@/app/lib/types/api";
-import { Artist, Review} from "@/app/lib/types/artist";
+import { Release, ReviewResponse } from "@/app/lib/types/api";
+import { Artist } from "@/app/lib/types/artist";
 import { NotebookText, Star } from "lucide-react";
 import Favorite from "./Favorite";
-import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
+import { Song } from "@/app/lib/types/song";
 
 const ReviewModal = dynamic(() => import("./ReviewModal"), {
   ssr: false, 
-  loading: () => null, // you can put a spinner here if you want
+  loading: () => null,
 })
 
 export default function ReviewBar ({
   item, 
   type,
   reviews,
-  setReviews
+  setReviews,
+  coverArtUrl
 } : {
-  item: Artist | Album | Song | null,
+  item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song',
-  reviews?: Review[]
+  reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
+  coverArtUrl?: string
 }) {
 
   const [open, setOpen] = useState(false)
@@ -45,7 +47,7 @@ export default function ReviewBar ({
           <NotebookText size={18}/> Review
         </button>
         {item && (
-          <Favorite item={item} type={type}/>
+          <Favorite item={item} type={type} coverArtUrl={coverArtUrl}/>
         )}
       </div>
       {open &&
@@ -56,6 +58,7 @@ export default function ReviewBar ({
           setOpen={setOpen}
           reviews={reviews}
           setReviews={setReviews}
+          coverArtUrl={coverArtUrl}
         />
       }
     </div>

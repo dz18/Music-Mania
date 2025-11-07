@@ -1,5 +1,6 @@
 'use client'
 
+import Statistics from "@/app/components/profile/statistics";
 import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Reviews from "@/app/components/reviews/Reviews";
 import Container from "@/app/components/ui/Container";
@@ -7,9 +8,11 @@ import Footer from "@/app/components/ui/Footer";
 import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar";
 import Nav from "@/app/components/ui/NavigationBar";
 import { ReviewResponse } from "@/app/lib/types/api";
+import type { Song } from "@/app/lib/types/song";
 import axios from "axios";
 import { ImageOff, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react";
 
 export default function Song ({
@@ -19,7 +22,8 @@ export default function Song ({
 }) {
 
   const { songId } = use(params)
-  const { data: session, status} = useSession()
+  const { data: session } = useSession()
+  const router = useRouter()
 
   const [song, setSong] = useState<Song | null>(null)
   const [loading, setLoading] = useState(false)
@@ -36,12 +40,13 @@ export default function Song ({
           axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getSong`, {
             params: { songId }
           }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,{
-            params: {type: 'SONG', id: songId}
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/song`,{
+            params: { id: songId }
           })
         ])
 
         if (songResult.status === 'fulfilled') {
+          console.log(songResult.value.data.song)
           setSong(songResult.value.data.song)
           setCoverArt(songResult.value.data.coverArtUrl)
         } else {
@@ -64,28 +69,6 @@ export default function Song ({
     fetchData()
   }, [])
 
-  const partOf = useMemo(() => {
-    if (!song) return []
-
-    const seen = new Set()
-    const rgs = []
-    for (const r of song.releases) {
-      const type = r["release-group"]["primary-type"]
-      if (seen.has(type) || type === 'Single') continue
-      seen.add(r["release-group"]["primary-type"])
-
-      rgs.push({
-        type: r["release-group"]["primary-type"],
-        id: r["release-group"].id,
-        name: r["release-group"].title
-      })
-
-    }
-
-    console.log(rgs)
-    return rgs
-  }, [song])
-
   return (
     <div>
       <Nav/>
@@ -96,15 +79,33 @@ export default function Song ({
             <div className="flex-1 flex flex-col gap-4 font-mono text-sm mr-4">
               <div>
                 <p className="text-xl font-mono font-bold">{song?.title}</p>
-                <p className="text-sm text-gray-500 font-mono">{song?.["artist-credit"].map(a => `${a.name} ${a.joinphrase}`)}</p>
+                <p className="text-sm text-gray-500 font-mono">
+                  {song?.artistCredit.map(a => (
+                    <span key={a.artist.id}>
+                      <span
+                        className="hover:underline cursor-pointer"
+                        onClick={() => router.push(`/artist/${a.artist.id}`)}
+                      >
+                        {a.name}
+                      </span>
+                      <span>
+                        {a.joinphrase}
+                      </span>
+                    </span>
+                  ))}
+                </p>
               </div>
 
-              {partOf.length !== 0 &&
-                partOf.map(p => {
+              {song?.partOf.length !== 0 &&
+                song?.partOf?.map(p => {
                   return (
                     <div className="text-sm" key={p.id}>
                       <p className="text-gray-500 font-bold">{p.type}</p>
-                      <p className="">{p.name}</p>
+                      <p className="hover:underline cursor-pointer"
+                        onClick={() => router.push(`/release/${p.id}`)}
+                      >
+                        {p.name}
+                      </p>
                     </div>
                   )
                 })
@@ -112,7 +113,7 @@ export default function Song ({
 
               <div className="text-sm">
                 <p className="font-bold text-gray-500">Released</p>
-                <p>{song?.["first-release-date"]}</p>
+                <p>{song?.firstReleaseDate}</p>
               </div>
 
               {song?.length &&
@@ -149,13 +150,23 @@ export default function Song ({
 
           </div>
 
-          {status !== 'unauthenticated' &&
-            <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews}/>
+          {reviews?.starStats &&
+            <div className={`
+              border-t pt-3 mt-2 border-gray-500
+              ${!session && 'pb-2 border-b mb-2'}
+            `}>
+              <Statistics stats={reviews.starStats}/>
+            </div>
+          }
+
+          {session &&
+            <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
           }
           
           {loading &&
             <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
           }
+
           {reviews &&
             <Reviews reviews={reviews.reviews}/>
           }

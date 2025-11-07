@@ -6,24 +6,25 @@ import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
 import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar";
 import Nav from "@/app/components/ui/NavigationBar";
-import { Album, ReviewResponse } from "@/app/lib/types/api";
+import { Release, ReviewResponse } from "@/app/lib/types/api";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react"
 import Tracklist from "@/app/components/album/Tracklist";
 import TextContent from "@/app/components/album/TextContent";
+import Statistics from "@/app/components/profile/statistics";
 
 export default function AlbumPage ({
   params
 } : {
-  params: Promise<{albumId : string}>
+  params: Promise<{releaseId : string}>
 }) {
 
-  const { albumId } = use(params)
+  const { releaseId } = use(params)
   const { data: session } = useSession()
   const [coverArt, setCoverArt] = useState('')
-  const [album, setAlbum] = useState<Album | null>(null)
+  const [album, setAlbum] = useState<Release | null>(null)
   const [loading, setLoading] = useState(false)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [active, setActive] = useState('reviews')
@@ -33,11 +34,11 @@ export default function AlbumPage ({
       try {
         setLoading(true)
         const [album, reviews] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getAlbum`, {
-            params: {albumId: albumId}
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getRelease`, {
+            params: {releaseId: releaseId}
           }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,{
-            params: {type: 'RELEASE', id: albumId}
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/release`,{
+            params: {id: releaseId}
           })
         ])
         setCoverArt(album.data.coverArtUrl)
@@ -67,20 +68,35 @@ export default function AlbumPage ({
             />
           </div>
 
-          {session && 
-            <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews}/>
+          {reviews?.starStats &&
+            <div className={`
+              border-t pt-3 mt-2 border-gray-500
+              ${!session && 'pb-2 border-b mb-2'}
+            `}>
+              <Statistics stats={reviews.starStats}/>
+            </div>
           }
+
+          {session && 
+            <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
+          }
+
 
           <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1 mb-2">
             <li 
               className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'reviews' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
               onClick={() => setActive('reviews')}
-            >Reviews</li>
+            >
+              Reviews
+            </li>
             <li
               className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'tracklist' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
               onClick={() => setActive('tracklist')}
-            >Tracklist</li>
+            >
+              Tracklist
+            </li>
           </ul>
+
 
           {active === 'reviews' &&
             <>

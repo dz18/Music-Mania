@@ -1,11 +1,10 @@
-import { Review } from "@/app/lib/types/artist"
 import { Star, StarHalf } from "lucide-react"
 import Link from "next/link"
 
 export default function Reviews ({
   reviews,
 } : {
-  reviews: Review[] | null
+  reviews: UserArtistReview[] | UserReleaseReview[] | UserSongReview[] | null
 }) {
 
   return (
@@ -14,7 +13,7 @@ export default function Reviews ({
       {reviews?.length !== 0 ?
         <div className="bg-gray-800 border-1">
           {reviews?.map((review, i) => (
-            <div className={`${i % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'} p-2`} key={review.id}>
+            <div className={`${i % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'} p-2`} key={review.user.id}>
               <div className="flex justify-between">
                 <div className="flex gap-2 items-end">
                   <Link 
@@ -24,7 +23,7 @@ export default function Reviews ({
                     <img src={review.user.avatar}className="w-7"/>
                     <p>{review.user.username}</p>
                   </Link>
-                  <span className="text-sm text-gray-500">{new Date(review.createAt).toLocaleDateString()}</span>
+                  <span className="text-sm text-gray-500">{new Date(review.updatedAt).toLocaleDateString()}</span>
                 </div>
                 <div className="font-bold flex items-center gap-1 text-gray-300">
                   {review.rating}
@@ -40,9 +39,16 @@ export default function Reviews ({
               {review.review &&
                 <>
                   <div className="border-t-1 border-gray-500 mb-1"/>
-                  <p className="text-sm">
-                    {review.review}
-                  </p>
+                  <div className="">
+                    {review.title &&
+                      <p className="font-bold text-sm mb-2">
+                        {review.title}
+                      </p>
+                    }
+                    <p className="text-sm">
+                      {review.review}
+                    </p>
+                  </div>
                 </>
               }
             </div>

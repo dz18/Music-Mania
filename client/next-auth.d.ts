@@ -9,9 +9,9 @@ declare module "next-auth" {
       avatar?: string | null;
       id?: string | null
       phoneNumber?: string | null
-      favArtists?: string[] | null
-      favSongs?: string[] | null
-      favReleases?: string[] | null
+      favArtists?: userFavArtist[] | null
+      favSongs?: userFavSong[] | null
+      favReleases?: userFavRelease[] | null
     };
   }
 

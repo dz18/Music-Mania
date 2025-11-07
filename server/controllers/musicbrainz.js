@@ -346,11 +346,20 @@ const discography = async (req, res) => {
         return lenA - lenB
       }).map(async (releaseGroup) => {
         
-        const nums = await prisma.review.aggregate({
-          where: {itemId: releaseGroup.id},
-          _avg: {rating: true},
-          _count: {rating: true}
-        })
+        let nums
+        if (type === 'single') {
+          nums = await prisma.userSongReviews.aggregate({
+            where: {songId: releaseGroup.id},
+            _avg: {rating: true},
+            _count: {rating: true}
+          })
+        } else if (type === 'album' || type === 'ep') {
+          nums = await prisma.userReleaseReviews.aggregate({
+            where: {releaseId: releaseGroup.id},
+            _avg: {rating: true},
+            _count: {rating: true}
+          })
+        }
 
         
         const average = nums._avg.rating
@@ -399,17 +408,19 @@ const discography = async (req, res) => {
   }
 }
 
-const getAlbum = async (req, res) => {
-  const { albumId } = req.query
+const getRelease = async (req, res) => {
+  const { releaseId } = req.query
   
   logApiCall(req.method, req.originalUrl)
 
   try {
-    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${albumId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups&fmt=json&limit=100&offset=0`, {
+    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${releaseId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups&fmt=json&limit=100&offset=0`, {
       headers: {
         'User-Agent' : userAgent
       }
     })
+
+    console.log(albums)
 
     const albumsJSON = await albums.json()
     const albumData = albumsJSON.releases
@@ -457,11 +468,12 @@ const getAlbum = async (req, res) => {
 
     const first = sorted[0]
     
-    const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${albumId}`)
+    const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${releaseId}`)
     const coverArtJSON = await FetchCoverArt.json()
     const coverArt = coverArtJSON.images.filter(img => img.front === true)
 
     //console.log(sorted)
+    console.log(first)
     successApiCall(req.method, req.originalUrl)
     return res.json({
       album: first,
@@ -485,7 +497,7 @@ const getSong = async (req, res) => {
 
   try {
 
-    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups`, {
+    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups&status=official`, {
       headers: {
         'User-Agent': userAgent
       }
@@ -511,10 +523,39 @@ const getSong = async (req, res) => {
       coverArtUrl = coverArt[0].image
     }
 
-    console.log(coverArtUrl)
+    // console.log(coverArtUrl)
+    let partOf
+    const seen = new Set()
+    const rgs = []
+    for (const r of song.releases) {
+      const type = r['release-group']['primary-type']
+      if (seen.has(type) || type == 'Single' ) continue
+      seen.add(r['release-group']['primary-type'])
+
+      rgs.push({
+        type: r["release-group"]["primary-type"],
+        id: r["release-group"].id,
+        name: r["release-group"].title
+      })
+    }
+    partOf = rgs
+
+    songFormatted = {
+      id: song.id,
+      artistCredit: song['artist-credit'],
+      genres: song.genres,
+      length: song.length,
+      title: song.title,
+      firstReleaseDate: song['first-release-date'],
+      partOf: partOf,
+      disambiguation: song.disambiguation,
+      video: song.video
+    }
+    
+    console.log(songFormatted)
     successApiCall(req.method, req.originalUrl)
     return res.json({
-      song, 
+      song: songFormatted, 
       coverArtUrl
     })
   } catch (error) {
@@ -562,7 +603,7 @@ module.exports = {
   releases,
   getArtist,
   discography,
-  getAlbum,
+  getRelease,
   getSong,
   findSingleId
 }

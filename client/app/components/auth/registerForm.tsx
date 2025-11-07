@@ -56,7 +56,7 @@ export default function RegisterForm () {
       signIn('credentials',{
         email,
         password,
-        callbackUrl: '/home'
+        callbackUrl: '/'
       })
 
     } catch (error : any) {

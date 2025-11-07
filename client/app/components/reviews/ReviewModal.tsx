@@ -1,9 +1,12 @@
-import { Album, ReviewResponse } from "@/app/lib/types/api";
-import { Artist, Review } from "@/app/lib/types/artist";
+import { Release, ReviewResponse } from "@/app/lib/types/api";
+import { Artist } from "@/app/lib/types/artist";
 import axios from "axios";
+import { stat } from "fs";
 import { Loader, Star, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import IndeterminateLoadingBar from "../ui/IndeterminateLoadingBar";
+import { Song } from "@/app/lib/types/song";
 
 export default function ReviewModal ({
   item,
@@ -11,21 +14,24 @@ export default function ReviewModal ({
   open,
   setOpen,
   reviews,
-  setReviews
+  setReviews,
+  coverArtUrl,
 } : {
-  item: Artist | Album | Song | null,
-  type: string
+  item: Artist | Release | Song | null,
+  type: 'artist' | 'release' | 'song'
   open: boolean,
   setOpen: Dispatch<SetStateAction<boolean>>
-  reviews?: Review[] | null
+  reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[] | null
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
+  coverArtUrl?: string
 }) {
 
-  const {data: session} = useSession()
+  const {data: session, status} = useSession()
 
   const [title, setTitle] = useState<string>('')
   const [rating, setRating] = useState<number>(0)
   const [hover, setHover] = useState<number | null>(null)
+  const [reviewExists, setReviewExist] = useState(false)
   const [review, setReview] = useState<string>('')
   const [reviewId, setReviewId] = useState<string>('')
   const [currentStatus, setCurrentStatus] = useState<'Published' | 'Draft' | ''>('')
@@ -33,46 +39,34 @@ export default function ReviewModal ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const review = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/user`, {
-        params: { userId: session?.user.id, itemId: item?.id }
-      })
+      try {
+        setLoading(true)
+        const review = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/user`, {
+          params: { userId: session?.user.id, itemId: item?.id, type: type }
+        })
 
-      console.log(review.data)
-      if (!review.data) return
-      setTitle(review.data.title)
-      setRating(review.data.rating)
-      setReview(review.data.review)
-      setReviewId(review.data.id)
-      setCurrentStatus(review.data.status.charAt(0) + review.data.status.slice(1).toLowerCase())
+        console.log('review MODEL:', review.data)
+        if (!review.data) return
+        setReviewExist(review.data ? true : false)
+        setTitle(review.data.title)
+        setRating(review.data.rating)
+        setReview(review.data.review)
+        setCurrentStatus(review.data.status.charAt(0) + review.data.status.slice(1).toLowerCase())
+      } catch (error) {
+        console.log(error)
+      } finally {
+        setLoading(false)
+      }
     }
     fetchData()
-  }, [item])
+  }, [])
 
   const updateReviews = (res: any, status?: 'PUBLISHED' | 'DRAFT' | 'DELETED') => {
-    console.log(res.data)
-    if (res.data.action === 'UPDATED' && status === 'PUBLISHED') {
-      setReviews(prev => {
-        if (!prev) {
-          return {
-            avgRating: res.data.avg,
-            reviews: [res.data.review]
-          } as ReviewResponse
-        }
 
-        const exists = prev.reviews.some(r => r.id === res.data.review.id)
-
-        return {
-          ...prev,
-          avgRating: res.data.avg,
-          reviews: exists
-            ? prev.reviews.map(r =>
-                r.id === res.data.review.id ? res.data.review : r
-              )
-            : [...prev.reviews, res.data.review]
-        }
-      })
-    } else if (res.data.action === 'CREATED' && status === 'PUBLISHED') {
-      setReviews(prev => {
+    console.log('action',res.data.action)
+    console.log('status',status)
+    setReviews(prev => {
+      if (status === 'PUBLISHED') {
         if (!prev) {
           return {
             avgRating: res.data.avg,
@@ -81,30 +75,30 @@ export default function ReviewModal ({
         }
 
         return {
-          ...prev,
           avgRating: res.data.avg,
-          reviews: [res.data.review, ...prev.reviews]
+          reviews: exists 
+            ? prev?.reviews.map(r => (
+                r.userId === session?.user.id
+                  ? res.data.review
+                  : r
+              ))
+            : [res.data.review, ...prev.reviews]
         }
-      })
-    } else if ((res.data.action === 'UPDATED' || res.data.action === 'DELETED') && (status === 'DRAFT' || status == 'DELETED')) {
-      setReviews(prev => {
-        if (!prev) {
-          return {
-            avgRating: res.data.avg,
-            reviews: []
-          } as ReviewResponse
-        }
-
+      } else if (status === 'DRAFT' || status === 'DELETED') {
         return {
-          ...prev,
           avgRating: res.data.avg,
-          reviews: prev.reviews.filter(r => r.id !== res.data.review.id)
-        }
-      })
-    } 
+          reviews: prev?.reviews.filter(r => r.userId !== session?.user.id)
+        } as ReviewResponse
+      } 
+
+      return prev
+    })
+
   }
 
   const handleButton = async (action: 'PUBLISHED' | 'DRAFT') => {
+    if (!item) return
+
     try {
       setLoading(true)
 
@@ -114,8 +108,12 @@ export default function ReviewModal ({
         title: title,
         rating: rating,
         review: review,
-        type: type !== 'album' ? type.toUpperCase() : 'RELEASE',
-        status: action
+        type: type.toUpperCase(),
+        status: action,
+        itemName: 'name' in item ? item.name : null,
+        itemTitle: 'title' in item ? item.title : null,
+        artistCredit: 'artistCredit' in item ? item.artistCredit.map(ac => ({joinphrase: ac.joinphrase, name: ac.name})) : null,
+        coverArt: coverArtUrl
       })
 
       updateReviews(res, action)
@@ -135,7 +133,7 @@ export default function ReviewModal ({
         params: {
           userId: session?.user.id,
           itemId: item?.id,
-          id: reviewId
+          type: type
         }
       })
       console.log(res.data)
@@ -148,6 +146,10 @@ export default function ReviewModal ({
       setLoading(false)
     }
   }
+
+  const exists = useMemo(() => (
+    status === 'authenticated' ? reviews?.some(r => r.userId === session?.user.id) : false
+  ), [review])
 
   if (!open) return null
 
@@ -185,6 +187,7 @@ export default function ReviewModal ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={48}
+              disabled={loading}
             />
           </div>
 
@@ -198,6 +201,7 @@ export default function ReviewModal ({
                 onMouseEnter={() => setHover(star)}
                 onMouseLeave={() => setHover(null)}
                 className="focus:outline-none"
+                disabled={loading}
               >
                 <Star
                   size={18}
@@ -219,14 +223,15 @@ export default function ReviewModal ({
           <div>
             <label className="text-sm font-mono mb-1 flex justify-between">
               <p>Review: </p>
-              <p className="text-gray-500">{review.length}/512</p>
+              <p className="text-gray-500">{review.length}/1024</p>
             </label>
             <textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
               className="bg-gray-950 border-black p-1 text-sm w-full"
-              maxLength={512}
+              maxLength={1024}
               rows={10}
+              disabled={loading}
             />
           </div>
 
@@ -240,7 +245,7 @@ export default function ReviewModal ({
               >
                 Save as Draft
               </button>  
-              {reviewId &&
+              {reviewExists &&
                 <button
                   className="text-red-500 px-2 py-1 border-1 border-red-500 rounded hover:bg-red-900 cursor-pointer"
                   onClick={deleteReview}
@@ -251,9 +256,6 @@ export default function ReviewModal ({
               }
             </div>
             <div className="flex gap-2 items-center">
-              {loading &&
-                <Loader size={18} className="animate-spin text-teal-300"/>
-              }
               <button 
                 className="text-teal-300  bg-teal-950 px-2 py-1 border-1 rounded cursor-pointer hover:bg-teal-900"
                 onClick={() => handleButton('PUBLISHED')}
@@ -261,11 +263,13 @@ export default function ReviewModal ({
               >
                 Publish
               </button>    
-            </div>        
+            </div>
           </div>
 
         </div>
-
+        {loading &&
+          <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+        }
       </div>
     </div>
   )
