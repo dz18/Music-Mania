@@ -14,7 +14,8 @@ export default function ReviewModal ({
   open,
   setOpen,
   reviews,
-  setReviews
+  setReviews,
+  coverArtUrl,
 } : {
   item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song'
@@ -22,6 +23,7 @@ export default function ReviewModal ({
   setOpen: Dispatch<SetStateAction<boolean>>
   reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[] | null
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
+  coverArtUrl?: string
 }) {
 
   const {data: session, status} = useSession()
@@ -111,6 +113,7 @@ export default function ReviewModal ({
         itemName: 'name' in item ? item.name : null,
         itemTitle: 'title' in item ? item.title : null,
         artistCredit: 'artistCredit' in item ? item.artistCredit.map(ac => ({joinphrase: ac.joinphrase, name: ac.name})) : null,
+        coverArt: coverArtUrl
       })
 
       updateReviews(res, action)
@@ -220,13 +223,13 @@ export default function ReviewModal ({
           <div>
             <label className="text-sm font-mono mb-1 flex justify-between">
               <p>Review: </p>
-              <p className="text-gray-500">{review.length}/512</p>
+              <p className="text-gray-500">{review.length}/1024</p>
             </label>
             <textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
               className="bg-gray-950 border-black p-1 text-sm w-full"
-              maxLength={512}
+              maxLength={1024}
               rows={10}
               disabled={loading}
             />

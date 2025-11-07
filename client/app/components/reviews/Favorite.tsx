@@ -9,9 +9,11 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 export default function Favorite ({
   item,
   type,
+  coverArtUrl
 } : {
   item: Artist | Release | Song | null
   type: 'artist' | 'release' | 'song'
+  coverArtUrl?: string
 }) {
 
   const {data : session, update} = useSession()
@@ -84,7 +86,8 @@ export default function Favorite ({
           artistCredit: 'artistCredit' in item ? artistCredit : null,
           type: type,
           since: since,
-          action: action
+          action: action,
+          coverArt: coverArtUrl
         })
 
         setFavorites(

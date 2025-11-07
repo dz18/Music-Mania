@@ -2,6 +2,7 @@
 export type ReviewResponse = {
   reviews: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
   avgRating: number
+  starStats: StarCount[]
 }
 
 export type FavoritesResponse = {

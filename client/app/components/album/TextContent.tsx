@@ -1,5 +1,4 @@
-import { Album, ReviewResponse } from "@/app/lib/types/api"
-import { Review } from "@/app/lib/types/artist"
+import { Release, ReviewResponse } from "@/app/lib/types/api"
 import { ImageOff, Loader, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo } from "react"
@@ -11,7 +10,7 @@ export default function TextContent ({
   coverArt,
   loading
 } : {
-  album: Album | null
+  album: Release | null
   reviews: ReviewResponse | null
   coverArt: string
   loading: boolean
@@ -49,7 +48,7 @@ export default function TextContent ({
           </div>
         </div>
 
-        <div className="flex gap-2 flex-col">
+        <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">
             Made by
           </p>
@@ -70,12 +69,12 @@ export default function TextContent ({
           <p>{album?.date}</p>
         </div>
 
-        <div className="flex gap-2 flex-col">
+        <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Type</p>
           <p>{album?.type.join(' + ')}</p>
         </div>
 
-        <div className="flex gap-2 flex-col">
+        <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Genre</p>
           <div className="flex flex-wrap gap-1">
           {album?.genres.map((genre, i) => (
@@ -94,12 +93,12 @@ export default function TextContent ({
           </div>
         </div>
         
-        <div className="flex gap-2 flex-col">
+        <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Total Length</p>
           <p>{hours !== 0 && `${hours} hrs`} {minutes} mins {!hours && `${seconds} secs`}</p>
         </div>
 
-        <div className="flex gap-2 flex-col">
+        <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Language</p>
           {album?.language && 
             new Intl.DisplayNames(['en'], { type: 'language' }).of(album?.language)

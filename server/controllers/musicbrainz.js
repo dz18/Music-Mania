@@ -420,6 +420,8 @@ const getRelease = async (req, res) => {
       }
     })
 
+    console.log(albums)
+
     const albumsJSON = await albums.json()
     const albumData = albumsJSON.releases
 
@@ -495,7 +497,7 @@ const getSong = async (req, res) => {
 
   try {
 
-    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups`, {
+    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups&status=official`, {
       headers: {
         'User-Agent': userAgent
       }
@@ -527,7 +529,7 @@ const getSong = async (req, res) => {
     const rgs = []
     for (const r of song.releases) {
       const type = r['release-group']['primary-type']
-      if (seen.has(type) || type == 'Single') continue
+      if (seen.has(type) || type == 'Single' ) continue
       seen.add(r['release-group']['primary-type'])
 
       rgs.push({

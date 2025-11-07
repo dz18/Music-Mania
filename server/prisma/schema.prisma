@@ -24,8 +24,12 @@ model User {
   avatar        String?
   phoneNumber   String? @unique
   aboutMe       String?
+  age           Int?
 
   role          Role @default(USER)
+  
+  following     Follow[] @relation("Following")
+  followers     Follow[] @relation("Follower")
 
   favArtists    UserFavArtist[]
   favReleases   UserFavRelease[]
@@ -35,6 +39,19 @@ model User {
   releaseReviews  UserReleaseReviews[]
   songReviews     UserSongReviews[]
 
+}
+
+model Follow {
+  id            String  @id @default(cuid())
+  followerId    String
+  followingId   String
+
+  follower      User @relation("Following", fields: [followerId], references: [id])
+  following     User @relation("Follower", fields: [followingId], references: [id])
+
+  createdAt     DateTime @default(now())
+
+  @@unique([followerId, followingId])
 }
 
 model Artist {
@@ -49,7 +66,7 @@ model Release {
   id            String @id
   title         String
   artistCredit  Json
-  coverArt      String
+  coverArt      String?
 
   favorited     UserFavRelease[]
   reviews       UserReleaseReviews[]
@@ -59,7 +76,7 @@ model Song {
   id            String @id
   title         String
   artistCredit  Json
-  coverArt      String
+  coverArt      String?
 
   favorited     UserFavSong[]
   reviews       UserSongReviews[]

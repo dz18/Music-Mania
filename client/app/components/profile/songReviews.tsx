@@ -8,10 +8,10 @@ export default function SongReviews ({profile} : {profile: UserProfile}) {
   return (
     <>
       {profile?.songReviews.length !== 0 ?
-        <div className="border">
+        <div>
           {profile?.songReviews.map((r, i) => (
             <div key={r.songId} 
-                className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'} border-gray-200 py-1 p-2 text-sm flex flex-col gap-1`}
+                className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'}  py-1 p-2 text-sm flex flex-col gap-1`}
               >
                 <div className="border-b flex justify-between items-center">
                   <div className="flex gap-2">
@@ -28,8 +28,15 @@ export default function SongReviews ({profile} : {profile: UserProfile}) {
                     ))}
                   </div>
                 </div>
-                <p className="font-bold">{r.title}</p>
-                <p>{r.review}</p>
+                <div className="flex gap-4">
+                  {r.song.coverArt &&
+                    <img src={r.song.coverArt} className="w-40"/>
+                  }
+                  <div className="flex flex-col justify-start">
+                    <p className="font-bold font-mono">{r.title}</p>
+                    <p>{r.review}</p>
+                  </div>
+                </div>
               </div>
           ))}
         </div>

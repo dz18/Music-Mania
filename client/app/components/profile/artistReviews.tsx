@@ -8,10 +8,10 @@ export default function ArtistReviews ({profile} : {profile: UserProfile}) {
   return (
     <>
       {profile.artistReviews.length !== 0 ?
-        <div className="border-1">
+        <div className="">
           {profile?.artistReviews.map((r, i) => (
             <div key={r.artistId} 
-              className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'} border-gray-200 py-1 p-2 text-sm flex flex-col gap-1`}
+              className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'} py-1 p-2 text-sm flex flex-col gap-1`}
             >
               <div className="border-b flex justify-between items-center">
                 <div className="flex gap-2">

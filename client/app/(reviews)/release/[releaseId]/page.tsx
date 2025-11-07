@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react"
 import Tracklist from "@/app/components/album/Tracklist";
 import TextContent from "@/app/components/album/TextContent";
+import Statistics from "@/app/components/profile/statistics";
 
 export default function AlbumPage ({
   params
@@ -67,20 +68,35 @@ export default function AlbumPage ({
             />
           </div>
 
-          {session && 
-            <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews}/>
+          {reviews?.starStats &&
+            <div className={`
+              border-t pt-3 mt-2 border-gray-500
+              ${!session && 'pb-2 border-b mb-2'}
+            `}>
+              <Statistics stats={reviews.starStats}/>
+            </div>
           }
+
+          {session && 
+            <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
+          }
+
 
           <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1 mb-2">
             <li 
               className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'reviews' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
               onClick={() => setActive('reviews')}
-            >Reviews</li>
+            >
+              Reviews
+            </li>
             <li
               className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'tracklist' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
               onClick={() => setActive('tracklist')}
-            >Tracklist</li>
+            >
+              Tracklist
+            </li>
           </ul>
+
 
           {active === 'reviews' &&
             <>

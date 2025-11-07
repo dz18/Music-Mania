@@ -15,12 +15,14 @@ export default function ReviewBar ({
   item, 
   type,
   reviews,
-  setReviews
+  setReviews,
+  coverArtUrl
 } : {
   item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song',
   reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
+  coverArtUrl?: string
 }) {
 
   const [open, setOpen] = useState(false)
@@ -45,7 +47,7 @@ export default function ReviewBar ({
           <NotebookText size={18}/> Review
         </button>
         {item && (
-          <Favorite item={item} type={type}/>
+          <Favorite item={item} type={type} coverArtUrl={coverArtUrl}/>
         )}
       </div>
       {open &&
@@ -56,6 +58,7 @@ export default function ReviewBar ({
           setOpen={setOpen}
           reviews={reviews}
           setReviews={setReviews}
+          coverArtUrl={coverArtUrl}
         />
       }
     </div>

@@ -8,7 +8,7 @@ export default function ReleaseReviews ({profile} : {profile: UserProfile}) {
   return (
     <>
       {profile.releaseReviews.length !== 0 ?
-        <div className="border-1">
+        <div>
           {profile?.releaseReviews.map((r, i) => (
             <div key={r.releaseId} 
               className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'} border-gray-200 py-1 p-2 text-sm flex flex-col gap-1`}
@@ -28,8 +28,15 @@ export default function ReleaseReviews ({profile} : {profile: UserProfile}) {
                   ))}
                 </div>
               </div>
-              <p className="font-bold">{r.title}</p>
-              <p>{r.review}</p>
+              <div className="flex gap-4">
+                {r.release.coverArt &&
+                  <img src={r.release.coverArt} className="w-40"/>
+                }
+                <div className="flex flex-col justify-start">
+                  <p className="font-bold font-mono">{r.title}</p>
+                  <p>{r.review}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>

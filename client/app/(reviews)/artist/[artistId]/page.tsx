@@ -12,6 +12,7 @@ import type { Artist } from "@/app/lib/types/artist"
 import axios from "axios"
 import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
+import Statistics from "@/app/components/profile/statistics"
 
 export default function Artist ({
   params
@@ -24,6 +25,7 @@ export default function Artist ({
 
   const [artist, setArtist] = useState<Artist | null>(null)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [avgRating, setAvgRating] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -71,14 +73,28 @@ export default function Artist ({
 
             <div className="flex gap-10">
               {/* About */}
-              <About artist={artist} avgRating={reviews?.avgRating ?? 0}/>
+              <About artist={artist} reviews={reviews}/>
 
             </div>
+
+            {reviews?.starStats &&
+              <div className={`
+                border-t pt-3 mt-2 border-gray-500
+                ${!session && 'pb-2 border-b mb-2'}
+              `}>
+                <Statistics stats={reviews.starStats}/>
+              </div>
+            }
 
             {/* Make a Review */}
             {session && !isLoading &&
               <>
-                <ReviewBar item={artist} type="artist" reviews={reviews?.reviews} setReviews={setReviews}/>
+                <ReviewBar 
+                  item={artist} 
+                  type="artist" 
+                  reviews={reviews?.reviews} 
+                  setReviews={setReviews} 
+                />
               </>
             }
 

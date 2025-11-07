@@ -26,10 +26,9 @@ const artistReviews = async(req, res) => {
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: id }
+        where: { artistId: id }
       })
     ])
-
     const average = rating._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
 
@@ -59,7 +58,7 @@ const releaseReviews = async(req, res) => {
       res.status(400).json({error : 'Missing parameters'})
     }
 
-    const [reviews, rating] = await Promise.all([
+    const [reviews, rating, releaseStats] = await Promise.all([
       prisma.userReleaseReviews.findMany({
         where: { releaseId: id, status: 'PUBLISHED' },
         include: { user: { omit: { password: true } } },
@@ -68,14 +67,27 @@ const releaseReviews = async(req, res) => {
       prisma.userReleaseReviews.aggregate({
         where: { releaseId: id, status: 'PUBLISHED' },
         _avg: { rating: true }
+      }),
+      prisma.userReleaseReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { releaseId: id }
       })
     ])
 
     const average = rating._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
 
+    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
+    for (const group of [...releaseStats]) {
+      starCount[group.rating] += group._count.rating
+    }
+    const starStats = Object.entries(starCount)
+      .map(([rating, count]) => ({ rating: +rating, count }))
+      .sort((a, b) => b.rating - a.rating)
+
     successApiCall(req.method, req.originalUrl)
-    res.json({reviews, avgRating: avgRounded ?? 0})
+    res.json({reviews, avgRating: avgRounded ?? 0, starStats})
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
@@ -93,7 +105,7 @@ const songReviews = async(req, res) => {
       res.status(400).json({error : 'Missing parameters'})
     }
 
-    const [reviews, rating] = await Promise.all([
+    const [reviews, rating, songStats] = await Promise.all([
       prisma.userSongReviews.findMany({
         where: { songId: id, status: 'PUBLISHED' },
         include: { user: { omit: { password: true } } },
@@ -102,14 +114,27 @@ const songReviews = async(req, res) => {
       prisma.userSongReviews.aggregate({
         where: { songId: id, status: 'PUBLISHED' },
         _avg: { rating: true }
+      }),
+      prisma.userReleaseReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { releaseId: id }
       })
     ])
 
     const average = rating._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
 
+    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
+    for (const group of [...songStats]) {
+      starCount[group.rating] += group._count.rating
+    }
+    const starStats = Object.entries(starCount)
+      .map(([rating, count]) => ({ rating: +rating, count }))
+      .sort((a, b) => b.rating - a.rating)
+
     successApiCall(req.method, req.originalUrl)
-    res.json({reviews, avgRating: avgRounded ?? 0})
+    res.json({reviews, avgRating: avgRounded ?? 0, starStats})
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
@@ -150,7 +175,7 @@ const publishOrDraft = async (req, res) => {
     userId, itemId, title, 
     rating, review, type, 
     status, itemName, itemTitle, 
-    artistCredit 
+    artistCredit, coverArt
   } = req.body
   
   logApiCall(req.method, req.originalUrl)
@@ -202,7 +227,7 @@ const publishOrDraft = async (req, res) => {
       await prisma.release.upsert({
         where: { id: itemId },
         update: {},
-        create: { id: itemId, title: itemTitle, artistCredit}
+        create: { id: itemId, title: itemTitle, artistCredit, coverArt}
       });
 
       [published, newAvg] = await Promise.all([
@@ -221,7 +246,7 @@ const publishOrDraft = async (req, res) => {
       await prisma.song.upsert({
         where: { id: itemId },
         update: {},
-        create: { id: itemId, title: itemTitle, artistCredit}
+        create: { id: itemId, title: itemTitle, artistCredit, coverArt}
       });
       [published, newAvg] = await Promise.all([
         prisma.userSongReviews.upsert({

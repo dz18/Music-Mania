@@ -45,7 +45,6 @@ const findUserById = async (req, res) => {
       errorApiCall(req.method, req.originalUrl, 'User does not exist')
       return res.status(400).json({error: 'User does not exist.'})
     }
-    console.log(user)
     // console.log('User data:', user)
     successApiCall(req.method, req.originalUrl)
     return res.json({
@@ -95,7 +94,7 @@ const getFavorites = async (res, req) => {
 
 // Add or remove a favorite
 const favorite = async (req, res) => {
-  const { id, name, title, artistCredit, since, userId, type, action } = req.body
+  const { id, name, title, artistCredit, since, userId, type, action, coverArt } = req.body
 
   logApiCall(req.method, req.originalUrl)
 
@@ -131,8 +130,6 @@ const favorite = async (req, res) => {
       }
     })
 
-    console.log(`${field}:`, user[field].length)
-
     if (user[field].includes(id) && type === 'add') {
       errorApiCall(req.method, req.originalUrl, `${field} already includes id`)
       return res.status(400).json({error : 'Artist already set as favorite'})
@@ -166,7 +163,7 @@ const favorite = async (req, res) => {
       await prisma.release.upsert({
         where: { id },
         update: {},
-        create: { id, title, artistCredit }
+        create: { id, title, artistCredit, coverArt }
       })
 
       if (action === 'add') {
@@ -184,7 +181,7 @@ const favorite = async (req, res) => {
       await prisma.song.upsert({
         where: {id},
         update: {},
-        create: {id, title, artistCredit}
+        create: {id, title, artistCredit, coverArt}
       })
 
       if (action === 'add') {
@@ -236,7 +233,6 @@ const query = async (req, res) => {
       take: 25
     })
 
-    console.log(query.map(q => q))
     successApiCall(req.method, req.originalUrl)
     res.json(query)
 
@@ -257,36 +253,36 @@ const profile = async (req, res) => {
   }
 
   try {
-    const userProfile = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        favArtists: { include: { artist: true } },
-        favReleases: { include: { release: true } },
-        favSongs: { include: { song: true } },
-        artistReviews: { include: { artist: true } },
-        releaseReviews: { include: { release: true }},
-        songReviews: { include: { song: true }},
-      },
-      omit: { password: true, email: true, phoneNumber: true }
-    })
 
-    const artistStats = await prisma.userArtistReviews.groupBy({
-      by: ['rating'],
-      _count: { rating: true },
-      where: { userId: id }
-    })
-
-    const releaseStats = await prisma.userReleaseReviews.groupBy({
-      by: ['rating'],
-      _count: { rating: true },
-      where: { userId: id }
-    })
-
-    const songStats = await prisma.userSongReviews.groupBy({
-      by: ['rating'],
-      _count: { rating: true },
-      where: { userId: id }
-    })
+    const [userProfile, artistStats, releaseStats, songStats, counts] = await Promise.all([
+      await prisma.user.findUnique({
+        where: { id },
+        include: {
+          favArtists: { include: { artist: true } },
+          favReleases: { include: { release: true } },
+          favSongs: { include: { song: true } },
+          artistReviews: { include: { artist: true } },
+          releaseReviews: { include: { release: true }},
+          songReviews: { include: { song: true }},
+        },
+        omit: { password: true, email: true, phoneNumber: true }
+      }),
+      await prisma.userArtistReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: id }
+      }),
+      await prisma.userReleaseReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: id }
+      }),
+      await prisma.userSongReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: id }
+      }),
+    ])
 
     const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
 
@@ -311,6 +307,7 @@ const profile = async (req, res) => {
 
     const totalReviewCount = allReviews.length
 
+    console.log(userProfile)
     const profile = {
       ...userProfile,
       totalReviewCount,
@@ -325,11 +322,109 @@ const profile = async (req, res) => {
 
 }
 
+const isFollowing = async (req, res) => {
+  const { userId, profileId } = req.query
+
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+    const isFollowing = await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: userId,
+          followingId: profileId
+        }
+      }
+    })
+
+    console.log(isFollowing)
+
+    successApiCall(req.method, req.originalUrl)
+    res.json(isFollowing) 
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+}
+
+const follow = async (req, res) => {
+  const { userId, profileId } = req.body
+
+  logApiCall(req.method, req.originalUrl)
+  
+  try {
+    const follow = await prisma.follow.create({
+      data: {
+        followerId: userId,
+        followingId: profileId
+      }
+    })
+
+    console.log(follow)
+    successApiCall(req.method, req.originalUrl)
+    res.json(follow)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+
+}
+
+const unfollow = async (req, res) => {
+  const { userId, profileId } = req.body
+
+  logApiCall(req.method, req.originalUrl)
+  
+  try {
+    await prisma.follow.delete({
+      where: {
+        followerId_followingId: { 
+          followerId: userId, 
+          followingId: profileId 
+        }
+      }
+    })
+
+    res.json({ success: true })
+    successApiCall(req.method, req.originalUrl)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+}
+
+const countFollow = async (req, res) => {
+  const { profileId } = req.query
+
+  logApiCall(req.method, req.originalUrl)
+  
+  try {
+    
+    const [followers, following] = await Promise.all([
+      prisma.follow.count({
+        where: {followingId: profileId}
+      }),
+      prisma.follow.count({
+        where: { followerId: profileId }
+      })
+    ])
+
+    const data = {followers, following}
+    console.log(data)
+    successApiCall(req.method, req.originalUrl)
+    res.json(data)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+
+}
+
 module.exports = {
   getUsers,
   findUserById,
   getFavorites,
   favorite,
   query,
-  profile
+  profile,
+  isFollowing,
+  follow,
+  unfollow,
+  countFollow
 };

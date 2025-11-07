@@ -26,6 +26,7 @@ interface UserProfile {
         name: string
         joinphrase: string
       }[]
+      coverArt: string
     }
   }[]
   favSongs: {
@@ -39,6 +40,7 @@ interface UserProfile {
         name: string
         joinphrase: string
       }[]
+      coverArt: string
     }
   }[]
   artistReviews: {
@@ -71,6 +73,7 @@ interface UserProfile {
         name: string
         joinphrase: string
       }[]
+      coverArt: string
     }
   }[]
   songReviews: {
@@ -89,6 +92,7 @@ interface UserProfile {
         name: string
         joinphrase: string
       }[]
+      coverArt: string
     }
   }[]
   totalReviewCount: number

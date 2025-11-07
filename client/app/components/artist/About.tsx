@@ -4,13 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import ExternalResources from "./ExternalResources"
+import { ReviewResponse } from "@/app/lib/types/api"
 
 export default function About ({
   artist,
-  avgRating
+  reviews
 } : {
   artist: Artist | null
-  avgRating: number
+  reviews: ReviewResponse | null
 }) {
 
   const pathname = usePathname()
@@ -31,7 +32,7 @@ export default function About ({
         </div>
         <div>
           <p className="flex items-center gap-2">
-            <span className="font-bold text-xl">{avgRating}</span> / 5.0 <Star size={18} className="fill-amber-500 stroke-0"/>
+            <span className="font-bold text-xl">{reviews?.avgRating}</span> / 5.0 <Star size={18} className="fill-amber-500 stroke-0"/>
           </p>
         </div>
       </div>

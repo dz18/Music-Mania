@@ -1,5 +1,6 @@
 'use client'
 
+import Statistics from "@/app/components/profile/statistics";
 import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Reviews from "@/app/components/reviews/Reviews";
 import Container from "@/app/components/ui/Container";
@@ -11,6 +12,7 @@ import type { Song } from "@/app/lib/types/song";
 import axios from "axios";
 import { ImageOff, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react";
 
 export default function Song ({
@@ -20,7 +22,8 @@ export default function Song ({
 }) {
 
   const { songId } = use(params)
-  const { data: status} = useSession()
+  const { data: session } = useSession()
+  const router = useRouter()
 
   const [song, setSong] = useState<Song | null>(null)
   const [loading, setLoading] = useState(false)
@@ -76,7 +79,21 @@ export default function Song ({
             <div className="flex-1 flex flex-col gap-4 font-mono text-sm mr-4">
               <div>
                 <p className="text-xl font-mono font-bold">{song?.title}</p>
-                <p className="text-sm text-gray-500 font-mono">{song?.artistCredit.map(a => `${a.name} ${a.joinphrase}`)}</p>
+                <p className="text-sm text-gray-500 font-mono">
+                  {song?.artistCredit.map(a => (
+                    <span key={a.artist.id}>
+                      <span
+                        className="hover:underline cursor-pointer"
+                        onClick={() => router.push(`/artist/${a.artist.id}`)}
+                      >
+                        {a.name}
+                      </span>
+                      <span>
+                        {a.joinphrase}
+                      </span>
+                    </span>
+                  ))}
+                </p>
               </div>
 
               {song?.partOf.length !== 0 &&
@@ -84,7 +101,11 @@ export default function Song ({
                   return (
                     <div className="text-sm" key={p.id}>
                       <p className="text-gray-500 font-bold">{p.type}</p>
-                      <p className="">{p.name}</p>
+                      <p className="hover:underline cursor-pointer"
+                        onClick={() => router.push(`/release/${p.id}`)}
+                      >
+                        {p.name}
+                      </p>
                     </div>
                   )
                 })
@@ -129,8 +150,17 @@ export default function Song ({
 
           </div>
 
-          {status &&
-            <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews}/>
+          {reviews?.starStats &&
+            <div className={`
+              border-t pt-3 mt-2 border-gray-500
+              ${!session && 'pb-2 border-b mb-2'}
+            `}>
+              <Statistics stats={reviews.starStats}/>
+            </div>
+          }
+
+          {session &&
+            <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
           }
           
           {loading &&
