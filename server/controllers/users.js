@@ -416,6 +416,75 @@ const countFollow = async (req, res) => {
 
 }
 
+const allFollowers = async (req, res) => {
+  const { profileId, page = '1', userId, following } = req.query
+
+  const per_page = 30
+  const pageNumber = parseInt(page, 10) || 1
+  const isFollowingMode = following === 'true'
+
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+    const total = await prisma.follow.count({
+      where: isFollowingMode
+        ? { followerId: profileId }
+        : { followingId: profileId },
+    })
+
+    const follows = await prisma.follow.findMany({
+      where: isFollowingMode
+        ? { followerId: profileId }
+        : { followingId: profileId },
+      include: isFollowingMode
+        ? {
+            following: {
+              omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
+            },
+          }
+        : {
+            follower: {
+              omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
+            },
+          },
+      skip: (pageNumber - 1) * per_page,
+      take: per_page,
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const targetIds = follows
+      .map(f => (isFollowingMode ? f.followingId : f.followerId))
+      .filter(id => id !== userId)
+
+    let isFollowingMap = {}
+    if (userId && targetIds.length > 0) {
+      const usersFollows = await prisma.follow.findMany({
+        where: { followerId: userId, followingId: { in: targetIds } },
+        select: { followingId: true },
+      })
+
+      const followSet = new Set(usersFollows.map(f => f.followingId))
+      isFollowingMap = Object.fromEntries(
+        targetIds.map(id => [id, followSet.has(id)])
+      )
+    }
+
+    const data = {
+      total,
+      pages: Math.ceil(total / per_page),
+      page: pageNumber,
+      count: follows.length,
+      follows,
+      isFollowing: isFollowingMap,
+    }
+
+    successApiCall(req.method, req.originalUrl);
+    res.json(data);
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error);
+  }
+};
+
 module.exports = {
   getUsers,
   findUserById,
@@ -426,5 +495,6 @@ module.exports = {
   isFollowing,
   follow,
   unfollow,
-  countFollow
+  countFollow,
+  allFollowers
 };

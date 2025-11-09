@@ -1,10 +1,12 @@
 import useIsFollowing from "@/app/hooks/api/profile/useFollow";
 import { CalendarDays } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function MainDisplay ({profile} : {profile: UserProfile}) {
 
   const { data: session } = useSession()
+  const router = useRouter()
   const { 
     following, 
     follow, 
@@ -30,11 +32,13 @@ export default function MainDisplay ({profile} : {profile: UserProfile}) {
         </div>
         <div className="flex gap-4 text-sm">
           <div>
-            <p className="font-bold">Followers</p>
+            <p className="font-bold cursor-pointer hover:underline" onClick={() => router.push(`/profile/${profile.id}/followers`)}>
+              Followers
+            </p>
             <p>{followerCount}</p>
           </div>
           <div>
-            <p className="font-bold">Following</p>
+            <p className="font-bold cursor-pointer hover:underline" onClick={() => router.push(`/profile/${profile.id}/followings`)}>Following</p>
             <p>{followingCount}</p>
           </div>
         </div>
