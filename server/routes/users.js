@@ -11,6 +11,7 @@ router.get('/profile', userController.profile)
 
 router.get('/follow', userController.isFollowing)
 router.get('/countFollow', userController.countFollow)
+router.get('/allFollowers', userController.allFollowers)
 router.post('/follow', userController.follow)
 router.delete('/follow', userController.unfollow)
 

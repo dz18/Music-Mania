@@ -8,36 +8,35 @@ const ratingOptions = [1,2,3,4,5]
 
 async function main() {
 
+  let userlist = []
+
   // Create TEST Admin User
   const hashedPassword = await bcrypt.hash(process.env.PASSWORD, 10)
-  await prisma.user.upsert({
-    where: {username: process.env.USERNAME},
-    create: {
-      email: process.env.EMAIL,
-      password: hashedPassword,
-      username: process.env.USERNAME
-    },
-    update: {}
+  userlist.push({
+    username: process.env.USERNAME,
+    email: process.env.EMAIL,
+    password: hashedPassword,
+    username: process.env.USERNAME
   })
 
   // Create Users
-  let userPromises = []
-  for (let i = 0; i < 25; i++) {
-    userPromises.push(
-      prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          username: faker.internet.username(),
-          password: await bcrypt.hash(faker.internet.password(), 10),
-          avatar: faker.image.avatar(),
-          phoneNumber: faker.phone.number(),
-          aboutMe: faker.lorem.sentences(Math.floor(Math.random() * 6))
-        }
-      })
-    )
+  for (let i = 0; i < 100; i++) {
+    userlist.push({
+      email: faker.internet.email(),
+      username: faker.internet.username(),
+      password: await bcrypt.hash(faker.internet.password(), 10),
+      avatar: faker.image.avatar(),
+      phoneNumber: faker.phone.number(),
+      aboutMe: faker.lorem.sentences(Math.floor(Math.random() * 6))
+    })
   }
 
-  const users = await Promise.all(userPromises)
+  await prisma.user.createMany({
+    data: userlist,
+    skipDuplicates: true
+  })
+
+  const users = await prisma.user.findMany()
 
   // Create Artist
   const artistIDs = [
@@ -91,6 +90,27 @@ async function main() {
   }
 
   await Promise.all(artistReviewPromises)
+
+  const follow = []
+  for (let user of users) {
+    const count = Math.floor(Math.random() * (users.length - 1)) + 1
+    const shuffled = [...users].sort(() => Math.random() - 0.5)
+    const followList = shuffled.slice(0, count)
+
+    for (let f of followList) {
+      if (user.id === f.id) continue 
+
+      follow.push({
+        followerId: user.id,
+        followingId: f.id
+      })
+    }
+  }
+
+  await prisma.follow.createMany({
+    data: follow,
+    skipDuplicates: true,
+  })
 
 }
 
