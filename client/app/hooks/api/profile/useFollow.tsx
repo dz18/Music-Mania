@@ -12,35 +12,38 @@ export default function useIsFollowing (profileId: string) {
   const [followingCount, setFollowingCount] = useState(0)
 
   useEffect(() => {
-
-    const isFollowing = async () => {
-      if (!profileId || !session?.user?.id) return
+    const load = async () => {
+      if (!profileId) return
 
       try {
         setLoading(true)
-        const [following, countFollow] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
-            params: { userId : session.user.id, profileId: profileId}
-          }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/countFollow`, {
-            params: { profileId: profileId }
-          })
-        ])
-        
-        setFollowing(following.data)
-        setFollowerCount(countFollow.data.followers)
-        setFollowingCount(countFollow.data.following)
+
+        const countReq = axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/countFollow`,
+          { params: { profileId } }
+        )
+
+        const followingReq = session?.user?.id
+          ? axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
+              params: { userId: session.user.id, profileId }
+            })
+          : Promise.resolve({ data: false })
+
+        const [following, count] = await Promise.all([followingReq, countReq]);
+
+        setFollowing(following.data);
+        setFollowerCount(count.data.followers);
+        setFollowingCount(count.data.following);
 
       } catch (error) {
-        console.error(error)
+        console.error(error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    isFollowing()
-
-  }, [session?.user?.id, profileId])
+    load();
+  }, [session?.user?.id, profileId]);
 
   const follow = async () => {
     try {

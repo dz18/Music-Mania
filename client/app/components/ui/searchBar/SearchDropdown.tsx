@@ -2,7 +2,7 @@ import { Dispatch, JSX, SetStateAction, useEffect } from "react"
 import ArtistSuggestions from "./ArtistSuggestions"
 import UserSuggestions from "./UserSuggestions"
 import ReleaseSuggestions from "./ReleaseSuggestions"
-import IndeterminateLoadingBar from "../IndeterminateLoadingBar"
+import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
 
 
 export default function SearchDropdown ({

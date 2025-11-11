@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import { FormEvent, useState } from "react"
 
-export default function RegisterForm () {
+export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
 
   const path = usePathname()
 
@@ -56,8 +56,10 @@ export default function RegisterForm () {
       signIn('credentials',{
         email,
         password,
-        callbackUrl: '/'
+        callbackUrl: callbackUrl
       })
+      
+      
 
     } catch (error : any) {
     

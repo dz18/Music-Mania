@@ -8,13 +8,15 @@ export default function AuthContainer({
   title,
   subtitle,
   linkTitle,
-  linkHref
+  linkHref,
+  callbackUrl
 } : {
   form: ReactNode
   title: string
   subtitle: string,
   linkTitle: string,
-  linkHref: string
+  linkHref: string,
+  callbackUrl: string
 }) {
   return (
     <div className="flex flex-col min-h-screen items-center justify-center">
@@ -28,7 +30,7 @@ export default function AuthContainer({
 
         <Link 
           className="hover:bg-white/10 active:bg-white/30 p-1 rounded-full inline-flex items-center cursor-pointer"
-          href='/'
+          href={callbackUrl}
         >
           <ChevronLeft size={18}/>
         </Link>

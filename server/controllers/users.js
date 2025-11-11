@@ -254,7 +254,7 @@ const profile = async (req, res) => {
 
   try {
 
-    const [userProfile, artistStats, releaseStats, songStats, counts] = await Promise.all([
+    const [userProfile, artistStats, releaseStats, songStats] = await Promise.all([
       await prisma.user.findUnique({
         where: { id },
         include: {
@@ -426,6 +426,16 @@ const allFollowers = async (req, res) => {
   logApiCall(req.method, req.originalUrl)
 
   try {
+
+    const profile = await prisma.user.findUnique({
+      where: { id: profileId },
+      select: { username: true },
+    })
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' })
+    }
+
     const total = await prisma.follow.count({
       where: isFollowingMode
         ? { followerId: profileId }
@@ -476,6 +486,7 @@ const allFollowers = async (req, res) => {
       count: follows.length,
       follows,
       isFollowing: isFollowingMap,
+      username: profile.username
     }
 
     successApiCall(req.method, req.originalUrl);
@@ -483,7 +494,7 @@ const allFollowers = async (req, res) => {
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error);
   }
-};
+}
 
 module.exports = {
   getUsers,

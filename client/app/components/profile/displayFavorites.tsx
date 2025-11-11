@@ -46,7 +46,7 @@ export default function DisplayFavorites({profile} : {profile : UserProfile}){
                       {artist.artist.name}
                     </p>
                     <p className="text-gray-500">
-                      since {new Date(release.since).toLocaleDateString()}
+                      since {new Date(release?.since).toLocaleDateString()}
                     </p>
                   </div>
                 : (

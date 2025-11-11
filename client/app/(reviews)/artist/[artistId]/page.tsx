@@ -5,7 +5,6 @@ import Reviews from "@/app/components/reviews/Reviews"
 import ReviewBar from "@/app/components/reviews/ReviewBar"
 import Container from "@/app/components/ui/Container"
 import Footer from "@/app/components/ui/Footer"
-import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar"
 import Nav from "@/app/components/ui/NavigationBar"
 import { ReviewResponse } from "@/app/lib/types/api"
 import type { Artist } from "@/app/lib/types/artist"
@@ -13,6 +12,7 @@ import axios from "axios"
 import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
 import Statistics from "@/app/components/profile/statistics"
+import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
 
 export default function Artist ({
   params

@@ -5,7 +5,7 @@ import { stat } from "fs";
 import { Loader, Star, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
-import IndeterminateLoadingBar from "../ui/IndeterminateLoadingBar";
+import IndeterminateLoadingBar from "../ui/loading/IndeterminateLoadingBar";
 import { Song } from "@/app/lib/types/song";
 
 export default function ReviewModal ({
