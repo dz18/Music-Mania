@@ -1,7 +1,7 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 
-const userAgent = 'MusicMania/0.1.0 (dylan18zuniga@gmail.com)'
+const userAgent = process.env.USER_AGENT
 
 // Search Bar Functions
 

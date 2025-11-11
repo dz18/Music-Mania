@@ -77,7 +77,7 @@ export default function Followers ({
               </div>
 
               {session &&
-                session?.user.id !== f.followingId &&
+                session?.user.id !== f.followerId &&
                   <div className="flex items-center">
                     <button 
                       className={`
