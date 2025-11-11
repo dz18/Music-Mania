@@ -12,11 +12,11 @@ export default function fetchFollowers (profileId: string, following: boolean = 
 
   useEffect(() => {
  
-    fetchFollowers()
+    fetchFollows()
 
   }, [profileId, session?.user.id, page])
 
-  const fetchFollowers = async () => {
+  const fetchFollows = async () => {
     try {
       setLoading(true)
       const results = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/allFollowers`, {
@@ -66,6 +66,6 @@ export default function fetchFollowers (profileId: string, following: boolean = 
     }
   }
 
-  return { results, follow, unfollow, loading, setPage }
+  return { results, follow, unfollow, loading, setPage, fetchFollows }
 
 }

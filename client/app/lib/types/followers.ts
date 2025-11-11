@@ -27,5 +27,6 @@ interface FollowersResponse {
     id: string
   }[]
   total: number,
-  isFollowing: Record<string, boolean> // userId => followingStatus
+  isFollowing: Record<string, boolean> // userId : followingStatus
+  username: string
 }

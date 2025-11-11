@@ -4,7 +4,7 @@ import Reviews from "@/app/components/reviews/Reviews";
 import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
-import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar";
+import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import Nav from "@/app/components/ui/NavigationBar";
 import { Release, ReviewResponse } from "@/app/lib/types/api";
 import axios from "axios";

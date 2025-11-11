@@ -6,10 +6,12 @@ import SearchBar from "./searchBar/SearchBar"
 import { useSession } from "next-auth/react"
 import UserDropdown from "./navigationBar/UserDropdown"
 import AlertsDropdown from "./navigationBar/AlertsDropdown"
+import { usePathname } from "next/navigation"
 
 export default function Nav() {
 
   const {data : session} = useSession()
+  const pathname = usePathname()
 
   return (
     <nav className="absolute top-0 left-0 w-full z-50 px-6 py-3 max-h-15 h-full items-center">
@@ -49,7 +51,7 @@ export default function Nav() {
         :
           <Link 
             className="bg-teal-500 text-black hover:shadow-[0_0_10px_rgba(0,255,255,0.5)] transition px-2 py-1 rounded text-sm font-bold cursor-pointer font-mono active:bg-teal-500/50"
-            href='/sign-in'
+            href={`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`}
           >
             Sign In
           </Link>

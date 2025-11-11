@@ -4,7 +4,7 @@ import DiscographyTable from "@/app/components/artist/DiscographyTable";
 import Pagination from "@/app/components/artist/Pagination";
 import Container from "@/app/components/ui/Container";
 import Footer from "@/app/components/ui/Footer";
-import IndeterminateLoadingBar from "@/app/components/ui/IndeterminateLoadingBar";
+import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import Nav from "@/app/components/ui/NavigationBar";
 import UnderConstruction from "@/app/lib/fallback/UnderConstruction";
 import { ReleaseGroup } from "@/app/lib/types/api";

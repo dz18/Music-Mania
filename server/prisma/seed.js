@@ -1,5 +1,4 @@
 const { faker } = require('@faker-js/faker');
-const artistIDs = require('./seed/artistIDs.json')
 const prisma = require('./client');
 const bcrypt = require('bcrypt')
 

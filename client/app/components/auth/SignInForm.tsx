@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { FormEvent, useState } from "react"
 
-export default function SignInForm () {
+export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
 
   const router = useRouter()
 
@@ -17,7 +17,7 @@ export default function SignInForm () {
     password : ''
   })
 
-  const handleSignIn = async (e : FormEvent<HTMLFormElement  >) => {
+  const handleSignIn = async (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!email || !password) {
@@ -34,6 +34,7 @@ export default function SignInForm () {
         email, 
         password,
         redirect: false,
+        callbackUrl: callbackUrl
       })
 
       if (result?.error) {
@@ -47,7 +48,7 @@ export default function SignInForm () {
       }
       
       if (result?.ok) {
-        router.push('/')
+        router.push(callbackUrl)
       }
 
     } catch (error) {

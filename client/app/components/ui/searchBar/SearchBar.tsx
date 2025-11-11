@@ -4,7 +4,7 @@ import axios from "axios"
 import { Search } from "lucide-react"
 import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
-import IndeterminateLoadingBar from "../IndeterminateLoadingBar"
+import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
 
 export default function SearchBar () {
 
