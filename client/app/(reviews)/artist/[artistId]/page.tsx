@@ -13,6 +13,10 @@ import { useSession } from "next-auth/react"
 import { use, useEffect, useState } from "react"
 import Statistics from "@/app/components/profile/statistics"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
+import fetchArtist from "@/app/hooks/musicbrainz/fetchArtist"
+import LoadingBox from "@/app/components/ui/loading/loadingBox"
+import RefreshPage from "@/app/components/ui/RefreshPage"
+import { fetchData } from "next-auth/client/_utils"
 
 export default function Artist ({
   params
@@ -22,97 +26,101 @@ export default function Artist ({
 
   const { artistId } = use(params)
   const { data: session } = useSession()
+  const { artist, reviews, loading, setReviews, fetchData } = fetchArtist(artistId)
 
-  const [artist, setArtist] = useState<Artist | null>(null)
-  const [reviews, setReviews] = useState<ReviewResponse | null>(null)
-  const [avgRating, setAvgRating] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  console.log(loading)
 
-  useEffect(() => {
-    
-    const fetchData = async () => {
-      try {
-        setIsLoading(true)
-        const [artist, reviews] = await Promise.allSettled([
-          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
-            params : {id : artistId}
-          }),
-          await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
-            params: {id: artistId}
-          })
-        ])
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between">
+          <div className="flex flex-col gap-2">
+            <LoadingBox className="w-100 h-8"/>
+            <LoadingBox className="w-50 h-8"/>
+          </div>
+          <div className="flex">
+            <LoadingBox className="w-50 h-8"/>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <LoadingBox className="w-20 h-4"/>
+          <LoadingBox className="w-[25%] h-4"/>
+          <LoadingBox className="w-20 h-4"/>
+          <LoadingBox className="w-[50%] h-4"/>
+          <LoadingBox className="w-20 h-4"/>
+          <LoadingBox className="w-[25%] h-4"/>
+          <LoadingBox className="w-20 h-4"/>
+          <LoadingBox className="w-[75%] h-4"/>
+        </div>
+        <div className="flex flex-col gap-2">
+          <LoadingBox className="w-50 h-8"/>
+          <div className="flex h-40">
+            <LoadingBox className="w-full h-full"/>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <LoadingBox className="w-50 h-8"/>
+          <div className="flex h-40">
+            <LoadingBox className="w-full h-full"/>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-        if (artist.status === "fulfilled") {
-          setArtist(artist.value.data)
-        } else {
-          console.error("Artist fetch failed", artist.reason)
-        }
-
-        if (reviews.status === "fulfilled") {
-          setReviews(reviews.value.data)
-        } else {
-          console.error("Reviews fetch failed", reviews.reason)
-        }
-
-      } catch (error) {
-        console.error(error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchData()
-  }, [])
+  if (!artist) {
+    return (
+      <RefreshPage
+        func={fetchData}
+        title={'Artist Page'}
+        loading={loading}
+        note="Musicbrainz API Data fetched failed or Artist ID doesn't exist"
+      />
+    )
+  }
 
   return (
     <div>
-      <Nav/>
-      <Container>
-        <div className="mt-20 min-h-screen mb-5">
-          
-          <div className="gap-10">
+      <div className="gap-10">
 
-            <div className="flex gap-10">
-              {/* About */}
-              <About artist={artist} reviews={reviews}/>
-
-            </div>
-
-            {reviews?.starStats &&
-              <div className={`
-                border-t pt-3 mt-2 border-gray-500
-                ${!session && 'pb-2 border-b mb-2'}
-              `}>
-                <Statistics stats={reviews.starStats}/>
-              </div>
-            }
-
-            {/* Make a Review */}
-            {session && !isLoading &&
-              <>
-                <ReviewBar 
-                  item={artist} 
-                  type="artist" 
-                  reviews={reviews?.reviews} 
-                  setReviews={setReviews} 
-                />
-              </>
-            }
-
-            <div className="font-mono flex mt-2 justify-between items-center">
-            </div>
-            {isLoading &&
-              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
-            }
-            {reviews &&
-              <Reviews reviews={reviews.reviews}/>
-            }
-
-              
-          </div>
+        <div className="flex gap-10">
+          {/* About */}
+          <About artist={artist} reviews={reviews}/>
 
         </div>
-      </Container>
-      <Footer/>
+
+        {reviews?.starStats &&
+          <div className={`
+            border-t pt-3 mt-2 border-gray-500
+            ${!session && 'pb-2 border-b mb-2'}
+          `}>
+            <Statistics stats={reviews.starStats}/>
+          </div>
+        }
+
+        {/* Make a Review */}
+        {session && !loading &&
+          <>
+            <ReviewBar 
+              item={artist} 
+              type="artist" 
+              reviews={reviews?.reviews} 
+              setReviews={setReviews} 
+            />
+          </>
+        }
+
+        <div className="font-mono flex mt-2 justify-between items-center">
+        </div>
+        {loading &&
+          <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+        }
+        {reviews &&
+          <Reviews reviews={reviews.reviews}/>
+        }
+
+          
+      </div>
     </div>
   )
 }
