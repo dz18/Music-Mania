@@ -17,6 +17,7 @@ import fetchArtist from "@/app/hooks/musicbrainz/fetchArtist"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
 import { fetchData } from "next-auth/client/_utils"
+import LoadingText from "@/app/components/ui/loading/LoadingText"
 
 export default function Artist ({
   params
@@ -26,7 +27,7 @@ export default function Artist ({
 
   const { artistId } = use(params)
   const { data: session } = useSession()
-  const { artist, reviews, loading, setReviews, fetchData } = fetchArtist(artistId)
+  const { artist, reviews, loading, setReviews, fetchData, error } = fetchArtist(artistId)
 
   console.log(loading)
 
@@ -35,7 +36,7 @@ export default function Artist ({
       <div className="flex flex-col gap-4">
         <div className="flex justify-between">
           <div className="flex flex-col gap-2">
-            <LoadingBox className="w-100 h-8"/>
+            <LoadingText text="Searching for artist"/>
             <LoadingBox className="w-50 h-8"/>
           </div>
           <div className="flex">
@@ -106,6 +107,7 @@ export default function Artist ({
               type="artist" 
               reviews={reviews?.reviews} 
               setReviews={setReviews} 
+              stats={reviews?.starStats || []}
             />
           </>
         }

@@ -4,7 +4,6 @@ const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 const userAgent = process.env.USER_AGENT
 
 // Search Bar Functions
-
 const artists = async (req, res) => {
   const { q } = req.query
 
@@ -21,6 +20,12 @@ const artists = async (req, res) => {
         'User-Agent' : userAgent
       }
     })
+
+    if (!query.ok) {
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${query.status}`)
+      return res.status(query.status).json({error: `MusicBrainz server returned an error. Try again later.`})
+    }
+
     const data = await query.json()
 
     // Sort & Filter
@@ -64,10 +69,9 @@ const releases = async (req, res) => {
       }
     })
 
-
     if (!query.ok) {
-      errorApiCall(req.method, req.originalUrl, 'Query Failed')
-      return res.status(500).json({error : 'Error'})
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${query.status}`)
+      return res.status(query.status).json({error: `MusicBrainz server returned an error. Try again later or check the release ID.`})
     }
 
     const data = await query.json()
@@ -120,6 +124,11 @@ const getArtist = async (req, res) => {
         'User-Agent' : userAgent
       }
     })
+
+    if (!fetchArtist.ok) {
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchArtist.status}`)
+      return res.status(fetchArtist.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
+    }
 
     const artistData = await fetchArtist.json()
 
@@ -297,7 +306,7 @@ const getArtist = async (req, res) => {
       urls: URLRelations
     }
 
-    // console.log(artist)
+    console.log(artist)
     successApiCall(req.method, req.originalUrl)
     res.json(artist)
   } catch (error) {
@@ -335,6 +344,11 @@ const discography = async (req, res) => {
         'User-Agent' : userAgent
       }
     }) 
+
+    if (!releases.ok) {
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${releases.status}`)
+      return res.status(releases.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
+    }
 
     const releasesData = await releases.json()
     
@@ -404,8 +418,18 @@ const discography = async (req, res) => {
     })
 
   } catch (error) {
-    console.error(error)
+     
+    if (error.cause && error.cause.code === 'ECONNRESET') {
+      console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
+      errorApiCall(req.method, req.originalUrl, error.message)
+      return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
+    }
+    
+    console.error('[UNEXPECTED ERROR] Failed fetching discography:', error)
+    errorApiCall(req.method, req.originalUrl, error.message)
+    return res.status(500).json({ error: 'Failed to fetch discography data.' })
   }
+  
 }
 
 const getRelease = async (req, res) => {
@@ -420,7 +444,10 @@ const getRelease = async (req, res) => {
       }
     })
 
-    console.log(albums)
+    if (!albums.ok) {
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${albums.status}`)
+      return res.status(albums.status).json({error: `MusicBrainz server returned an error. Try again later or check the release ID.`})
+    }
 
     const albumsJSON = await albums.json()
     const albumData = albumsJSON.releases
@@ -466,22 +493,40 @@ const getRelease = async (req, res) => {
       }
     })
 
+    
+
     const first = sorted[0]
     
     const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${releaseId}`)
-    const coverArtJSON = await FetchCoverArt.json()
-    const coverArt = coverArtJSON.images.filter(img => img.front === true)
+
+    let coverArt = null
+    if (FetchCoverArt.ok) {
+      const coverArtJSON = await FetchCoverArt.json()
+      coverArt = coverArtJSON.images.filter(img => img.front === true)
+    }
+
+    console.log(FetchCoverArt)
+
+
 
     //console.log(sorted)
-    console.log(first)
+    //console.log(first)
     successApiCall(req.method, req.originalUrl)
     return res.json({
       album: first,
-      coverArtUrl: coverArt[0].image
+      coverArtUrl: coverArt && coverArt[0].image
     })
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    if (error.cause && error.cause.code === 'ECONNRESET') {
+      console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
+      errorApiCall(req.method, req.originalUrl, error.message)
+      return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
+    }
+    
+    console.error('[UNEXPECTED ERROR] Failed fetching release:', error)
+    errorApiCall(req.method, req.originalUrl, error.message)
+    return res.status(500).json({ error: 'Failed to fetch release data.' })
   }
 }
 
@@ -502,6 +547,11 @@ const getSong = async (req, res) => {
         'User-Agent': userAgent
       }
     })
+
+    if (!fetchSong.ok) {
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchSong.status}`)
+      return res.status(fetchSong.status).json({error: `MusicBrainz server returned an error. Try again later or check the song ID.`})
+    }
 
     const song = await fetchSong.json()
     // console.log(song)
@@ -572,8 +622,13 @@ const findSingleId = async (req, res) => {
     const fetchSingle = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${rgId}&status=official&type=single&inc=release-groups+recordings&fmt=json`, {
       headers: {
         'User-Agent': userAgent
-      } 
+      }
     })
+
+    if (!fetchSingle.ok) {
+      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchSingle.status}`)
+      return res.status(fetchSingle.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
+    }
 
     const single = await fetchSingle.json()
 

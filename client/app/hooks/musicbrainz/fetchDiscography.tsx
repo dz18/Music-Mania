@@ -67,7 +67,7 @@ export default function fetchDiscography(artistId: string) {
 
     } catch (error : any) {
       console.error(error)
-      setError(error?.message ?? 'error')
+      setError(error?.response.data.error ?? 'error')
     } finally {
       setTableLoad(false)
     }

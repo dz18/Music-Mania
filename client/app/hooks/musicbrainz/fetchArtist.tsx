@@ -8,6 +8,7 @@ export default function fetchArtist (artistId: string) {
   const [loading, setLoading] = useState(false)
   const [artist, setArtist] = useState<Artist | null>(null)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -29,6 +30,7 @@ export default function fetchArtist (artistId: string) {
         setArtist(artist.value.data)
       } else {
         console.error("Artist fetch failed", artist.reason)
+        setError(artist.reason)
       }
 
       if (reviews.status === "fulfilled") {
@@ -44,6 +46,6 @@ export default function fetchArtist (artistId: string) {
     }
   }
 
-  return { artist, reviews, loading, fetchData, setReviews, setArtist }
+  return { artist, reviews, loading, fetchData, setReviews, setArtist, error }
 
 }

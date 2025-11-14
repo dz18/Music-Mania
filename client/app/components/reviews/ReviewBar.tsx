@@ -16,13 +16,15 @@ export default function ReviewBar ({
   type,
   reviews,
   setReviews,
-  coverArtUrl
+  coverArtUrl,
+  stats
 } : {
   item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song',
   reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
   coverArtUrl?: string
+  stats: StarCount[] 
 }) {
 
   const [open, setOpen] = useState(false)
@@ -59,6 +61,7 @@ export default function ReviewBar ({
           reviews={reviews}
           setReviews={setReviews}
           coverArtUrl={coverArtUrl}
+          stats={stats}
         />
       }
     </div>

@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import IndeterminateLoadingBar from "../ui/loading/IndeterminateLoadingBar";
 import { Song } from "@/app/lib/types/song";
+import { count } from "console";
 
 export default function ReviewModal ({
   item,
@@ -16,6 +17,7 @@ export default function ReviewModal ({
   reviews,
   setReviews,
   coverArtUrl,
+  stats
 } : {
   item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song'
@@ -24,6 +26,7 @@ export default function ReviewModal ({
   reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[] | null
   setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
   coverArtUrl?: string
+  stats: StarCount[]
 }) {
 
   const {data: session, status} = useSession()
@@ -48,7 +51,7 @@ export default function ReviewModal ({
         console.log('review MODEL:', review.data)
         if (!review.data) return
         setReviewExist(review.data ? true : false)
-        setTitle(review.data.title)
+        setTitle(review.data.title || '')
         setRating(review.data.rating)
         setReview(review.data.review)
         setCurrentStatus(review.data.status.charAt(0) + review.data.status.slice(1).toLowerCase())
@@ -63,14 +66,15 @@ export default function ReviewModal ({
 
   const updateReviews = (res: any, status?: 'PUBLISHED' | 'DRAFT' | 'DELETED') => {
 
-    console.log('action',res.data.action)
-    console.log('status',status)
+    console.log(res.data)
     setReviews(prev => {
       if (status === 'PUBLISHED') {
         if (!prev) {
+
           return {
             avgRating: res.data.avg,
-            reviews: [res.data.review]
+            reviews: [res.data.review],
+            starStats: res.data.starStats
           } as ReviewResponse
         }
 
@@ -82,12 +86,14 @@ export default function ReviewModal ({
                   ? res.data.review
                   : r
               ))
-            : [res.data.review, ...prev.reviews]
+            : [res.data.review, ...prev.reviews],
+          starStats: res.data.starStats
         }
       } else if (status === 'DRAFT' || status === 'DELETED') {
         return {
           avgRating: res.data.avg,
-          reviews: prev?.reviews.filter(r => r.userId !== session?.user.id)
+          reviews: prev?.reviews.filter(r => r.userId !== session?.user.id),
+          starStats: res.data.starStats
         } as ReviewResponse
       } 
 

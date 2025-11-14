@@ -1,8 +1,9 @@
 import { useRouter } from "next/navigation"
 import NoResults from "./NoResults"
+import { Dispatch, SetStateAction } from "react"
 
 export default function UserSuggestions ({
-  suggestions
+  suggestions,
 } : {
   suggestions : UserQuery[] | null
 }) {

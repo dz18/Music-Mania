@@ -1,9 +1,9 @@
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { Dispatch, SetStateAction, useEffect } from "react"
 import NoResults from "./NoResults"
 
 export default function ReleaseSuggestions ({
-  suggestions
+  suggestions,
 } : {
   suggestions : ReleaseQuery[] | null
 }) {
@@ -13,6 +13,7 @@ export default function ReleaseSuggestions ({
   useEffect(() => {
     console.log('suggestions:', suggestions)
   }, [suggestions])
+
 
   return (
     <>
