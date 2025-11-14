@@ -204,6 +204,7 @@ const publishOrDraft = async (req, res) => {
 
     let published
     let newAvg
+    let stats
     if (type === 'ARTIST') {
       await prisma.artist.upsert({
         where: { id: itemId },
@@ -211,18 +212,24 @@ const publishOrDraft = async (req, res) => {
         create: { id: itemId, name: itemName}
       });
 
-      [published, newAvg] = await Promise.all([
-        prisma.userArtistReviews.upsert({
-          where : { userId_artistId: { userId, artistId: itemId } },
-          update: updateData,
-          create: {...createData, artistId: itemId},
-          include: { user: { omit: { password: true } }, },
-        }),
-        prisma.userArtistReviews.aggregate({
-          where: { artistId: itemId, status: 'PUBLISHED' },
-          _avg: { rating: true }
-        })
-      ])
+      published = await prisma.userArtistReviews.upsert({
+        where : { userId_artistId: { userId, artistId: itemId } },
+        update: updateData,
+        create: {...createData, artistId: itemId},
+        include: { user: { omit: { password: true } }, },
+      })
+
+      newAvg = await prisma.userArtistReviews.aggregate({
+        where: { artistId: itemId, status: 'PUBLISHED' },
+        _avg: { rating: true }
+      }) 
+
+      stats = await prisma.userArtistReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { artistId: itemId }
+      })
+
     } else if (type === 'RELEASE') {
       await prisma.release.upsert({
         where: { id: itemId },
@@ -230,36 +237,49 @@ const publishOrDraft = async (req, res) => {
         create: { id: itemId, title: itemTitle, artistCredit, coverArt}
       });
 
-      [published, newAvg] = await Promise.all([
-        prisma.userReleaseReviews.upsert({
-          where : { userId_releaseId: { userId, releaseId: itemId } },
-          update: updateData,
-          create: {...createData, releaseId: itemId},
-          include: { user: { omit: { password: true } }, },
-        }),
-        prisma.userReleaseReviews.aggregate({
-          where: { releaseId: itemId, status: 'PUBLISHED' },
-          _avg: { rating: true }
-        })
-      ])
+      published = await prisma.userReleaseReviews.upsert({
+        where : { userId_releaseId: { userId, releaseId: itemId } },
+        update: updateData,
+        create: {...createData, releaseId: itemId},
+        include: { user: { omit: { password: true } }, },
+      })
+
+      newAvg = await prisma.userReleaseReviews.aggregate({
+        where: { releaseId: itemId, status: 'PUBLISHED' },
+        _avg: { rating: true }
+      })
+
+      stats = await prisma.userReleaseReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { releaseId: itemId }
+      })
+
     } else if (type === 'SONG') {
       await prisma.song.upsert({
         where: { id: itemId },
         update: {},
         create: { id: itemId, title: itemTitle, artistCredit, coverArt}
-      });
-      [published, newAvg] = await Promise.all([
-        prisma.userSongReviews.upsert({
-          where : { userId_songId: { userId, songId: itemId } },
-          update: updateData,
-          create: {...createData, songId: itemId},
-          include: { user: { omit: { password: true } }, },
-        }),
-        prisma.userSongReviews.aggregate({
-          where: { songId: itemId, status: 'PUBLISHED' },
-          _avg: { rating: true }
-        })
-      ])
+      })
+      
+      published = await prisma.userSongReviews.upsert({
+        where : { userId_songId: { userId, songId: itemId } },
+        update: updateData,
+        create: {...createData, songId: itemId},
+        include: { user: { omit: { password: true } }, },
+      })
+
+      newAvg = await prisma.userSongReviews.aggregate({
+        where: { songId: itemId, status: 'PUBLISHED' },
+        _avg: { rating: true }
+      })
+
+      stats = await prisma.userSongReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { songId: itemId }
+      })
+
     }
 
     const action = published.createdAt.getTime() === published.updatedAt.getTime() ? 'CREATED' : 'UPDATED'
@@ -267,8 +287,21 @@ const publishOrDraft = async (req, res) => {
     const average = newAvg._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
 
+    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
+    for (const group of [...stats]) {
+      starCount[group.rating] += group._count.rating
+    }
+    const starStats = Object.entries(starCount)
+      .map(([rating, count]) => ({ rating: +rating, count }))
+      .sort((a, b) => b.rating - a.rating)
+
     successApiCall(req.method, req.originalUrl)
-    return res.json({action: action, review: published, avg: avgRounded ?? 0 })
+    return res.json({
+      action: action, 
+      review: published, 
+      avg: avgRounded ?? 0,
+      starStats 
+    })
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)

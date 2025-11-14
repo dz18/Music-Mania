@@ -1,10 +1,10 @@
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { Dispatch, SetStateAction, useEffect } from "react"
 import NoResults from "./NoResults"
 import Link from "next/link"
 
 export default function ArtistSuggestions ({
-  suggestions
+  suggestions,
 } : {
   suggestions : ArtistQuery[] | null
 }) {

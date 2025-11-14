@@ -36,12 +36,14 @@ export default function About ({
           </p>
         </div>
       </div>
-      <div>
-        <p className="text-sm text-gray-500 font-bold">
-          {artist?.type === 'Person' ? 'Born' : 'Formed'}
-        </p>
-        <p>{artist?.lifeSpan.begin}</p>
-      </div>
+      {artist?.lifeSpan.begin !== null && artist?.lifeSpan.begin !== null &&
+        <div>
+          <p className="text-sm text-gray-500 font-bold">
+            {artist?.type === 'Person' ? 'Born' : 'Formed'}
+          </p>
+          <p>{artist?.lifeSpan.begin}</p>
+        </div>
+      }
       {artist?.lifeSpan.ended &&
         <div>
           <p className="text-sm text-gray-500 font-bold">
@@ -76,7 +78,7 @@ export default function About ({
           <p>{aliases.join(', ')}</p>
         </div>
       }
-      {artist?.genres &&
+      {artist?.genres.length !== 0 &&
         <div>
           <p className="text-sm text-gray-500 font-bold">Genres</p>
           {artist?.genres.map((genre, i) => (
@@ -94,7 +96,9 @@ export default function About ({
           ))}
         </div>
       }
-      <ExternalResources artist={artist}/>
+      {artist?.urls.length !== 0 &&
+        <ExternalResources artist={artist}/>
+      }
       <Link href={`${pathname}/discography`} className="inline-flex text-teal-500 font-bold hover:underline">
         See discography
       </Link>

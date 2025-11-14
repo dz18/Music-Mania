@@ -5,8 +5,11 @@ import { Search } from "lucide-react"
 import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
 import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
+import { usePathname } from "next/navigation"
 
 export default function SearchBar () {
+
+  const pathname = usePathname()
 
   const [query, setQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(Boolean)
@@ -67,6 +70,9 @@ export default function SearchBar () {
     }
   }, [])
 
+  useEffect(() => {
+    setShowDropdown(false)
+  }, [pathname])
 
   const submit = (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()
