@@ -345,13 +345,17 @@ const discography = async (req, res) => {
       }
     }) 
 
+    console.log(releases)
+
     if (!releases.ok) {
       errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${releases.status}`)
       return res.status(releases.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
     }
 
-    const releasesData = await releases.json()
     
+
+    const releasesData = await releases.json()
+    console.log(releasesData)
     const releaseGroups = releasesData['release-groups']
     const sorted = await Promise.all(
       [...releaseGroups].sort((a, b) => {

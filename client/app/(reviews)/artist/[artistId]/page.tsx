@@ -107,7 +107,6 @@ export default function Artist ({
               type="artist" 
               reviews={reviews?.reviews} 
               setReviews={setReviews} 
-              stats={reviews?.starStats || []}
             />
           </>
         }

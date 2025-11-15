@@ -1,6 +1,6 @@
 import { ReviewResponse } from "@/app/lib/types/api"
 import { Song } from "@/app/lib/types/song"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import { useEffect, useState } from "react"
 
 export default function fetchSong (songId: string) {
@@ -10,6 +10,7 @@ export default function fetchSong (songId: string) {
   const [loading, setLoading] = useState(false)
   const [coverArt, setCoverArt] = useState('')
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -28,21 +29,26 @@ export default function fetchSong (songId: string) {
       ])
 
       if (songResult.status === 'fulfilled') {
-        console.log(songResult.value.data.song)
         setSong(songResult.value.data.song)
         setCoverArt(songResult.value.data.coverArtUrl)
       } else {
-        console.error("Failed:", songResult.reason)
+        const error = songResult.reason as AxiosError<{error: string}>
+        console.error("Song fetch failed", error.response?.data.error)
+        setError(error.response?.data.error ?? error.message)
       }
 
       if (reviews.status === 'fulfilled') {
         setReviews(reviews.value.data)
       } else {
-        console.error("Failed:", reviews.reason)
+        const error = reviews.reason as AxiosError<{error: string}>
+        console.error("Review fetch failed", error.response?.data.error)
+        setError(error.response?.data.error ?? error.message)
       }
 
     } catch (error) {
-      console.error(error)
+      const err = error as AxiosError<{error: string}>
+      console.error("Review fetch failed", err.response?.data.error)
+      setError(err.response?.data.error ?? err.message)
     } finally {
       setLoading(false)
     }

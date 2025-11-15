@@ -1,6 +1,6 @@
 import { ReleaseGroup } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
 
 export default function fetchDiscography(artistId: string) {
@@ -24,6 +24,8 @@ export default function fetchDiscography(artistId: string) {
     try {
       setArtistLoad(true)
       setTableLoad(true)
+      setError(null)
+
       const [discog, artist] = await Promise.all([
         axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography`, {
           params: { artistId, type: 'album' }
@@ -35,13 +37,13 @@ export default function fetchDiscography(artistId: string) {
 
       const discography = discog.data
 
-      console.log(discography.data)
       setDiscography(discography.data)
       setCount(discography.count)
       setArtist(artist.data)
     } catch (error : any) {
-      console.error(error)
-      setError(error?.message ?? 'error')
+      const err = error as AxiosError<{error: string}>
+      console.error("Review fetch failed", err.response?.data.error)
+      setError(err.response?.data.error ?? err.message)
     } finally {
       setArtistLoad(false)
       setTableLoad(false)
@@ -50,7 +52,6 @@ export default function fetchDiscography(artistId: string) {
 
   const fetchDiscog = useCallback(async (artistId: string, type: 'album' | 'single' | 'ep', offset: number = 0) => {
     try {
-      console.log(offset)
       setError(null)
       setTableLoad(true)
       setActive(type)
@@ -66,8 +67,9 @@ export default function fetchDiscography(artistId: string) {
       setCount(discography.count)
 
     } catch (error : any) {
-      console.error(error)
-      setError(error?.response.data.error ?? 'error')
+      const err = error as AxiosError<{error: string}>
+      console.error("Review fetch failed", err.response?.data.error)
+      setError(err.response?.data.error ?? err.message)
     } finally {
       setTableLoad(false)
     }

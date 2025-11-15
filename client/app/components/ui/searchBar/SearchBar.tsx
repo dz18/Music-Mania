@@ -1,61 +1,23 @@
 'use client'
 
-import axios from "axios"
 import { Search } from "lucide-react"
 import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
-import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
-import { usePathname } from "next/navigation"
+import useQueryArtists from "@/app/hooks/musicbrainz/useQueryArtist"
 
 export default function SearchBar () {
 
-  const pathname = usePathname()
-
   const [query, setQuery] = useState('')
-  const [showDropdown, setShowDropdown] = useState(Boolean)
-  const [loading, setLoading] = useState(false)
-
-  const [suggestions, setSuggestions] = useState<ArtistQuery[] | UserQuery[] | ReleaseQuery[] | null>(null)
   const [selectedType, setSelectedType] = useState('artists')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const fetchSuggestions = async () => {
-        if (query.trim() && query) {
-          try {
-            setLoading(true)
-            let res
-            if (selectedType === 'artists' || selectedType === 'releases') {
-              res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedType}`, {
-                params: { q: query }
-              })
-            } else if (selectedType === 'users') {
-              res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/query`, {
-                params: { q: query }
-              })
-            } else {
-              throw new Error('Unknown Type')
-            }
-
-            const data = res.data
-            console.log(data)
-            setSuggestions(data || [])
-            setShowDropdown(true)
-          } catch (error) {
-            console.error('Error fetching suggestions:', error)
-            setSuggestions([])
-          } finally {
-            setLoading(false)
-          }
-        } 
-      }
-      
-      fetchSuggestions()
-    }, 500)
-
-    return () => clearTimeout(handler);
-  }, [query, selectedType])
+  const {
+    showDropdown,
+    setShowDropdown,
+    loading,
+    suggestions,
+    setSuggestions
+  } = useQueryArtists(query, selectedType)
 
   useEffect(() => {
     function clickOutside(event: MouseEvent) {
@@ -69,10 +31,6 @@ export default function SearchBar () {
       document.removeEventListener('mousedown', clickOutside)
     }
   }, [])
-
-  useEffect(() => {
-    setShowDropdown(false)
-  }, [pathname])
 
   const submit = (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()

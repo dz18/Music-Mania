@@ -1,6 +1,6 @@
 import { ReviewResponse } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 
 export default function fetchArtist (artistId: string) {
@@ -18,10 +18,10 @@ export default function fetchArtist (artistId: string) {
     try {
       setLoading(true)
       const [artist, reviews] = await Promise.allSettled([
-        await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
           params : {id : artistId}
         }),
-        await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
           params: {id: artistId}
         })
       ])
@@ -29,14 +29,17 @@ export default function fetchArtist (artistId: string) {
       if (artist.status === "fulfilled") {
         setArtist(artist.value.data)
       } else {
-        console.error("Artist fetch failed", artist.reason)
-        setError(artist.reason)
+        const error = artist.reason as AxiosError<{error: string}>
+        console.error("Artist fetch failed", error.response?.data.error)
+        setError(error.response?.data.error ?? error.message)
       }
 
       if (reviews.status === "fulfilled") {
         setReviews(reviews.value.data)
       } else {
-        console.error("Reviews fetch failed", reviews.reason)
+        const error = reviews.reason as AxiosError<{error: string}>
+        console.error("Review fetch failed", error.response?.data.error)
+        setError(error.response?.data.error ?? error.message)
       }
 
     } catch (error) {

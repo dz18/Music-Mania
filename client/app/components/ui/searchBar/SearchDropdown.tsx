@@ -17,7 +17,7 @@ export default function SearchDropdown ({
   type : string
   setType : Dispatch<SetStateAction<string>>
   suggestions: any
-  setSuggestions: Dispatch<SetStateAction<ArtistQuery[] | UserQuery[] | ReleaseQuery[] | null>>
+  setSuggestions: Dispatch<SetStateAction<Suggestion | null>>
   loading: boolean
 }) {
 

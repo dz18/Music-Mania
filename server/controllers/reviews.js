@@ -26,7 +26,7 @@ const artistReviews = async(req, res) => {
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { artistId: id }
+        where: { artistId: id, status: 'PUBLISHED'}
       })
     ])
     const average = rating._avg.rating
@@ -71,7 +71,7 @@ const releaseReviews = async(req, res) => {
       prisma.userReleaseReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { releaseId: id }
+        where: { releaseId: id, status: 'PUBLISHED'}
       })
     ])
 
@@ -118,7 +118,7 @@ const songReviews = async(req, res) => {
       prisma.userReleaseReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { releaseId: id }
+        where: { releaseId: id, status: 'PUBLISHED' }
       })
     ])
 
@@ -227,7 +227,7 @@ const publishOrDraft = async (req, res) => {
       stats = await prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { artistId: itemId }
+        where: { artistId: itemId, status: 'PUBLISHED' }
       })
 
     } else if (type === 'RELEASE') {
@@ -252,7 +252,7 @@ const publishOrDraft = async (req, res) => {
       stats = await prisma.userReleaseReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { releaseId: itemId }
+        where: { releaseId: itemId, status: 'PUBLISHED' }
       })
 
     } else if (type === 'SONG') {
@@ -277,7 +277,7 @@ const publishOrDraft = async (req, res) => {
       stats = await prisma.userSongReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { songId: itemId }
+        where: { songId: itemId, status: 'PUBLISHED' }
       })
 
     }
@@ -317,6 +317,7 @@ const deleteReview = async (req, res) => {
 
     let deleted
     let newAvg
+    let stats
     if (type === 'artist') {
       deleted = await prisma.userArtistReviews.delete({
         where: { userId_artistId: { userId, artistId: itemId } }
@@ -324,6 +325,11 @@ const deleteReview = async (req, res) => {
       newAvg = await prisma.userArtistReviews.aggregate({
         where: { artistId: itemId, status: 'PUBLISHED'},
         _avg: { rating: true}
+      })      
+      stats = await prisma.userArtistReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { artistId: itemId, status: 'PUBLISHED' }
       })
     } else if (type === 'release') {
       deleted = await prisma.userReleaseReviews.delete({
@@ -332,6 +338,11 @@ const deleteReview = async (req, res) => {
       newAvg = await prisma.userReleaseReviews.aggregate({
         where: { releaseId: itemId, status: 'PUBLISHED'},
         _avg: { rating: true}
+      })      
+      stats = await prisma.userReleaseReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { releaseId: itemId, status: 'PUBLISHED' }
       })
     } else if (type === 'song') {
       deleted = await prisma.userSongReviews.delete({
@@ -340,11 +351,24 @@ const deleteReview = async (req, res) => {
       newAvg = await prisma.userSongReviews.aggregate({
         where: { songId: itemId, status: 'PUBLISHED'},
         _avg: { rating: true}
+      })      
+      stats = await prisma.userSongReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { songId: itemId, status: 'PUBLISHED' }
       })
     }
 
+    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
+    for (const group of [...stats]) {
+      starCount[group.rating] += group._count.rating
+    }
+    const starStats = Object.entries(starCount)
+      .map(([rating, count]) => ({ rating: +rating, count }))
+      .sort((a, b) => b.rating - a.rating)
+
     successApiCall(req.method, req.originalUrl)
-    return res.json({action: 'DELETED', review: deleted, avg: newAvg._avg.rating})
+    return res.json({action: 'DELETED', review: deleted, avg: newAvg._avg.rating, starStats})
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }

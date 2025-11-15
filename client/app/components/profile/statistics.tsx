@@ -19,7 +19,7 @@ export default function Statistics({ stats }: { stats: StarCount[] }) {
                 className="bg-teal-500 h-5 border-2 border-gray-300 transition-all"
                 style={{
                   width: `${maxCount > 0 ? (stat.count / maxCount) * 100 : 0}%`,
-                  backgroundColor: `hsl(${stat.rating * 25}, 85%, 45%)`, 
+                  backgroundColor: `hsl(${(stat.rating - 1) * 30}, 85%, 45%)`, 
                 }}
               />
             }

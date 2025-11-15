@@ -175,7 +175,7 @@ export default function Song ({
       }
 
       {session &&
-        <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt} stats={reviews?.starStats || []}/>
+        <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
       }
       
       {loading &&
