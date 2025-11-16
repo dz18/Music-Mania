@@ -1,22 +1,19 @@
 import { ReviewResponse } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
 import axios, { AxiosError } from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export default function fetchArtist (artistId: string) {
+export default function useFetchArtist (artistId: string) {
   
   const [loading, setLoading] = useState(false)
   const [artist, setArtist] = useState<Artist | null>(null)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
+      setError(null)
       const [artist, reviews] = await Promise.allSettled([
         axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
           params : {id : artistId}
@@ -47,7 +44,11 @@ export default function fetchArtist (artistId: string) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [artistId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   return { artist, reviews, loading, fetchData, setReviews, setArtist, error }
 

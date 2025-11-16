@@ -1,10 +1,9 @@
 import { ReviewResponse } from "@/app/lib/types/api"
 import { Song } from "@/app/lib/types/song"
 import axios, { AxiosError } from "axios"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
-export default function fetchSong (songId: string) {
-
+export default function useFetchSong (songId: string) {
 
   const [song, setSong] = useState<Song | null>(null)
   const [loading, setLoading] = useState(false)
@@ -12,11 +11,7 @@ export default function fetchSong (songId: string) {
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const [songResult, reviews] = await  Promise.allSettled([
@@ -52,7 +47,11 @@ export default function fetchSong (songId: string) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [songId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   return {
     song,
@@ -60,7 +59,8 @@ export default function fetchSong (songId: string) {
     coverArt,
     reviews,
     setReviews,
-    fetchData
+    fetchData,
+    error
   }
 
 }

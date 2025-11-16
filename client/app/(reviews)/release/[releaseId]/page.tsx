@@ -8,10 +8,11 @@ import { use, useState } from "react"
 import Tracklist from "@/app/components/album/Tracklist";
 import TextContent from "@/app/components/album/TextContent";
 import Statistics from "@/app/components/profile/statistics";
-import fetchRelease from "@/app/hooks/musicbrainz/fetchRelease";
+import fetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
 import RefreshPage from "@/app/components/ui/RefreshPage";
+import useFetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 
 export default function AlbumPage ({
   params
@@ -30,7 +31,7 @@ export default function AlbumPage ({
     error,
     setReviews,
     fetchData
-  } = fetchRelease(releaseId)
+  } = useFetchRelease(releaseId)
 
   if (loading) {
     return (

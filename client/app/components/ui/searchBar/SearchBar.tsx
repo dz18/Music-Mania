@@ -3,7 +3,7 @@
 import { Search } from "lucide-react"
 import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
-import useQueryArtists from "@/app/hooks/musicbrainz/useQueryArtist"
+import useSearchQuery from "@/app/hooks/musicbrainz/useSearchQuery"
 
 export default function SearchBar () {
 
@@ -16,8 +16,10 @@ export default function SearchBar () {
     setShowDropdown,
     loading,
     suggestions,
-    setSuggestions
-  } = useQueryArtists(query, selectedType)
+    setSuggestions,
+    error,
+    fetchSuggestions
+  } = useSearchQuery(query, selectedType)
 
   useEffect(() => {
     function clickOutside(event: MouseEvent) {
@@ -69,6 +71,8 @@ export default function SearchBar () {
         suggestions={suggestions}
         setSuggestions={setSuggestions}
         loading={loading}
+        error={error}
+        fetch={fetchSuggestions}
       />
 
     </div>

@@ -47,7 +47,7 @@ const artists = async (req, res) => {
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
-    return res.status(400).json({error : 'Error fetching suggested artist'})
+    return res.status(400).json({error : 'Error fetching suggested artists. Refresh results or try again later.'})
   }
 }
 
@@ -83,7 +83,7 @@ const releases = async (req, res) => {
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
-    return res.status(400).json({error : 'Error fetching suggested releases'})
+    return res.status(400).json({error : 'Error fetching suggested releases. Refresh Results or try again later.'})
   }
 
 }
@@ -125,6 +125,7 @@ const getArtist = async (req, res) => {
       }
     })
 
+    console.log(fetchArtist)
     if (!fetchArtist.ok) {
       errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchArtist.status}`)
       return res.status(fetchArtist.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
@@ -306,12 +307,12 @@ const getArtist = async (req, res) => {
       urls: URLRelations
     }
 
-    console.log(artist)
+    // console.log(artist)
     successApiCall(req.method, req.originalUrl)
     res.json(artist)
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
-    return res.status(400).json({error : 'Error fetching suggested releases'})
+    return res.status(400).json({error : 'Error fetching Artist'})
   }
 
 }

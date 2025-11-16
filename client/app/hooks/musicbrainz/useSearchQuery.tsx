@@ -1,13 +1,14 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-export default function useQueryArtists(query: string, selectedType: string) {
+export default function useSearchQuery(query: string, selectedType: string) {
   
   const pathname = usePathname()
   const [showDropdown, setShowDropdown] = useState<boolean>(false)
   const [loading, setLoading] = useState(false)
   const [suggestions, setSuggestions] = useState<Suggestion | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     setShowDropdown(false)
@@ -22,6 +23,8 @@ export default function useQueryArtists(query: string, selectedType: string) {
 
     try {
       setLoading(true)
+      setError(null)
+
       let res
       if (selectedType === 'artists' || selectedType === 'releases') {
         res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedType}`, {
@@ -40,11 +43,14 @@ export default function useQueryArtists(query: string, selectedType: string) {
       setSuggestions(data || [])
       setShowDropdown(true)
     } catch (error) {
-      console.error('Error fetching suggestions:', error)
+      const err = error as AxiosError<{error: string}>
+      console.error("Review fetch failed", err.response?.data.error)
+      setError(err.response?.data.error ?? err.message)
       setSuggestions([])
     } finally {
       setLoading(false)
     }
+
   }, [query, selectedType])
 
   useEffect(() => {
@@ -60,7 +66,9 @@ export default function useQueryArtists(query: string, selectedType: string) {
     setShowDropdown,
     loading,
     suggestions,
-    setSuggestions
+    setSuggestions,
+    error,
+    fetchSuggestions
   }
 
 }

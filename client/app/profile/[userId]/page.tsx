@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState } from "react"
-import fetchProfile from "@/app/hooks/api/profile/fetchProfile"
+import fetchProfile from "@/app/hooks/api/profile/useFetchProfile"
 import ArtistReviews from "@/app/components/profile/artistReviews"
 import ReleaseReviews from "@/app/components/profile/releaseReviews"
 import SongReviews from "@/app/components/profile/songReviews"
@@ -9,8 +9,9 @@ import Statistics from "@/app/components/profile/statistics"
 import DisplayFavorites from "@/app/components/profile/displayFavorites"
 import MainDisplay from "@/app/components/profile/mainDisplay"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
-import { RefreshCcw } from "lucide-react"
 import RefreshPage from "@/app/components/ui/RefreshPage"
+import LoadingText from "@/app/components/ui/loading/LoadingText"
+import useFetchProfile from "@/app/hooks/api/profile/useFetchProfile"
 
 
 export default function Profile ({
@@ -20,7 +21,7 @@ export default function Profile ({
 }) {
 
   const { userId } = use(params)
-  const { profile, loading, error, fetchProfilePage} = fetchProfile(userId)
+  const { profile, loading, error, fetchProfilePage} = useFetchProfile(userId)
   const [selected, setSelected] = useState('Statistics')
 
   type ReviewKeys = keyof Pick<UserProfile, 'artistReviews' | 'releaseReviews' | 'songReviews'>
@@ -41,8 +42,8 @@ export default function Profile ({
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
 
-              <LoadingBox className="w-100 h-4" />
-              <LoadingBox className="w-50 h-4" />
+              
+              <LoadingText text="Searching for Profile" />
             </div>
             <div className="flex gap-2">
               <div className="flex flex-col gap-2">

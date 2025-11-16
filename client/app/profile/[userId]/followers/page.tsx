@@ -1,12 +1,9 @@
 'use client'
 
 import Pagination from "@/app/components/profile/pagination";
-import Container from "@/app/components/ui/Container";
-import Footer from "@/app/components/ui/Footer";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
-import Nav from "@/app/components/ui/NavigationBar";
 import RefreshPage from "@/app/components/ui/RefreshPage";
-import fetchFollowers from "@/app/hooks/api/profile/fetchFollowers";
+import usefetchFollowers from "@/app/hooks/api/profile/useFetchFollowers";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
@@ -17,7 +14,7 @@ export default function Followers ({
 }) {
 
   const { userId } = use(params)
-  const { results, follow, unfollow, loading, setPage, fetchFollows } = fetchFollowers(userId)
+  const { results, follow, unfollow, loading, setPage, fetchFollows } = usefetchFollowers(userId)
   const {data: session} = useSession()
   const router = useRouter()
 

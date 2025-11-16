@@ -3,7 +3,7 @@ import { Artist } from "@/app/lib/types/artist";
 import axios, { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-export default function fetchDiscography(artistId: string) {
+export default function useFetchDiscography(artistId: string) {
   
   const [active, setActive] = useState<'album' | 'ep' | 'single'>('album')
   const [discography, setDiscography] = useState<ReleaseGroup[]>([])

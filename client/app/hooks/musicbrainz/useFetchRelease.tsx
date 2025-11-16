@@ -1,20 +1,16 @@
 import { Release, ReviewResponse } from "@/app/lib/types/api"
 import axios, { AxiosError } from "axios"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
-export default function fetchRelease (releaseId: string) {
+export default function useFetchRelease (releaseId: string) {
 
   const [coverArt, setCoverArt] = useState('')
   const [album, setAlbum] = useState<Release | null>(null)
   const [loading, setLoading] = useState(false)
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
-    
-  useEffect(() => {
-    fetchData()
-  }, [releaseId])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -43,7 +39,11 @@ export default function fetchRelease (releaseId: string) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [releaseId])
+    
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   return {
     coverArt,

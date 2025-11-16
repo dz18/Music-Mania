@@ -3,22 +3,16 @@
 import Statistics from "@/app/components/profile/statistics";
 import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Reviews from "@/app/components/reviews/Reviews";
-import Container from "@/app/components/ui/Container";
-import Footer from "@/app/components/ui/Footer";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
-import Nav from "@/app/components/ui/NavigationBar";
 import RefreshPage from "@/app/components/ui/RefreshPage";
-import fetchSong from "@/app/hooks/musicbrainz/fetchSong";
-import { ReviewResponse } from "@/app/lib/types/api";
+import useFetchSong from "@/app/hooks/musicbrainz/useFetchSong";
 import type { Song } from "@/app/lib/types/song";
-import axios from "axios";
 import { ImageOff, Loader } from "lucide-react";
-import { fetchData } from "next-auth/client/_utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useMemo, useState } from "react";
+import { use } from "react";
 
 export default function Song ({
   params
@@ -35,8 +29,9 @@ export default function Song ({
     coverArt,
     reviews,
     setReviews,
-    fetchData
-  } = fetchSong(songId)
+    fetchData,
+    error
+  } = useFetchSong(songId)
 
   if (loading) {
     return (
@@ -76,13 +71,13 @@ export default function Song ({
     )
   }
 
-  if (!song) {
+  if (error) {
     return (
       <RefreshPage
         func={fetchData}
         title={'Song Page'}
         loading={loading}
-        note="Musicbrainz API Data fetched failed or Song ID doesn't exist"
+        note={error}
       />
     )
   }

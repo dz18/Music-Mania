@@ -1,22 +1,15 @@
 import axios from "axios";
-import { profile } from "console";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export default function fetchFollowers (profileId: string, following: boolean = false) {
+export default function usefetchFollowers (profileId: string, following: boolean = false) {
 
   const [results, setResults] = useState<FollowersResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const {data: session} = useSession()
 
-  useEffect(() => {
- 
-    fetchFollows()
-
-  }, [profileId, session?.user.id, page])
-
-  const fetchFollows = async () => {
+  const fetchFollows = useCallback(async () => {
     try {
       setLoading(true)
       const results = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/allFollowers`, {
@@ -29,7 +22,11 @@ export default function fetchFollowers (profileId: string, following: boolean = 
     } finally {
       setLoading(false)
     }
-  }
+  }, [profileId, session?.user.id, page])
+
+  useEffect(() => {
+    fetchFollows()
+  }, [fetchFollows])
 
   const follow = async (id: string) => {
     try {

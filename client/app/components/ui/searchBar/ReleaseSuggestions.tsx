@@ -10,11 +10,6 @@ export default function ReleaseSuggestions ({
 
   const router = useRouter()
 
-  useEffect(() => {
-    console.log('suggestions:', suggestions)
-  }, [suggestions])
-
-
   return (
     <>
       {suggestions &&
