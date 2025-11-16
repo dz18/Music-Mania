@@ -3,7 +3,7 @@
 import Pagination from "@/app/components/profile/pagination";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import RefreshPage from "@/app/components/ui/RefreshPage";
-import fetchFollowers from "@/app/hooks/api/profile/fetchFollowers";
+import usefetchFollowers from "@/app/hooks/api/profile/useFetchFollowers";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
@@ -14,7 +14,7 @@ export default function Followings ({
 }) {
 
   const { userId } = use(params)
-  const { results, follow, unfollow, loading, setPage, fetchFollows } = fetchFollowers(userId, true)
+  const { results, follow, unfollow, loading, setPage, fetchFollows } = usefetchFollowers(userId, true)
   const { data: session } = useSession()
   const router = useRouter()
 

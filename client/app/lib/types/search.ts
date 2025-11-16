@@ -22,3 +22,5 @@ type ReleaseQuery = {
   'first-release-date': string,
   'primary-type': string
 }
+
+type Suggestion = ArtistQuery[] | ReleaseQuery[] | UserQuery[]

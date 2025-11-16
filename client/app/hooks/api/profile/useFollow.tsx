@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function useIsFollowing (profileId: string) {
 
@@ -11,8 +11,24 @@ export default function useIsFollowing (profileId: string) {
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
 
-  useEffect(() => {
-    const load = async () => {
+  const follow = async () => {
+    try {
+      setLoading(true)
+
+      const following = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
+        userId: session?.user.id, profileId
+      })
+
+      setFollowerCount(prev => prev + 1)
+      setFollowing(following.data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchFollows = useCallback(async () => {
       if (!profileId) return
 
       try {
@@ -40,27 +56,7 @@ export default function useIsFollowing (profileId: string) {
       } finally {
         setLoading(false);
       }
-    }
-
-    load();
-  }, [session?.user?.id, profileId]);
-
-  const follow = async () => {
-    try {
-      setLoading(true)
-
-      const following = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
-        userId: session?.user.id, profileId
-      })
-
-      setFollowerCount(prev => prev + 1)
-      setFollowing(following.data)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [session?.user?.id, profileId])
 
   const unfollow = async () => {
     try {
@@ -86,6 +82,9 @@ export default function useIsFollowing (profileId: string) {
     }
   }
 
+  useEffect(() => {
+    fetchFollows()
+  }, [fetchFollows])
 
   return { 
     following, 

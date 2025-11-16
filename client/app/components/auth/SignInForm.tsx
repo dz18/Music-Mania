@@ -20,13 +20,9 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
   const handleSignIn = async (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!email || !password) {
-      return
-    }
-
-    if (error.email || error.password) {
-      return
-    }
+    if (!email || !password) return;
+    if (error.email || error.password) return;
+    
 
     try {
       setSubmitting(true)

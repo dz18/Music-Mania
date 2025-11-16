@@ -3,6 +3,7 @@ import ArtistSuggestions from "./ArtistSuggestions"
 import UserSuggestions from "./UserSuggestions"
 import ReleaseSuggestions from "./ReleaseSuggestions"
 import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
+import { RefreshCcw } from "lucide-react"
 
 
 export default function SearchDropdown ({
@@ -12,13 +13,17 @@ export default function SearchDropdown ({
   suggestions,
   setSuggestions,
   loading,
+  error,
+  fetch
 } : {
   open : boolean
   type : string
   setType : Dispatch<SetStateAction<string>>
   suggestions: any
-  setSuggestions: Dispatch<SetStateAction<ArtistQuery[] | UserQuery[] | ReleaseQuery[] | null>>
+  setSuggestions: Dispatch<SetStateAction<Suggestion | null>>
   loading: boolean
+  error: string | null
+  fetch: () => Promise<void>
 }) {
 
   const searchTypes = ['artists', 'releases', 'users'] as const
@@ -67,11 +72,24 @@ export default function SearchDropdown ({
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
 
-      {suggestions && (
-        <>
-          {suggestionComponents[type as SearchTypes]}
-        </>
-      )}
+      {error ?
+        <div className="text-sm p-2 justify-center flex flex-col">
+          <p className="text-gray-500 text-sm text-center">{error}</p>
+          <div className="flex justify-center mt-2">   
+            <button 
+              className="p-1 rounded-full text-gray-500 flex gap-2 cursor-pointer hover:bg-gray-700"
+              onClick={fetch}
+            >
+              <RefreshCcw size={18}/>
+            </button>
+          </div>
+        </div>
+      :
+        suggestions && (
+          <>{suggestionComponents[type as SearchTypes]}</>
+        )
+      }
+      
     </div>
   )
 }

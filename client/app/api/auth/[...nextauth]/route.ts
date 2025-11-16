@@ -1,11 +1,8 @@
-// client/app/api/auth/[...nextauth]/route.ts
-
 import axios from "axios";
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 
 const handler = NextAuth({
-  // Configure one or more authentication providers
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -14,7 +11,6 @@ const handler = NextAuth({
         password: { label: "password", type: "password"}
       },
       async authorize(credentials) {
-        // Add logic here to look up the user from the credentials supplied
         try {
           const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in`, {
             email: credentials?.email,

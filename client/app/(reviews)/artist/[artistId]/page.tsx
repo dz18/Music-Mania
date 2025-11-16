@@ -3,21 +3,15 @@
 import About from "@/app/components/artist/About"
 import Reviews from "@/app/components/reviews/Reviews"
 import ReviewBar from "@/app/components/reviews/ReviewBar"
-import Container from "@/app/components/ui/Container"
-import Footer from "@/app/components/ui/Footer"
-import Nav from "@/app/components/ui/NavigationBar"
-import { ReviewResponse } from "@/app/lib/types/api"
 import type { Artist } from "@/app/lib/types/artist"
-import axios from "axios"
 import { useSession } from "next-auth/react"
-import { use, useEffect, useState } from "react"
+import { use } from "react"
 import Statistics from "@/app/components/profile/statistics"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
-import fetchArtist from "@/app/hooks/musicbrainz/fetchArtist"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
-import { fetchData } from "next-auth/client/_utils"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
+import useFetchArtist from "@/app/hooks/musicbrainz/useFetchArtist"
 
 export default function Artist ({
   params
@@ -27,10 +21,9 @@ export default function Artist ({
 
   const { artistId } = use(params)
   const { data: session } = useSession()
-  const { artist, reviews, loading, setReviews, fetchData, error } = fetchArtist(artistId)
+  const { artist, reviews, loading, setReviews, fetchData, error } = useFetchArtist(artistId)
 
-  console.log(loading)
-
+  console.log(error)
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -69,13 +62,13 @@ export default function Artist ({
     )
   }
 
-  if (!artist) {
+  if (error) {
     return (
       <RefreshPage
         func={fetchData}
         title={'Artist Page'}
         loading={loading}
-        note="Musicbrainz API Data fetched failed or Artist ID doesn't exist"
+        note={error}
       />
     )
   }
@@ -107,7 +100,6 @@ export default function Artist ({
               type="artist" 
               reviews={reviews?.reviews} 
               setReviews={setReviews} 
-              stats={reviews?.starStats || []}
             />
           </>
         }

@@ -11,11 +11,6 @@ export default function ArtistSuggestions ({
 
   const router = useRouter()
 
-  useEffect(() => {
-    console.log(suggestions)
-  }, [suggestions])
-
-
   return (
     <>
       {suggestions &&

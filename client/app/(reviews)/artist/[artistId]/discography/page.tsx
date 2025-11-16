@@ -3,9 +3,7 @@
 import DiscographyTable from "@/app/components/artist/DiscographyTable";
 import Pagination from "@/app/components/artist/Pagination";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
-import LoadingBox from "@/app/components/ui/loading/loadingBox";
-import LoadingText from "@/app/components/ui/loading/LoadingText";
-import fetchDiscography from "@/app/hooks/musicbrainz/fetchDiscography";
+import useFetchDiscography from "@/app/hooks/musicbrainz/useFetchDiscography";
 
 import {FileX2, RefreshCcw } from "lucide-react";
 
@@ -28,7 +26,7 @@ export default function Discography ({
     offset,
     fetchDiscog,
     error
-  } = fetchDiscography(artistId)
+  } = useFetchDiscography(artistId)
 
   return (
     <div className="flex flex-col h-full">

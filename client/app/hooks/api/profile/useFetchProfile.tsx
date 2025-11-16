@@ -1,19 +1,13 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export default function fetchProfile (id: string) {
+export default function useFetchProfile (id: string) {
 
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [profile, setProfile] = useState<UserProfile | null>(null)
 
-	useEffect(() => {
-		if (!id) return
-
-		fetchProfilePage()
-	}, [id])
-
-	const fetchProfilePage =  async () => {
+	const fetchProfilePage = useCallback( async () => {
 		try {
 			setLoading(true)
 			setError(null)
@@ -30,8 +24,13 @@ export default function fetchProfile (id: string) {
 		} finally {
 			setLoading(false)
 		}
+	}, [id])
 
-	}
+	useEffect(() => {
+		if (!id) return
+
+		fetchProfilePage()
+	}, [fetchProfilePage])
 
 	return { profile, loading, error, fetchProfilePage }
 }

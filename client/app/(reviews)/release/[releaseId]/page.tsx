@@ -8,11 +8,11 @@ import { use, useState } from "react"
 import Tracklist from "@/app/components/album/Tracklist";
 import TextContent from "@/app/components/album/TextContent";
 import Statistics from "@/app/components/profile/statistics";
-import fetchRelease from "@/app/hooks/musicbrainz/fetchRelease";
+import fetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
 import RefreshPage from "@/app/components/ui/RefreshPage";
-import { fetchData } from "next-auth/client/_utils";
+import useFetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 
 export default function AlbumPage ({
   params
@@ -28,9 +28,10 @@ export default function AlbumPage ({
     album,
     loading,
     reviews,
+    error,
     setReviews,
     fetchData
-  } = fetchRelease(releaseId)
+  } = useFetchRelease(releaseId)
 
   if (loading) {
     return (
@@ -70,13 +71,13 @@ export default function AlbumPage ({
     )
   }
 
-  if (!album) {
+  if (error) {
     return (
       <RefreshPage
         func={fetchData}
         title={'Release Page'}
         loading={loading}
-        note="Musicbrainz API Data fetched failed or Release ID doesn't exist"
+        note={error}
       />
     )
   }
@@ -103,7 +104,7 @@ export default function AlbumPage ({
       }
 
       {session && 
-        <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt} stats={reviews?.starStats || []}/>
+        <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
       }
 
 
