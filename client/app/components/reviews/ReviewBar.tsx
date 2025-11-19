@@ -1,4 +1,4 @@
-import { Release, ReviewResponse } from "@/app/lib/types/api";
+import { ApiPageResponse, Release, ReviewResponse } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
 import { NotebookText, Star } from "lucide-react";
 import Favorite from "./Favorite";
@@ -14,14 +14,14 @@ const ReviewModal = dynamic(() => import("./ReviewModal"), {
 export default function ReviewBar ({
   item, 
   type,
-  reviews,
-  setReviews,
+  data,
+  setData,
   coverArtUrl,
 } : {
   item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song',
-  reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
-  setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
+  data?: ApiPageResponse<ReviewResponse> 
+  setData: Dispatch<SetStateAction<ApiPageResponse<ReviewResponse> | null>>
   coverArtUrl?: string
 }) {
 
@@ -56,8 +56,8 @@ export default function ReviewBar ({
           type={type} 
           open={open} 
           setOpen={setOpen}
-          reviews={reviews}
-          setReviews={setReviews}
+          data={data}
+          setData={setData}
           coverArtUrl={coverArtUrl}
         />
       }

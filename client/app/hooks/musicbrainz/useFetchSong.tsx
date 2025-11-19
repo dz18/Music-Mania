@@ -1,4 +1,4 @@
-import { ReviewResponse } from "@/app/lib/types/api"
+import { ApiPageResponse, ReviewResponse } from "@/app/lib/types/api"
 import { Song } from "@/app/lib/types/song"
 import axios, { AxiosError } from "axios"
 import { useCallback, useEffect, useState } from "react"
@@ -11,7 +11,9 @@ export default function useFetchSong (songId: string) {
   const [reviews, setReviews] = useState<ReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = useCallback(async () => {
+  const [data, setData] = useState<ApiPageResponse<ReviewResponse> | null>(null)
+
+  const fetchData = useCallback(async (page: number) => {
     try {
       setLoading(true)
       const [songResult, reviews] = await  Promise.allSettled([
@@ -19,7 +21,7 @@ export default function useFetchSong (songId: string) {
           params: { songId }
         }),
         axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/song`,{
-          params: { id: songId }
+          params: { id: songId, page: page }
         })
       ])
 
@@ -33,7 +35,7 @@ export default function useFetchSong (songId: string) {
       }
 
       if (reviews.status === 'fulfilled') {
-        setReviews(reviews.value.data)
+        setData(reviews.value.data)
       } else {
         const error = reviews.reason as AxiosError<{error: string}>
         console.error("Review fetch failed", error.response?.data.error)
@@ -50,15 +52,15 @@ export default function useFetchSong (songId: string) {
   }, [songId])
 
   useEffect(() => {
-    fetchData()
+    fetchData(1)
   }, [fetchData])
 
   return {
     song,
     loading,
     coverArt,
-    reviews,
-    setReviews,
+    data,
+    setData,
     fetchData,
     error
   }

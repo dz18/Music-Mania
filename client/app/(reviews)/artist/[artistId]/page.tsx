@@ -12,6 +12,7 @@ import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchArtist from "@/app/hooks/musicbrainz/useFetchArtist"
+import Pagination from "@/app/components/ui/Pagination"
 
 export default function Artist ({
   params
@@ -21,9 +22,8 @@ export default function Artist ({
 
   const { artistId } = use(params)
   const { data: session } = useSession()
-  const { artist, reviews, loading, setReviews, fetchData, error } = useFetchArtist(artistId)
+  const { artist, loading, fetchData, error, data, setData } = useFetchArtist(artistId)
 
-  console.log(error)
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -65,7 +65,7 @@ export default function Artist ({
   if (error) {
     return (
       <RefreshPage
-        func={fetchData}
+        func={() => fetchData(1)}
         title={'Artist Page'}
         loading={loading}
         note={error}
@@ -79,27 +79,28 @@ export default function Artist ({
 
         <div className="flex gap-10">
           {/* About */}
-          <About artist={artist} reviews={reviews}/>
-
+          {data &&
+            <About artist={artist} reviews={data.data}/>
+          }
         </div>
 
-        {reviews?.starStats &&
+        {data?.data.starStats &&
           <div className={`
             border-t pt-3 mt-2 border-gray-500
             ${!session && 'pb-2 border-b mb-2'}
           `}>
-            <Statistics stats={reviews.starStats}/>
+            <Statistics stats={data.data.starStats}/>
           </div>
         }
 
         {/* Make a Review */}
-        {session && !loading &&
+        {session && !loading && data && 
           <>
             <ReviewBar 
               item={artist} 
               type="artist" 
-              reviews={reviews?.reviews} 
-              setReviews={setReviews} 
+              data={data} 
+              setData={setData} 
             />
           </>
         }
@@ -109,8 +110,12 @@ export default function Artist ({
         {loading &&
           <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
         }
-        {reviews &&
-          <Reviews reviews={reviews.reviews}/>
+        {data &&
+          <>
+            <Reviews data={data}/>
+            <Pagination data={data} fetchData={fetchData}/>
+          </>
+
         }
 
           

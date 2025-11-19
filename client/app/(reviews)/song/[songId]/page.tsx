@@ -6,6 +6,7 @@ import Reviews from "@/app/components/reviews/Reviews";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
+import Pagination from "@/app/components/ui/Pagination";
 import RefreshPage from "@/app/components/ui/RefreshPage";
 import useFetchSong from "@/app/hooks/musicbrainz/useFetchSong";
 import type { Song } from "@/app/lib/types/song";
@@ -27,8 +28,8 @@ export default function Song ({
     song,
     loading,
     coverArt,
-    reviews,
-    setReviews,
+    data,
+    setData,
     fetchData,
     error
   } = useFetchSong(songId)
@@ -74,7 +75,7 @@ export default function Song ({
   if (error) {
     return (
       <RefreshPage
-        func={fetchData}
+        func={() => fetchData(1)}
         title={'Song Page'}
         loading={loading}
         note={error}
@@ -160,25 +161,34 @@ export default function Song ({
 
       </div>
 
-      {reviews?.starStats &&
+      {data?.data.starStats &&
         <div className={`
           border-t pt-3 mt-2 border-gray-500
           ${!session && 'pb-2 border-b mb-2'}
         `}>
-          <Statistics stats={reviews.starStats}/>
+          <Statistics stats={data.data.starStats}/>
         </div>
       }
 
-      {session &&
-        <ReviewBar item={song} type="song" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
+      {session && data &&
+        <ReviewBar 
+          item={song} 
+          type="song" 
+          data={data} 
+          setData={setData} 
+          coverArtUrl={coverArt}
+        />
       }
       
       {loading &&
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
 
-      {reviews &&
-        <Reviews reviews={reviews.reviews}/>
+      {data?.data.reviews &&
+        <>
+          <Reviews data={data}/>
+          <Pagination data={data} fetchData={fetchData}/>
+        </>
       }
 
     </div>

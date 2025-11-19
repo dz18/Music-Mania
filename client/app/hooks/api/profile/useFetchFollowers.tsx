@@ -1,15 +1,15 @@
+import { ApiPageResponse, FollowersResponse } from "@/app/lib/types/api";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 
 export default function usefetchFollowers (profileId: string, following: boolean = false) {
 
-  const [results, setResults] = useState<FollowersResponse | null>(null)
+  const [results, setResults] = useState<ApiPageResponse<FollowersResponse> | null>(null)
   const [loading, setLoading] = useState(false)
-  const [page, setPage] = useState(1)
   const {data: session} = useSession()
 
-  const fetchFollows = useCallback(async () => {
+  const fetchFollows = useCallback(async (page: number) => {
     try {
       setLoading(true)
       const results = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/allFollowers`, {
@@ -22,23 +22,28 @@ export default function usefetchFollowers (profileId: string, following: boolean
     } finally {
       setLoading(false)
     }
-  }, [profileId, session?.user.id, page])
+  }, [profileId, session?.user.id])
 
   useEffect(() => {
-    fetchFollows()
+    fetchFollows(1)
   }, [fetchFollows])
 
   const follow = async (id: string) => {
     try {
-      setLoading(true)
 
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
         userId: session?.user.id, profileId: id
       })
 
-      setResults(prev =>
-        prev ? {...prev, isFollowing: {...prev.isFollowing, [id]: true}} : prev
-      )
+      setResults(prev => 
+        prev ? ({
+          ...prev, data: {
+            ...prev?.data, 
+            isFollowingMap: {...prev?.data.isFollowingMap, [id]: true}
+          }
+        }) : prev
+      ) 
+
     } catch (error) {
       console.error(error)
     } finally {
@@ -48,14 +53,20 @@ export default function usefetchFollowers (profileId: string, following: boolean
 
   const unfollow = async (id: string) => {
     try {
-      setLoading(true)
+      
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
         data: { userId: session?.user.id, profileId: id }
       })
 
-      setResults(prev =>
-        prev ? {...prev, isFollowing: {...prev.isFollowing, [id]: false}} : prev
-      )
+      setResults(prev => 
+        prev ? ({
+          ...prev, data: {
+            ...prev?.data, 
+            isFollowingMap: {...prev?.data.isFollowingMap, [id]: false}
+          }
+        }) : prev
+      ) 
+
     } catch (error) {
       console.error(error)
     } finally {
@@ -63,6 +74,6 @@ export default function usefetchFollowers (profileId: string, following: boolean
     }
   }
 
-  return { results, follow, unfollow, loading, setPage, fetchFollows }
+  return { results, follow, unfollow, loading, fetchFollows }
 
 }

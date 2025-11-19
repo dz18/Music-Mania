@@ -1,30 +1,26 @@
-import { Release, ReviewResponse } from "@/app/lib/types/api";
+import { ApiPageResponse, Release, ReviewResponse } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
-import axios from "axios";
-import { stat } from "fs";
-import { Loader, Star, X } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { Star, X } from "lucide-react";
+import { Dispatch, SetStateAction, useState } from "react";
 import IndeterminateLoadingBar from "../ui/loading/IndeterminateLoadingBar";
 import { Song } from "@/app/lib/types/song";
-import { count } from "console";
-import useFetchReviews from "@/app/hooks/api/reviews/useFetchReviews";
+import useFetchUserReview from "@/app/hooks/api/reviews/useFetchReviews";
 
 export default function ReviewModal ({
   item,
   type,
   open,
   setOpen,
-  reviews,
-  setReviews,
+  data,
+  setData,
   coverArtUrl,
 } : {
   item: Artist | Release | Song | null,
   type: 'artist' | 'release' | 'song'
   open: boolean,
   setOpen: Dispatch<SetStateAction<boolean>>
-  reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[] | null
-  setReviews: Dispatch<SetStateAction<ReviewResponse | null>>
+  data?: ApiPageResponse<ReviewResponse>
+  setData: Dispatch<SetStateAction<ApiPageResponse<ReviewResponse> | null>>
   coverArtUrl?: string
 }) {
 
@@ -42,7 +38,7 @@ export default function ReviewModal ({
     setTitle,
     handleButton,
     deleteReview
-  } = useFetchReviews(item, type, setReviews, setOpen, reviews, coverArtUrl)
+  } = useFetchUserReview(item, type, setData, setOpen, data, coverArtUrl)
 
   if (!open) return null
 

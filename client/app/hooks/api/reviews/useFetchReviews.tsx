@@ -1,16 +1,16 @@
-import { Release, ReviewResponse } from "@/app/lib/types/api"
+import { ApiPageResponse, Release, ReviewResponse } from "@/app/lib/types/api"
 import { Artist } from "@/app/lib/types/artist"
 import { Song } from "@/app/lib/types/song"
 import axios from "axios"
 import { useSession } from "next-auth/react"
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react"
 
-export default function useFetchReviews (  
+export default function useFetchUserReview (  
   item: Artist | Release | Song | null,
   type: "artist" | "release" | "song",
-  setReviews: React.Dispatch<React.SetStateAction<ReviewResponse | null>>,
+  setData: React.Dispatch<React.SetStateAction<ApiPageResponse<ReviewResponse> | null>>,
   setOpen: Dispatch<SetStateAction<boolean>>,
-  reviews?: UserArtistReview[] | UserReleaseReview[] | UserSongReview[] | null,
+  data?: ApiPageResponse<ReviewResponse>,
   coverArtUrl?: string
 ) {
 
@@ -31,7 +31,6 @@ export default function useFetchReviews (
           params: { userId: session?.user.id, itemId: item?.id, type: type }
         })
 
-        console.log('review MODEL:', review.data)
         if (!review.data) return
         setReviewExist(review.data ? true : false)
         setTitle(review.data.title || '')
@@ -50,34 +49,52 @@ export default function useFetchReviews (
   const updateReviews = (res: any, status?: 'PUBLISHED' | 'DRAFT' | 'DELETED') => {
 
     console.log(res.data)
-    setReviews(prev => {
+    setData(prev => {
       if (status === 'PUBLISHED') {
         if (!prev) {
-
           return {
-            avgRating: res.data.avg,
-            reviews: [res.data.review],
-            starStats: res.data.starStats
-          } as ReviewResponse
+            count: 1,
+            pages: 1,
+            currentPage: 1,
+            limit: 25,
+            data: {
+              avgRating: res.data.avg,
+              reviews: [res.data.review],
+              starStats: res.data.starStats
+            }
+          } as ApiPageResponse<ReviewResponse>
         }
 
         return {
-          avgRating: res.data.avg,
-          reviews: exists 
-            ? prev?.reviews.map(r => (
-                r.userId === session?.user.id
-                  ? res.data.review
-                  : r
-              ))
-            : [res.data.review, ...prev.reviews],
-          starStats: res.data.starStats
+          count: res.data.count,
+          pages: Math.ceil(res.data.count / res.data.limit),
+          currentPage: 1,
+          limit: res.data.limit,
+          data : {
+            avgRating: res.data.avg,
+            reviews: exists 
+              ? prev?.data.reviews.map(r => (
+                  r.userId === session?.user.id
+                    ? res.data.review
+                    : r
+                ))
+              : [res.data.review, ...prev.data.reviews],
+            starStats: res.data.starStats
+          }
+
         }
       } else if (status === 'DRAFT' || status === 'DELETED') {
         return {
-          avgRating: res.data.avg,
-          reviews: prev?.reviews.filter(r => r.userId !== session?.user.id),
-          starStats: res.data.starStats
-        } as ReviewResponse
+          count: res.data.count,
+          currentPage: prev?.currentPage,
+          limit: prev?.limit,
+          pages: Math.ceil(res.data.count / res.data.limit),
+          data: {
+            avgRating: res.data.avg,
+            reviews: prev?.data.reviews.filter(r => r.userId !== session?.user.id),
+            starStats: res.data.starStats
+          }
+        } as ApiPageResponse<ReviewResponse>
       } 
 
       return prev
@@ -137,7 +154,7 @@ export default function useFetchReviews (
   }
 
   const exists = useMemo(() => (
-    status === 'authenticated' ? reviews?.some(r => r.userId === session?.user.id) : false
+    status === 'authenticated' ?  data?.data.reviews.some(r => r.userId === session?.user.id) : false
   ), [review])
 
   return {

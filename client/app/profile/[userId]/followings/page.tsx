@@ -1,7 +1,8 @@
 'use client'
 
-import Pagination from "@/app/components/profile/pagination";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
+import LoadingText from "@/app/components/ui/loading/LoadingText";
+import Pagination from "@/app/components/ui/Pagination";
 import RefreshPage from "@/app/components/ui/RefreshPage";
 import usefetchFollowers from "@/app/hooks/api/profile/useFetchFollowers";
 import { useSession } from "next-auth/react";
@@ -14,7 +15,7 @@ export default function Followings ({
 }) {
 
   const { userId } = use(params)
-  const { results, follow, unfollow, loading, setPage, fetchFollows } = usefetchFollowers(userId, true)
+  const { results, follow, unfollow, loading, fetchFollows } = usefetchFollowers(userId, true)
   const { data: session } = useSession()
   const router = useRouter()
 
@@ -22,8 +23,7 @@ export default function Followings ({
     return (
       <div className="h-screen"> 
         <div className="flex flex-col gap-2 h-full min-h-0 p-4">
-          <LoadingBox className="w-full h-8" />
-          <LoadingBox className="w-1/2 h-8" />
+          <LoadingText text="Loading Followings" />
 
           <div className="flex-1 min-h-0">
             <LoadingBox className="w-full h-full" />
@@ -36,7 +36,7 @@ export default function Followings ({
   if (!results) {
     return (
       <RefreshPage
-        func={fetchFollows}
+        func={() => fetchFollows(1)}
         title="Followings Page"
         loading={loading}
         note="Error Fetching Followings"
@@ -47,16 +47,16 @@ export default function Followings ({
   return (
     <div>
 
-      <p className="text-lg font-mono"><span className="font-bold">{results?.username}</span> Followings</p>
+      <p className="text-lg font-mono"><span className="font-bold">{results.data.username}</span> Followings</p>
 
       {/* Results */}
       <section>
         <div className="mb-1">
           <span className="font-mono font-bold">Total: </span>
-          <span className="font-mono text-teal-500 font-bold">{results?.total}</span>
+          <span className="font-mono text-teal-500 font-bold">{results?.count}</span>
         </div>
-        {results?.follows?.length !== 0 ?
-          results?.follows?.map((f, i) => (
+        {results?.data?.follows?.length !== 0 ?
+          results?.data?.follows?.map((f, i) => (
             <div 
               key={i}
               className={`
@@ -70,7 +70,7 @@ export default function Followings ({
                 <p className="font-mono font-bold hover:underline cursor-pointer" onClick={() => router.push(`/profile/${f.followingId}`)}>
                   {f.following.username}
                 </p>
-                <p className="text-gray-400">Follower since {new Date(f.createdAt).toLocaleDateString('en-us', {year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                <p className="text-gray-400">Following since {new Date(f.createdAt).toLocaleDateString('en-us', {year: 'numeric', month: 'long', day: 'numeric'})}</p>
               </div>
 
               {session &&
@@ -78,15 +78,15 @@ export default function Followings ({
                   <div className="flex items-center">
                     <button 
                       className={`
-                        ${results.isFollowing[f.followingId] ? 
+                        ${results.data.isFollowingMap[f.followingId] ? 
                           'text-white hover:bg-black/20 active:bg-black/40 border' : 
                           'text-black bg-white hover:bg-white/80 active:bg-white/60'
                         }
                         px-2 py-1 rounded w-24 font-mono text-sm cursor-pointer 
                       `}
-                      onClick={() => results.isFollowing[f.followingId] ? unfollow(f.followingId) : follow(f.followingId)}
+                      onClick={() => results.data.isFollowingMap[f.followingId] ? unfollow(f.followingId) : follow(f.followingId)}
                     >
-                      {results.isFollowing[f.followingId] ? 'unfollow' : 'follow'}
+                      {results.data.isFollowingMap[f.followingId] ? 'unfollow' : 'follow'}
                     </button>
                   </div>
               }
@@ -102,9 +102,9 @@ export default function Followings ({
         
       </section>
 
-      {results?.follows.length !== 0 &&
+      {results?.data.follows.length !== 0 &&
         <section>
-          <Pagination setPage={setPage} results={results}/>
+          <Pagination data={results} fetchData={fetchFollows}/>
         </section>
       }
             

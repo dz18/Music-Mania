@@ -1,31 +1,30 @@
 'use client'
 
 import DiscographyTable from "@/app/components/artist/DiscographyTable";
-import Pagination from "@/app/components/artist/Pagination";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
+import Pagination from "@/app/components/ui/Pagination";
 import useFetchDiscography from "@/app/hooks/musicbrainz/useFetchDiscography";
 
-import {FileX2, RefreshCcw } from "lucide-react";
+import { FileX2, RefreshCcw } from "lucide-react";
 
 import { use } from "react";
 
 export default function Discography ({
   params
-} : {
-  params: Promise<{artistId: string}>
+}: {
+  params: Promise<{ artistId: string }>,
 }) {
 
   const { artistId } = use(params)
 
   const {
-    discography, 
+    data,
     artist, 
-    active, 
-    count, 
+    fetchData,
     tableLoad,
-    offset,
-    fetchDiscog,
-    error
+    error,
+    active,
+    setActive
   } = useFetchDiscography(artistId)
 
   return (
@@ -45,24 +44,38 @@ export default function Discography ({
       <div className="flex justify-between items-end mb-2">
         <ul className="text-lg font-bold flex flex-wrap list-none gap-3">
           <li 
-            onClick={() => fetchDiscog(artistId, 'album')}
             className={`${active === 'album' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
+            onClick={() => {
+              setActive('album')
+              fetchData(1)
+            }}
           >
             Albums
           </li>
           <li 
-            onClick={() => fetchDiscog(artistId, 'ep')}
             className={`${active === 'ep' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
-          >EPs</li>
+            onClick={() => {
+              setActive('ep')
+              fetchData(1)
+            }}
+          >
+            EPs
+          </li>
           <li 
-            onClick={() => fetchDiscog(artistId, 'single')}
             className={`${active === 'single' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
-          >Singles</li>
+            onClick={() => {
+              setActive('single')
+              fetchData(1)
+            }}
+          >
+            Singles
+          </li>
         </ul>
 
         <p className="font-mono text-sm text-gray-500">
-          {count} total results
+          {data?.count} total results
         </p>
+
       </div>
       
       
@@ -72,25 +85,16 @@ export default function Discography ({
             <p className="">{error}</p>
             <button 
               className="flex items-center gap-2 px-2 py-1 bg-teal-500 rounded text-black font-bold font-mono cursor-pointer"
-              onClick={() => fetchDiscog(artistId, active, offset)}
+              onClick={() => fetchData(1)}
             >
               Refresh <RefreshCcw size={18}/>
             </button>
           </div>
         ) : (
-          discography.length !== 0 ?
+          data && data?.data.length !== 0 ?
             <>
-              <DiscographyTable discography={discography} active={active}/>
-              <div className="my-3">
-                <Pagination
-                  artistId={artistId}
-                  active={active}
-                  offset={offset}
-                  count={count}
-                  fetchDiscog={fetchDiscog}
-                  loading={tableLoad}
-                />
-              </div>
+              <DiscographyTable discography={data.data} active={active}/>
+              <Pagination data={data} fetchData={fetchData}/>
             </>
             
           :

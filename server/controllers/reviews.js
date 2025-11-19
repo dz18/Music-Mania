@@ -1,27 +1,39 @@
-const e = require('express')
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
+const { calcStarStats } = require('./functions/calcStarStats')
+
+const limit = 25
 
 const artistReviews = async(req, res) => {
   const { id } = req.query
-  
+  let page = Number(req.query.page) || 0
+
   logApiCall(req.method, req.originalUrl)
 
   try {
     if (!id) {
-      errorApiCall(req.method, req.originalUrl, 'Missing parameters')
-      res.status(400).json({error : 'Missing parameters'})
+      errorApiCall(req.method, req.originalUrl, 'Missing artist id')
+      res.status(400).json({error : 'Missing artist id'})
+    }
+
+    
+    if (!page) {
+      errorApiCall(req.method, req.originalUrl, 'Missing Page Number')
+      res.status(400).json({error : 'Missing Page Number'})
     }
 
     const [reviews, rating, artistStats] = await Promise.all([
       prisma.userArtistReviews.findMany({
         where: { artistId: id, status: 'PUBLISHED' },
         include: { user: { omit: { password: true } } },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
       }),
       prisma.userArtistReviews.aggregate({
         where: { artistId: id, status: 'PUBLISHED' },
-        _avg: { rating: true }
+        _avg: { rating: true },
+        _count: true
       }),
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
@@ -31,17 +43,18 @@ const artistReviews = async(req, res) => {
     ])
     const average = rating._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+    const starStats = calcStarStats(artistStats)
 
-    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-    for (const group of [...artistStats]) {
-      starCount[group.rating] += group._count.rating
-    }
-    const starStats = Object.entries(starCount)
-      .map(([rating, count]) => ({ rating: +rating, count }))
-      .sort((a, b) => b.rating - a.rating)
+    const data = {reviews, avgRating: avgRounded ?? 0, starStats}
 
     successApiCall(req.method, req.originalUrl)
-    res.json({reviews, avgRating: avgRounded ?? 0, starStats})
+    res.json({
+      data: data,
+      count: rating._count,
+      pages: Math.ceil(rating._count / limit),
+      currentPage: page,
+      limit: limit
+    })
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
@@ -49,7 +62,8 @@ const artistReviews = async(req, res) => {
 
 const releaseReviews = async(req, res) => {
   const { id } = req.query
-  
+  let page = Number(req.query.page) || 0
+
   logApiCall(req.method, req.originalUrl)
 
   try {
@@ -57,16 +71,24 @@ const releaseReviews = async(req, res) => {
       errorApiCall(req.method, req.originalUrl, 'Missing parameters')
       res.status(400).json({error : 'Missing parameters'})
     }
+    
+    if (!page) {
+      errorApiCall(req.method, req.originalUrl, 'Missing Page Number')
+      res.status(400).json({error : 'Missing Page Number'})
+    }
 
     const [reviews, rating, releaseStats] = await Promise.all([
       prisma.userReleaseReviews.findMany({
         where: { releaseId: id, status: 'PUBLISHED' },
         include: { user: { omit: { password: true } } },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit
       }),
       prisma.userReleaseReviews.aggregate({
         where: { releaseId: id, status: 'PUBLISHED' },
-        _avg: { rating: true }
+        _avg: { rating: true },
+        _count: true
       }),
       prisma.userReleaseReviews.groupBy({
         by: ['rating'],
@@ -77,17 +99,18 @@ const releaseReviews = async(req, res) => {
 
     const average = rating._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+    const starStats = calcStarStats(releaseStats)
 
-    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-    for (const group of [...releaseStats]) {
-      starCount[group.rating] += group._count.rating
-    }
-    const starStats = Object.entries(starCount)
-      .map(([rating, count]) => ({ rating: +rating, count }))
-      .sort((a, b) => b.rating - a.rating)
+    const data = {reviews, avgRating: avgRounded ?? 0, starStats}
 
     successApiCall(req.method, req.originalUrl)
-    res.json({reviews, avgRating: avgRounded ?? 0, starStats})
+    res.json({
+      data,
+      count: rating._count,
+      pages: Math.ceil(rating._count / limit),
+      currentPage: page,
+      limit: limit
+    })
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
@@ -96,7 +119,8 @@ const releaseReviews = async(req, res) => {
 
 const songReviews = async(req, res) => {
   const { id } = req.query
-  
+  let page = Number(req.query.page) || 0
+
   logApiCall(req.method, req.originalUrl)
 
   try {
@@ -105,36 +129,45 @@ const songReviews = async(req, res) => {
       res.status(400).json({error : 'Missing parameters'})
     }
 
+    if (!page) {
+      errorApiCall(req.method, req.originalUrl, 'Missing Page Number')
+      res.status(400).json({error : 'Missing Page Number'})
+    }
+
     const [reviews, rating, songStats] = await Promise.all([
       prisma.userSongReviews.findMany({
         where: { songId: id, status: 'PUBLISHED' },
         include: { user: { omit: { password: true } } },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit
       }),
       prisma.userSongReviews.aggregate({
         where: { songId: id, status: 'PUBLISHED' },
-        _avg: { rating: true }
+        _avg: { rating: true },
+        _count: true
       }),
-      prisma.userReleaseReviews.groupBy({
+      prisma.userSongReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { releaseId: id, status: 'PUBLISHED' }
+        where: { songId: id, status: 'PUBLISHED' }
       })
     ])
 
     const average = rating._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+    const starStats = calcStarStats(songStats)
 
-    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-    for (const group of [...songStats]) {
-      starCount[group.rating] += group._count.rating
-    }
-    const starStats = Object.entries(starCount)
-      .map(([rating, count]) => ({ rating: +rating, count }))
-      .sort((a, b) => b.rating - a.rating)
+    const data = {reviews, avgRating: avgRounded ?? 0, starStats}
 
     successApiCall(req.method, req.originalUrl)
-    res.json({reviews, avgRating: avgRounded ?? 0, starStats})
+    res.json({
+      data,
+      count: rating._count,
+      pages: Math.ceil(rating._count / limit),
+      currentPage: page,
+      limit: limit
+    })
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
@@ -221,7 +254,8 @@ const publishOrDraft = async (req, res) => {
 
       newAvg = await prisma.userArtistReviews.aggregate({
         where: { artistId: itemId, status: 'PUBLISHED' },
-        _avg: { rating: true }
+        _avg: { rating: true },
+        _count: true
       }) 
 
       stats = await prisma.userArtistReviews.groupBy({
@@ -246,7 +280,8 @@ const publishOrDraft = async (req, res) => {
 
       newAvg = await prisma.userReleaseReviews.aggregate({
         where: { releaseId: itemId, status: 'PUBLISHED' },
-        _avg: { rating: true }
+        _avg: { rating: true },
+        _count: true
       })
 
       stats = await prisma.userReleaseReviews.groupBy({
@@ -271,7 +306,8 @@ const publishOrDraft = async (req, res) => {
 
       newAvg = await prisma.userSongReviews.aggregate({
         where: { songId: itemId, status: 'PUBLISHED' },
-        _avg: { rating: true }
+        _avg: { rating: true },
+        _count: true
       })
 
       stats = await prisma.userSongReviews.groupBy({
@@ -281,26 +317,18 @@ const publishOrDraft = async (req, res) => {
       })
 
     }
-
-    const action = published.createdAt.getTime() === published.updatedAt.getTime() ? 'CREATED' : 'UPDATED'
     
     const average = newAvg._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
-
-    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-    for (const group of [...stats]) {
-      starCount[group.rating] += group._count.rating
-    }
-    const starStats = Object.entries(starCount)
-      .map(([rating, count]) => ({ rating: +rating, count }))
-      .sort((a, b) => b.rating - a.rating)
+    const starStats = calcStarStats(stats)
 
     successApiCall(req.method, req.originalUrl)
     return res.json({
-      action: action, 
       review: published, 
       avg: avgRounded ?? 0,
-      starStats 
+      starStats,
+      count: newAvg._count,
+      limit: limit
     })
 
   } catch (error) {

@@ -1,3 +1,4 @@
+import { DiscographyResponse } from "./discography"
 
 export type ReviewResponse = {
   reviews: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
@@ -71,4 +72,43 @@ export interface Recording {
   video: boolean
   "artist-credit": ArtistCredit[]
   "first-release-date"?: string
+}
+
+export interface FollowersResponse {
+  isFollowingMap: Record<string, boolean>
+  follows: {
+    createdAt: Date
+    follower: {
+      age: number
+      avatar: string
+      createdAt: Date,
+      id: string
+      role: string
+      updatedAt: string
+      username: string
+    },
+    following: {
+      age: number
+      avatar: string
+      createdAt: Date,
+      id: string
+      role: string
+      updatedAt: string
+      username: string
+    }
+    followerId: string
+    followingId: string
+    id: string
+  }[]
+  username: string
+}
+
+export type ApiData = ReleaseGroup[] | ReviewResponse | FollowersResponse
+
+export interface ApiPageResponse<T> {
+  data: T
+  count: number
+  pages: number
+  currentPage: number
+  limit: number
 }

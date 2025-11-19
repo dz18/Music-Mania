@@ -9,11 +9,6 @@ export default function Search ({
   params: Promise<{type: string}>
 }) {
 
-  const { type } = use(params)
-  const searchParams = useSearchParams()
-  const query = searchParams.get('q') ?? ''
-  const offset = searchParams.get('offset') ?? ''
-
   return (
     <div>
 
