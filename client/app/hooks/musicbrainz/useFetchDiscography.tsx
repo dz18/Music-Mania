@@ -1,45 +1,49 @@
-import { ReleaseGroup } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
+import { DiscographyResponse, DiscographyType } from "@/app/lib/types/discography";
 import axios, { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-export default function useFetchDiscography(artistId: string) {
+export default function useFetchDiscography(
+  artistId: string,
+) {
   
-  const [active, setActive] = useState<'album' | 'ep' | 'single'>('album')
-  const [discography, setDiscography] = useState<ReleaseGroup[]>([])
-  const [count, setCount] = useState(0)
-  const [offset, setOffset] = useState(0)
+
   const [artist, setArtist] = useState<Artist | null>(null)
+  const [data, setData] = useState<DiscographyResponse | null>(null)
   const [artistLoad, setArtistLoad] = useState(false)
   const [tableLoad, setTableLoad] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [active, setActive] = useState<DiscographyType>('album')
 
-  useEffect(() => {
-    fetchData()
-  }, [artistId])
-
-  const fetchData = async () => {
-    if (!artistId) return
+  const fetchData = useCallback(async(page: number) => {
+    if (!artistId || !page) {
+      setError('Missing required parameters')
+      return
+    }
 
     try {
-      setArtistLoad(true)
+      if (!artist) setArtistLoad(true)
       setTableLoad(true)
+
+      const discog = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography`, {
+        params: { artistId, type: active, page: page }
+      })
+      
+      setData(discog.data)
+      console.log(discog.data)
+
+      if (artist) {
+        setError(null)
+        return
+      }
+
+      const artistRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
+        params: { id: artistId }
+      })
+
+      setArtist(artistRes.data)
       setError(null)
 
-      const [discog, artist] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography`, {
-          params: { artistId, type: 'album' }
-        }),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
-          params: { id: artistId }
-        }),
-      ])
-
-      const discography = discog.data
-
-      setDiscography(discography.data)
-      setCount(discography.count)
-      setArtist(artist.data)
     } catch (error : any) {
       const err = error as AxiosError<{error: string}>
       console.error("Review fetch failed", err.response?.data.error)
@@ -47,44 +51,22 @@ export default function useFetchDiscography(artistId: string) {
     } finally {
       setArtistLoad(false)
       setTableLoad(false)
-    }
-  }
+    }   
+  }, [artistId, active])
 
-  const fetchDiscog = useCallback(async (artistId: string, type: 'album' | 'single' | 'ep', offset: number = 0) => {
-    try {
-      setError(null)
-      setTableLoad(true)
-      setActive(type)
-      setOffset(offset)
-
-      const discog = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography`, {
-        params: { artistId, type: type, offset }
-      })
-
-      const discography = discog.data
-
-      setDiscography(discography.data)
-      setCount(discography.count)
-
-    } catch (error : any) {
-      const err = error as AxiosError<{error: string}>
-      console.error("Review fetch failed", err.response?.data.error)
-      setError(err.response?.data.error ?? err.message)
-    } finally {
-      setTableLoad(false)
-    }
-  }, [])
+  useEffect(() => {
+    fetchData(1)
+  }, [fetchData])
 
   return { 
-    discography,
     artist,
-    active,
-    count,
-    offset,
     artistLoad,
     tableLoad,
-    fetchDiscog,
-    error
+    fetchData,
+    error,
+    data,
+    active,
+    setActive
   }
 
 }

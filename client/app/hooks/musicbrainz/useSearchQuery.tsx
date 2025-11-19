@@ -17,7 +17,7 @@ export default function useSearchQuery(query: string, selectedType: string) {
   const fetchSuggestions = useCallback(async () => {
 
     if (!query.trim()) {
-      setSuggestions([])
+      setSuggestions(null)
       return
     }
 

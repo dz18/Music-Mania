@@ -307,7 +307,6 @@ const profile = async (req, res) => {
 
     const totalReviewCount = allReviews.length
 
-    console.log(userProfile)
     const profile = {
       ...userProfile,
       totalReviewCount,
@@ -337,7 +336,6 @@ const isFollowing = async (req, res) => {
       }
     })
 
-    console.log(isFollowing)
 
     successApiCall(req.method, req.originalUrl)
     res.json(isFollowing) 
@@ -359,7 +357,6 @@ const follow = async (req, res) => {
       }
     })
 
-    console.log(follow)
     successApiCall(req.method, req.originalUrl)
     res.json(follow)
   } catch (error) {
@@ -407,7 +404,7 @@ const countFollow = async (req, res) => {
     ])
 
     const data = {followers, following}
-    console.log(data)
+
     successApiCall(req.method, req.originalUrl)
     res.json(data)
   } catch (error) {
@@ -419,7 +416,7 @@ const countFollow = async (req, res) => {
 const allFollowers = async (req, res) => {
   const { profileId, page = '1', userId, following } = req.query
 
-  const per_page = 30
+  const limit = 25
   const pageNumber = parseInt(page, 10) || 1
   const isFollowingMode = following === 'true'
 
@@ -457,8 +454,8 @@ const allFollowers = async (req, res) => {
               omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
             },
           },
-      skip: (pageNumber - 1) * per_page,
-      take: per_page,
+      skip: (pageNumber - 1) * limit,
+      take: limit,
       orderBy: { createdAt: 'desc' },
     })
 
@@ -480,14 +477,26 @@ const allFollowers = async (req, res) => {
     }
 
     const data = {
-      total,
-      pages: Math.ceil(total / per_page),
-      page: pageNumber,
-      count: follows.length,
-      follows,
-      isFollowing: isFollowingMap,
-      username: profile.username
+      data: {
+        isFollowingMap,
+        follows,
+        username: profile.username
+      },
+      pages: Math.ceil(total / limit),
+      limit: limit,
+      currentPage: pageNumber,
+      count: total
     }
+
+    // const data = {
+    //   total,
+    //   pages: Math.ceil(total / limit),
+    //   page: pageNumber,
+    //   count: follows.length,
+    //   follows,
+    //   isFollowing: isFollowingMap,
+    //   username: profile.username
+    // }
 
     successApiCall(req.method, req.originalUrl);
     res.json(data);

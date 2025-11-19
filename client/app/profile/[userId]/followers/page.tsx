@@ -1,7 +1,8 @@
 'use client'
 
-import Pagination from "@/app/components/profile/pagination";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
+import LoadingText from "@/app/components/ui/loading/LoadingText";
+import Pagination from "@/app/components/ui/Pagination";
 import RefreshPage from "@/app/components/ui/RefreshPage";
 import usefetchFollowers from "@/app/hooks/api/profile/useFetchFollowers";
 import { useSession } from "next-auth/react";
@@ -14,7 +15,7 @@ export default function Followers ({
 }) {
 
   const { userId } = use(params)
-  const { results, follow, unfollow, loading, setPage, fetchFollows } = usefetchFollowers(userId)
+  const { results, follow, unfollow, loading, fetchFollows } = usefetchFollowers(userId)
   const {data: session} = useSession()
   const router = useRouter()
 
@@ -22,8 +23,7 @@ export default function Followers ({
     return (
       <div className="h-screen"> 
         <div className="flex flex-col gap-2 h-full min-h-0 p-4">
-          <LoadingBox className="w-full h-8" />
-          <LoadingBox className="w-1/2 h-8" />
+          <LoadingText text="Loading Followers"/>
 
           <div className="flex-1 min-h-0">
             <LoadingBox className="w-full h-full" />
@@ -36,7 +36,7 @@ export default function Followers ({
   if (!results) {
     return (
       <RefreshPage
-        func={fetchFollows}
+        func={() => fetchFollows(1)}
         title="Followers Page"
         loading={loading}
         note="Error Fetching Followers"
@@ -47,16 +47,16 @@ export default function Followers ({
   return (
     <div>
 
-      <p className="text-lg font-mono"><span className="font-bold">{results?.username}</span> Followers</p>
+      <p className="text-lg font-mono"><span className="font-bold">{results?.data.username}</span> Followers</p>
 
       {/* Results */}
       <section>
         <div className="mb-1">
           <span className="font-mono font-bold">Total: </span>
-          <span className="font-mono text-teal-500 font-bold">{results?.total}</span>
+          <span className="font-mono text-teal-500 font-bold">{results.count}</span>
         </div>
-        {results?.follows.length !== 0 ? 
-          results?.follows?.map((f, i) => (
+        {results?.data.follows.length !== 0 ? 
+          results?.data.follows?.map((f, i) => (
             <div 
               key={i}
               className={`
@@ -78,15 +78,15 @@ export default function Followers ({
                   <div className="flex items-center">
                     <button 
                       className={`
-                        ${results.isFollowing[f.followerId] ? 
+                        ${results.data.isFollowingMap[f.followerId] ? 
                           'text-white hover:bg-black/20 active:bg-black/40 border' : 
                           'text-black bg-white hover:bg-white/80 active:bg-white/60'
                         }
                         px-2 py-1 rounded w-24 font-mono text-sm cursor-pointer 
                       `}
-                      onClick={() => results.isFollowing[f.followerId] ? unfollow(f.followerId) : follow(f.followerId)}
+                      onClick={() => results.data.isFollowingMap[f.followerId] ? unfollow(f.followerId) : follow(f.followerId)}
                     >
-                      {results.isFollowing[f.followerId] ? 'unfollow' : 'follow'}
+                      {results.data.isFollowingMap[f.followerId] ? 'unfollow' : 'follow'}
                     </button>
                   </div>
               }
@@ -100,11 +100,9 @@ export default function Followers ({
         
       </section>
 
-      {results?.follows.length !== 0 &&
-        <section>
-          <Pagination setPage={setPage} results={results}/>
-        </section>
-      }
+      <section>
+        <Pagination data={results} fetchData={fetchFollows}/> 
+      </section>
 
     </div>
   )

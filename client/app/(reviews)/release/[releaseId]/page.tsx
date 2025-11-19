@@ -8,11 +8,11 @@ import { use, useState } from "react"
 import Tracklist from "@/app/components/album/Tracklist";
 import TextContent from "@/app/components/album/TextContent";
 import Statistics from "@/app/components/profile/statistics";
-import fetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
 import RefreshPage from "@/app/components/ui/RefreshPage";
 import useFetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
+import Pagination from "@/app/components/ui/Pagination";
 
 export default function AlbumPage ({
   params
@@ -27,9 +27,9 @@ export default function AlbumPage ({
     coverArt,
     album,
     loading,
-    reviews,
     error,
-    setReviews,
+    setData,
+    data,
     fetchData
   } = useFetchRelease(releaseId)
 
@@ -74,7 +74,7 @@ export default function AlbumPage ({
   if (error) {
     return (
       <RefreshPage
-        func={fetchData}
+        func={() => fetchData(1)}
         title={'Release Page'}
         loading={loading}
         note={error}
@@ -86,25 +86,34 @@ export default function AlbumPage ({
     <div>
       <div className="flex justify-between">
         {/* Text content */}
-        <TextContent
-          album={album}
-          reviews={reviews}
-          coverArt={coverArt}
-          loading={loading}
-        />
+        {data &&
+          <TextContent
+            album={album}
+            reviews={data?.data}
+            coverArt={coverArt}
+            loading={loading}
+          />
+        }
       </div>
 
-      {reviews?.starStats &&
+      {data?.data.starStats &&
         <div className={`
           border-t pt-3 mt-2 border-gray-500
           ${!session && 'pb-2 border-b mb-2'}
         `}>
-          <Statistics stats={reviews.starStats}/>
+          <Statistics stats={data?.data.starStats}/>
         </div>
       }
 
-      {session && 
-        <ReviewBar item={album} type="release" reviews={reviews?.reviews} setReviews={setReviews} coverArtUrl={coverArt}/>
+      {session && !loading && data && 
+        <>
+          <ReviewBar 
+            item={album} 
+            type="artist" 
+            data={data} 
+            setData={setData} 
+          />
+        </>
       }
 
 
@@ -129,8 +138,11 @@ export default function AlbumPage ({
         {loading &&
           <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
         }
-        {reviews &&
-          <Reviews reviews={reviews.reviews}/>
+        {data &&
+          <>
+            <Reviews data={data}/>
+            <Pagination data={data} fetchData={fetchData}/>
+          </>
         }
         </>
       }

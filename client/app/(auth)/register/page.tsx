@@ -1,15 +1,14 @@
 import RegisterForm from "../../components/auth/registerForm";
 import AuthContainer from "../../components/auth/AuthContainer";
 
-export default function Register ({
+export default async function Register ({
   searchParams
 } : {
-  searchParams: {
-    callbackUrl: string
-  }
+  searchParams: Promise<{ callbackUrl?: string }>
 }) {
 
-  const callbackUrl = searchParams.callbackUrl ?? '/'
+  const params = await searchParams
+  const callbackUrl = params.callbackUrl ?? '/'
 
   return (
     <AuthContainer

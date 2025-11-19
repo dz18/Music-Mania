@@ -125,7 +125,6 @@ const getArtist = async (req, res) => {
       }
     })
 
-    console.log(fetchArtist)
     if (!fetchArtist.ok) {
       errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchArtist.status}`)
       return res.status(fetchArtist.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
@@ -319,10 +318,12 @@ const getArtist = async (req, res) => {
 
 const discography = async (req, res) => {
   const { artistId, type } = req.query
-  let offset = Number(req.query.offset) || 0
+  let page = Number(req.query.page) || 0
 
   logApiCall(req.method, req.originalUrl)
   console.log('Fetching artists discography...')
+
+  const limit = 25
 
   if (!artistId) {
     errorApiCall(req.method, req.originalUrl, 'Missing artistId')
@@ -336,17 +337,23 @@ const discography = async (req, res) => {
     return
   }
 
+  if (page < 1) {
+    errorApiCall(req.method, req.originalUrl, "Page number doesn't exist.")
+    res.status(400).json({error: "Page number doesn't exist."})
+    return
+  }
+
   try {
     
     const start = new Date()
 
-    const releases = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=25&release-group-status=website-default&offset=${offset}`, {
+    const releases = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
     }) 
 
-    console.log(releases)
+    // console.log(releases)
 
     if (!releases.ok) {
       errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${releases.status}`)
@@ -356,7 +363,7 @@ const discography = async (req, res) => {
     
 
     const releasesData = await releases.json()
-    console.log(releasesData)
+    // console.log(releasesData)
     const releaseGroups = releasesData['release-groups']
     const sorted = await Promise.all(
       [...releaseGroups].sort((a, b) => {
@@ -417,10 +424,15 @@ const discography = async (req, res) => {
     console.log('Total:', releasesData['release-groups'].length)
     console.log('Time:', duration, 'seconds')
 
-    res.json({
-      data: sorted, 
-      count: releasesData['release-group-count']
-    })
+    const data = {
+      data: sorted,
+      count: releasesData['release-group-count'],
+      currentPage: page,
+      pages: Math.ceil(releasesData['release-group-count'] / limit),
+      limit: limit
+    }
+
+    res.json(data)
 
   } catch (error) {
      
@@ -607,7 +619,7 @@ const getSong = async (req, res) => {
       video: song.video
     }
     
-    console.log(songFormatted)
+    // console.log(songFormatted)
     successApiCall(req.method, req.originalUrl)
     return res.json({
       song: songFormatted, 
