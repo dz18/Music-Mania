@@ -6,16 +6,24 @@ const userAgent = process.env.USER_AGENT
 // Search Bar Functions
 const artists = async (req, res) => {
   const { q } = req.query
+  const page = Number(req.query.page) ?? 1
+  
+  const limit = 50
 
   logApiCall(req.method, req.originalUrl)
 
   if (!q) {
     errorApiCall(req.method, req.originalUrl, 'Missing query parameter')
-    return res.status(400).json({error : 'Error fetching suggested artist'})
+    return res.status(400).json({error : 'Missing query parameter'})
+  }
+
+  if (page < 0) {
+    errorApiCall(req.method, req.originalUrl, 'Invalid Page number')
+    return res.status(400).json({error : 'Invalid Page number'})
   }
 
   try {
-    const query = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}&fmt=json`, {
+    const query = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
@@ -28,22 +36,27 @@ const artists = async (req, res) => {
 
     const data = await query.json()
 
-    // Sort & Filter
     const artists = []
     for (const artist of data.artists) {
       // console.log(artist)
       const filtered = {
-        id : artist.id,
-        type : artist.type,
-        name : artist.name,
-        disambiguation : artist.disambiguation
+        id: artist.id,
+        type: artist.type,
+        name: artist.name,
+        disambiguation: artist.disambiguation
       }
       artists.push(filtered)
     }
     console.log('results ========')
 
     successApiCall(req.method, req.originalUrl)
-    return res.json(artists)
+    return res.json({
+      data: {suggestions: artists},
+      count: data.count,
+      currentPage: page,
+      pages: Math.ceil(data.count / limit),
+      limit: limit
+    })
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
@@ -53,6 +66,9 @@ const artists = async (req, res) => {
 
 const releases = async (req, res) => {
   const { q } = req.query
+  const page = Number(req.query.page) ?? 1
+
+  const limit = 50
 
   logApiCall(req.method, req.originalUrl)
 
@@ -63,7 +79,7 @@ const releases = async (req, res) => {
 
   try {
 
-    const query = await fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND (primarytype:album OR primarytype:ep)&inc=artist-credits&fmt=json`, {
+    const query = await fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND (primarytype:album OR primarytype:ep)&inc=artist-credits&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
@@ -76,10 +92,28 @@ const releases = async (req, res) => {
 
     const data = await query.json()
 
+    const filtered = []
+    for (const f of data['release-groups']) {
+      filtered.push({
+        id: f.id,
+        type: f.type,
+        title: f.title,
+        artistCredit: f['artist-credit'].map(ac => ({
+          joinphrase: ac.joinphrase, name: ac.name
+        })),
+        primaryType: f['primary-type'],
+        firstReleaseDate: f['first-release-date']
+      })
+    }
 
-    console.log(data['release-groups'][0] ?? [])
     successApiCall(req.method, req.originalUrl)
-    return res.json(data['release-groups'])
+    return res.json({
+      data: { suggestions: filtered },
+      count: data.count,
+      limit: limit,
+      currentPage: page,
+      pages: Math.ceil(data.count / limit)
+    })
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)

@@ -1,26 +1,32 @@
 type ArtistQuery = {
-  id: string,
-  type: string,
-  name: string,
-  disambiguation: string
+  suggestions: {
+    id: string,
+    type: string,
+    name: string,
+    disambiguation: string
+  }[]
 }
 
 type UserQuery = {
-  id: string,
-  username: string,
-  createdAt: Date
+  suggestions: {
+    id: string,
+    username: string,
+    createdAt: Date
+    avatar: string
+  }[]
 }
 
 type ReleaseQuery = {
-  id: string,
-  title: string,
-  'artist-credit' : {
-    joinphrase?: string
-    name: string,
-  }[] | null
-  type: string
-  'first-release-date': string,
-  'primary-type': string
+  suggestions: {
+    id: string,
+    title: string,
+    artistCredit : {
+      joinphrase?: string
+      name: string,
+    }[] | null
+    firstReleaseDate: string,
+    primaryType: string
+  }[]
 }
 
-type Suggestion = ArtistQuery[] | ReleaseQuery[] | UserQuery[]
+type Suggestion = ArtistQuery | ReleaseQuery | UserQuery

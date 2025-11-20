@@ -60,11 +60,9 @@ export default function Pagination ({
         })()}
       </div>    
 
-      {(data.pages - 5) >= data.currentPage &&
+      {(data.pages - 5) > data.currentPage &&
         <div className="flex gap-4">
-          {(data.pages - 6) >= data.currentPage &&
-            <p>...</p>
-          }
+          <p>...</p>
           <button
             className="cursor-pointer hover:underline"
             onClick={() => fetchData(data.pages)}
@@ -82,6 +80,7 @@ export default function Pagination ({
           <ChevronRight size={18}/>
         </div>
       }
+      
       {data.pages > 10 &&
         <div className="flex gap-2 items-center">
           <input 

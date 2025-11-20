@@ -208,6 +208,9 @@ const favorite = async (req, res) => {
 // Get a batch of users
 const query = async (req, res) => {
   const { q } = req.query
+  const page = Number(req.query.page) ?? 1
+
+  limit = 50
 
   logApiCall(req.method, req.originalUrl)
 
@@ -226,15 +229,37 @@ const query = async (req, res) => {
         }
       },
       select: {
+        avatar: true,
         username: true,
         id: true,
         createdAt: true
       },
-      take: 25
+      take: limit,
+      skip: (page - 1) * limit,
     })
 
+    const count = await prisma.user.aggregate({
+      where: {
+        username: {
+          contains: q,
+          mode: 'insensitive'
+        }
+      },
+      _count: true
+    })
+
+    const data = {
+      suggestions: query
+    }
+
     successApiCall(req.method, req.originalUrl)
-    res.json(query)
+    res.json({
+      data: data,
+      count: count._count,
+      limit: limit,
+      pages: Math.ceil(count._count / limit),
+      currentPage: page
+    })
 
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
