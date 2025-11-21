@@ -25,11 +25,6 @@ export default function ReleaseSuggestions ({
                   <div className="">
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-base font-semibold text-white truncate">{item.title}</h3>
-                      {item.primaryType && (
-                        <span className="text-xs font-medium text-gray-500 tracking-wide select-none">
-                          {item.primaryType}
-                        </span>
-                      )}
                     </div>
                     {item?.artistCredit &&
                       <p className="mt-1 text-sm text-gray-500 italic truncate">

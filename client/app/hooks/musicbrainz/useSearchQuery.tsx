@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-export default function useSearchQuery(query: string, selectedType: string) {
+export default function useSearchQuery(query: string, selectedTab: string) {
   
   const pathname = usePathname()
   const [showDropdown, setShowDropdown] = useState<boolean>(false)
@@ -11,12 +11,14 @@ export default function useSearchQuery(query: string, selectedType: string) {
   const [data, setData] = useState<ApiPageResponse<Suggestion> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
+  const [artistType, setArtistType] = useState('')
+  const [releaseType, setReleaseType] = useState('')
 
   useEffect(() => {
     setShowDropdown(false)
   }, [pathname])
 
-  const fetchSuggestions = useCallback(async (page: number) => {
+  const fetchSuggestions = useCallback(async (page: number = 1) => {
 
     if (!query.trim()) {
       setData(null)
@@ -28,11 +30,11 @@ export default function useSearchQuery(query: string, selectedType: string) {
       setError(null)
 
       let res
-      if (selectedType === 'artists' || selectedType === 'releases') {
-        res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedType}`, {
-          params: { q: query, page: page }
+      if (selectedTab === 'artists' || selectedTab === 'releases') {
+        res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedTab}`, {
+          params: { q: query, page: page, type: selectedTab === 'artists' ? artistType : releaseType }
         })
-      } else if (selectedType === 'users') {
+      } else if (selectedTab === 'users') {
         res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/query`, {
           params: { q: query, page: page }
         })
@@ -53,7 +55,7 @@ export default function useSearchQuery(query: string, selectedType: string) {
       setLoading(false)
     }
 
-  }, [query, selectedType])
+  }, [query, selectedTab, artistType, releaseType])
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -76,7 +78,11 @@ export default function useSearchQuery(query: string, selectedType: string) {
     setData,
     error,
     fetchSuggestions,
-    setPage
+    setPage,
+    artistType,
+    releaseType,
+    setArtistType,
+    setReleaseType
   }
 
 }

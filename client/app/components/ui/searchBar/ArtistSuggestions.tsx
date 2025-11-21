@@ -1,7 +1,5 @@
 import { useRouter } from "next/navigation"
-import { Dispatch, SetStateAction, useEffect } from "react"
 import NoResults from "./NoResults"
-import Link from "next/link"
 
 export default function ArtistSuggestions ({
   data,

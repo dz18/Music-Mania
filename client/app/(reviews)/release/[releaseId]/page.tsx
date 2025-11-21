@@ -5,14 +5,14 @@ import ReviewBar from "@/app/components/reviews/ReviewBar";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import { useSession } from "next-auth/react";
 import { use, useState } from "react"
-import Tracklist from "@/app/components/album/Tracklist";
-import TextContent from "@/app/components/album/TextContent";
-import Statistics from "@/app/components/profile/statistics";
+import Tracklist from "@/app/components/pages/album/Tracklist";
+import Statistics from "@/app/components/pages/profile/statistics";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
 import RefreshPage from "@/app/components/ui/RefreshPage";
 import useFetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 import Pagination from "@/app/components/ui/Pagination";
+import TextContent from "@/app/components/pages/album/TextContent";
 
 export default function AlbumPage ({
   params

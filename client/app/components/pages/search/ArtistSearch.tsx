@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation"
-import { ApiPageResponse } from "../lib/types/api"
+import { ApiPageResponse } from "../../../lib/types/api"
 
 export default function ArtistSearch ({
   data

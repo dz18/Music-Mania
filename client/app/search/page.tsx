@@ -1,10 +1,10 @@
-import SearchPage from "./SearchPage"
+import SearchPage from "../components/pages/search/SearchPage"
 
 export default async function Search ({
   searchParams
 } : {
   searchParams: Promise<{
-    type: string, q: string
+    tab: string, q: string
   }>
 }) {
 
@@ -12,9 +12,7 @@ export default async function Search ({
 
   return (
     <div>
-
       <SearchPage params={params}/>
-
     </div>
   )
 }

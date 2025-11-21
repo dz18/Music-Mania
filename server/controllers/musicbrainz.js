@@ -5,7 +5,7 @@ const userAgent = process.env.USER_AGENT
 
 // Search Bar Functions
 const artists = async (req, res) => {
-  const { q } = req.query
+  const { q, type } = req.query
   const page = Number(req.query.page) ?? 1
   
   const limit = 50
@@ -23,7 +23,7 @@ const artists = async (req, res) => {
   }
 
   try {
-    const query = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
+    const query = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}${type && ` AND (type:${type})`}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
@@ -38,7 +38,6 @@ const artists = async (req, res) => {
 
     const artists = []
     for (const artist of data.artists) {
-      // console.log(artist)
       const filtered = {
         id: artist.id,
         type: artist.type,
@@ -47,7 +46,6 @@ const artists = async (req, res) => {
       }
       artists.push(filtered)
     }
-    console.log('results ========')
 
     successApiCall(req.method, req.originalUrl)
     return res.json({
@@ -65,7 +63,7 @@ const artists = async (req, res) => {
 }
 
 const releases = async (req, res) => {
-  const { q } = req.query
+  const { q, type } = req.query
   const page = Number(req.query.page) ?? 1
 
   const limit = 50
@@ -79,7 +77,7 @@ const releases = async (req, res) => {
 
   try {
 
-    const query = await fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND (primarytype:album OR primarytype:ep)&inc=artist-credits&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
+    const query = await fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND ${type ? `(primarytype:${type})` : '(primarytype:album OR primarytype:ep)'}&inc=artist-credits&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
@@ -175,7 +173,6 @@ const getArtist = async (req, res) => {
     const membersSet = new Set()
     for(const relation of artistData.relations) {
       if(relation.type.includes('member')) {
-        // console.log(relation)
         if (membersSet.has(relation.artist.id)) continue
 
         membersOfband.push({
@@ -195,7 +192,6 @@ const getArtist = async (req, res) => {
 
         membersSet.add(relation.artist.id)
       } else if (validURLTypes.includes(relation.type) && relation.url) {
-        // console.log(relation.url.resource)
         if (relation.type === 'social network') {
           if (relation.url.resource.includes('instagram') ) {
             URLRelations.push({
@@ -340,7 +336,6 @@ const getArtist = async (req, res) => {
       urls: URLRelations
     }
 
-    // console.log(artist)
     successApiCall(req.method, req.originalUrl)
     res.json(artist)
   } catch (error) {
@@ -355,7 +350,6 @@ const discography = async (req, res) => {
   let page = Number(req.query.page) || 0
 
   logApiCall(req.method, req.originalUrl)
-  console.log('Fetching artists discography...')
 
   const limit = 25
 
@@ -387,7 +381,6 @@ const discography = async (req, res) => {
       }
     }) 
 
-    // console.log(releases)
 
     if (!releases.ok) {
       errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${releases.status}`)
@@ -397,7 +390,6 @@ const discography = async (req, res) => {
     
 
     const releasesData = await releases.json()
-    // console.log(releasesData)
     const releaseGroups = releasesData['release-groups']
     const sorted = await Promise.all(
       [...releaseGroups].sort((a, b) => {
@@ -435,28 +427,9 @@ const discography = async (req, res) => {
         }
       }
     )) 
-    // !! Debug !!
-    // const seen = new Set()
-    // let i = 1
-    // sorted.forEach(releaseGroup => {
-    //   const key = releaseGroup['secondary-types'].join(' + ') // empty string if no types
-
-    //   if (!seen.has(key)) {
-    //     console.log(key || `${type}s`) // handle empty array
-    //     i = 1
-    //     seen.add(key)
-    //   }
-
-    //   console.log(`${i}. ${releaseGroup.title}`)
-    //   i += 1
-    // })
 
     const end = new Date()
     const duration = (end.getTime() - start.getTime()) / 1000
-    console.log('=====================================================')
-    console.log('Count:', releasesData['release-group-count'])
-    console.log('Total:', releasesData['release-groups'].length)
-    console.log('Time:', duration, 'seconds')
 
     const data = {
       data: sorted,
@@ -556,12 +529,6 @@ const getRelease = async (req, res) => {
       coverArt = coverArtJSON.images.filter(img => img.front === true)
     }
 
-    console.log(FetchCoverArt)
-
-
-
-    //console.log(sorted)
-    //console.log(first)
     successApiCall(req.method, req.originalUrl)
     return res.json({
       album: first,
@@ -605,15 +572,12 @@ const getSong = async (req, res) => {
     }
 
     const song = await fetchSong.json()
-    // console.log(song)
 
     song.releases.sort((a, b) => {
       const weight = (r) => r['release-group']?.["primary-type"] === 'Single' ? 0 : 1
       return weight(a) - weight(b) 
     })
 
-    // console.log(song.releases.length)
-    // console.log(song.releases.map(r => r['release-group']['primary-type']))
 
     let coverArtUrl = ''
     if (song.releases.length !== 0) {
@@ -624,7 +588,6 @@ const getSong = async (req, res) => {
       coverArtUrl = coverArt[0].image
     }
 
-    // console.log(coverArtUrl)
     let partOf
     const seen = new Set()
     const rgs = []
@@ -653,7 +616,6 @@ const getSong = async (req, res) => {
       video: song.video
     }
     
-    // console.log(songFormatted)
     successApiCall(req.method, req.originalUrl)
     return res.json({
       song: songFormatted, 
@@ -686,7 +648,6 @@ const findSingleId = async (req, res) => {
     if (single['release-count'] === 0) {
       res.status(404).json({error : 'No Recordings found'})
     }
-    // console.log(single)
    
     const media = single.releases.map(r => r.media)
     const recording = media.map(m => m[0].tracks[0].recording)

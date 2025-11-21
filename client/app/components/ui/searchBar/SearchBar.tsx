@@ -37,7 +37,7 @@ export default function SearchBar () {
   }, [])
 
   const submit = (e : FormEvent<HTMLFormElement>) => {
-    router.push(`/search?type=${selectedType}&q=${query.trim().replace(/ /g, '+')}`)
+    router.push(`/search?tab=${selectedType}&q=${query.trim().replace(/ /g, '+')}`)
   }
 
   return (

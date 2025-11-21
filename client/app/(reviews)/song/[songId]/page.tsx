@@ -1,6 +1,6 @@
 'use client'
 
-import Statistics from "@/app/components/profile/statistics";
+import Statistics from "@/app/components/pages/profile/statistics";
 import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Reviews from "@/app/components/reviews/Reviews";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
