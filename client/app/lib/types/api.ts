@@ -103,7 +103,9 @@ export interface FollowersResponse {
   username: string
 }
 
-export type ApiData = ReleaseGroup[] | ReviewResponse | FollowersResponse
+export type SearchTypes = "artists" | "releases" | "users"
+
+export type ApiData = ReleaseGroup[] | ReviewResponse | FollowersResponse | Suggestion
 
 export interface ApiPageResponse<T> {
   data: T

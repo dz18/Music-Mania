@@ -1,23 +1,27 @@
+import { ApiPageResponse } from "@/app/lib/types/api";
 import axios, { AxiosError } from "axios";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-export default function useSearchQuery(query: string, selectedType: string) {
+export default function useSearchQuery(query: string, selectedTab: string) {
   
   const pathname = usePathname()
   const [showDropdown, setShowDropdown] = useState<boolean>(false)
   const [loading, setLoading] = useState(false)
-  const [suggestions, setSuggestions] = useState<Suggestion | null>(null)
+  const [data, setData] = useState<ApiPageResponse<Suggestion> | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [artistType, setArtistType] = useState('')
+  const [releaseType, setReleaseType] = useState('')
 
   useEffect(() => {
     setShowDropdown(false)
   }, [pathname])
 
-  const fetchSuggestions = useCallback(async () => {
+  const fetchSuggestions = useCallback(async (page: number = 1) => {
 
     if (!query.trim()) {
-      setSuggestions(null)
+      setData(null)
       return
     }
 
@@ -26,13 +30,13 @@ export default function useSearchQuery(query: string, selectedType: string) {
       setError(null)
 
       let res
-      if (selectedType === 'artists' || selectedType === 'releases') {
-        res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedType}`, {
-          params: { q: query }
+      if (selectedTab === 'artists' || selectedTab === 'releases') {
+        res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/${selectedTab}`, {
+          params: { q: query, page: page, type: selectedTab === 'artists' ? artistType : releaseType }
         })
-      } else if (selectedType === 'users') {
+      } else if (selectedTab === 'users') {
         res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/query`, {
-          params: { q: query }
+          params: { q: query, page: page }
         })
       } else {
         throw new Error('Unknown Type')
@@ -40,35 +44,45 @@ export default function useSearchQuery(query: string, selectedType: string) {
 
       const data = res.data
       console.log(data)
-      setSuggestions(data || [])
+      setData(data)
       setShowDropdown(true)
     } catch (error) {
       const err = error as AxiosError<{error: string}>
       console.error("Review fetch failed", err.response?.data.error)
       setError(err.response?.data.error ?? err.message)
-      setSuggestions([])
+      setData(null)
     } finally {
       setLoading(false)
     }
 
-  }, [query, selectedType])
+  }, [query, selectedTab, artistType, releaseType])
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchSuggestions()
+      setPage(1)
+      fetchSuggestions(1)
     }, 500)
 
     return () => clearTimeout(handler)
   }, [fetchSuggestions])
 
+  useEffect(() => {
+    fetchSuggestions(page)
+  }, [page])
+
   return {
     showDropdown,
     setShowDropdown,
     loading,
-    suggestions,
-    setSuggestions,
+    data,
+    setData,
     error,
-    fetchSuggestions
+    fetchSuggestions,
+    setPage,
+    artistType,
+    releaseType,
+    setArtistType,
+    setReleaseType
   }
 
 }

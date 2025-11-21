@@ -4,14 +4,15 @@ import UserSuggestions from "./UserSuggestions"
 import ReleaseSuggestions from "./ReleaseSuggestions"
 import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
 import { RefreshCcw } from "lucide-react"
+import { ApiPageResponse, SearchTypes } from "@/app/lib/types/api"
 
 
 export default function SearchDropdown ({
   open,
   type,
   setType,
-  suggestions,
-  setSuggestions,
+  data,
+  setData,
   loading,
   error,
   fetch
@@ -19,24 +20,21 @@ export default function SearchDropdown ({
   open : boolean
   type : string
   setType : Dispatch<SetStateAction<string>>
-  suggestions: any
-  setSuggestions: Dispatch<SetStateAction<Suggestion | null>>
+  data: ApiPageResponse<Suggestion> | null
+  setData: Dispatch<SetStateAction<ApiPageResponse<Suggestion> | null>>
   loading: boolean
   error: string | null
   fetch: () => Promise<void>
 }) {
 
-  const searchTypes = ['artists', 'releases', 'users'] as const
-  type SearchTypes = (typeof searchTypes)[number]
-
   const suggestionComponents: Record<SearchTypes, JSX.Element> = {
-    artists: <ArtistSuggestions suggestions={suggestions}/>,
-    releases: <ReleaseSuggestions suggestions={suggestions}/>,
-    users: <UserSuggestions suggestions={suggestions}/>
+    artists: <ArtistSuggestions data={(data?.data as ArtistQuery)}/>,
+    releases: <ReleaseSuggestions data={(data?.data as ReleaseQuery)}/>,
+    users: <UserSuggestions data={(data?.data as UserQuery)}/>
   }
 
   useEffect(() => {
-    setSuggestions(null)
+    setData(null)
   }, [type])
 
   if (!open) return
@@ -49,7 +47,7 @@ export default function SearchDropdown ({
       {/* Select Search Type */}
       <ul className="flex flex-wrap p-2 gap-4 text-sm items-center box-border">
         <li className="text-gray-500">Search:</li>
-        {searchTypes.map(t => (
+        {['artists', 'releases', 'users'].map(t => (
           <li
             key={t}
             className={`cursor-pointer font-bold p-1 border-b-2 ${t === type ? 'border-teal-500 bg-teal-500/20 text-teal-300' : 
@@ -60,10 +58,10 @@ export default function SearchDropdown ({
             {t}
           </li>
         ))}
-        {suggestions &&
+        {data?.data &&
           <>
             <li className="flex grow"/>
-            <li className="text-gray-500 text-sm">{suggestions.length} results</li>
+            <li className="text-gray-500 text-sm">{data.count} results</li>
           </>
         }
       </ul>
@@ -85,7 +83,7 @@ export default function SearchDropdown ({
           </div>
         </div>
       :
-        suggestions && (
+        data?.data && (
           <>{suggestionComponents[type as SearchTypes]}</>
         )
       }

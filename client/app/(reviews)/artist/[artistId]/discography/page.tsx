@@ -1,6 +1,6 @@
 'use client'
 
-import DiscographyTable from "@/app/components/artist/DiscographyTable";
+import DiscographyTable from "@/app/components/pages/artist/DiscographyTable";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import Pagination from "@/app/components/ui/Pagination";
 import useFetchDiscography from "@/app/hooks/musicbrainz/useFetchDiscography";
@@ -47,7 +47,6 @@ export default function Discography ({
             className={`${active === 'album' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
             onClick={() => {
               setActive('album')
-              fetchData(1)
             }}
           >
             Albums
@@ -56,7 +55,6 @@ export default function Discography ({
             className={`${active === 'ep' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
             onClick={() => {
               setActive('ep')
-              fetchData(1)
             }}
           >
             EPs
@@ -65,7 +63,6 @@ export default function Discography ({
             className={`${active === 'single' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
             onClick={() => {
               setActive('single')
-              fetchData(1)
             }}
           >
             Singles
@@ -85,7 +82,7 @@ export default function Discography ({
             <p className="">{error}</p>
             <button 
               className="flex items-center gap-2 px-2 py-1 bg-teal-500 rounded text-black font-bold font-mono cursor-pointer"
-              onClick={() => fetchData(1)}
+              onClick={() => fetchData()}
             >
               Refresh <RefreshCcw size={18}/>
             </button>

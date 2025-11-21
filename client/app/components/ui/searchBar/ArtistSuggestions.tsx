@@ -1,22 +1,20 @@
 import { useRouter } from "next/navigation"
-import { Dispatch, SetStateAction, useEffect } from "react"
 import NoResults from "./NoResults"
-import Link from "next/link"
 
 export default function ArtistSuggestions ({
-  suggestions,
+  data,
 } : {
-  suggestions : ArtistQuery[] | null
+  data : ArtistQuery | null
 }) {
 
   const router = useRouter()
 
   return (
     <>
-      {suggestions &&
-        suggestions.length !== 0 ?
+      {data &&
+        data.suggestions.length !== 0 ?
           <>
-            {suggestions.map((item) => (
+            {data.suggestions.map((item) => (
               <div 
                 key={item.id} 
                 className="hover:bg-white/20 transition-colors duration-200 cursor-pointer"
@@ -37,14 +35,10 @@ export default function ArtistSuggestions ({
                 </div>
               </div>
             ))}
-            <Link href={''}>  
-              View More
-            </Link>
           </>
         :
           <NoResults/>
       }
-      
     </>
   )
 }

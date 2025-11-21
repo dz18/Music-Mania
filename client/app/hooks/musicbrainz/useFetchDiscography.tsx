@@ -15,34 +15,29 @@ export default function useFetchDiscography(
   const [error, setError] = useState<string | null>(null)
   const [active, setActive] = useState<DiscographyType>('album')
 
-  const fetchData = useCallback(async(page: number) => {
+  const fetchData = useCallback(async(page: number = 1) => {
     if (!artistId || !page) {
       setError('Missing required parameters')
       return
     }
 
     try {
-      if (!artist) setArtistLoad(true)
       setTableLoad(true)
+      if (!artist) { setArtistLoad(true) }
 
       const discog = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography`, {
         params: { artistId, type: active, page: page }
       })
       
       setData(discog.data)
-      console.log(discog.data)
-
-      if (artist) {
-        setError(null)
-        return
-      }
-
-      const artistRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
-        params: { id: artistId }
-      })
-
-      setArtist(artistRes.data)
       setError(null)
+
+      if (!artist) {
+        const artistRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
+          params: { id: artistId }
+        })
+        setArtist(artistRes.data)
+      }
 
     } catch (error : any) {
       const err = error as AxiosError<{error: string}>

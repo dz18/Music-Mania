@@ -1,12 +1,12 @@
 'use client'
 
-import About from "@/app/components/artist/About"
+import About from "@/app/components/pages/artist/About"
 import Reviews from "@/app/components/reviews/Reviews"
 import ReviewBar from "@/app/components/reviews/ReviewBar"
 import type { Artist } from "@/app/lib/types/artist"
 import { useSession } from "next-auth/react"
 import { use } from "react"
-import Statistics from "@/app/components/profile/statistics"
+import Statistics from "@/app/components/pages/profile/statistics"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"

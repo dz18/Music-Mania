@@ -4,19 +4,21 @@ import { Search } from "lucide-react"
 import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
 import useSearchQuery from "@/app/hooks/musicbrainz/useSearchQuery"
+import { useRouter } from "next/navigation"
 
 export default function SearchBar () {
 
   const [query, setQuery] = useState('')
   const [selectedType, setSelectedType] = useState('artists')
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   const {
     showDropdown,
     setShowDropdown,
     loading,
-    suggestions,
-    setSuggestions,
+    setData,
+    data,
     error,
     fetchSuggestions
   } = useSearchQuery(query, selectedType)
@@ -35,8 +37,7 @@ export default function SearchBar () {
   }, [])
 
   const submit = (e : FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    alert(`Searched '${query}'`)
+    router.push(`/search?tab=${selectedType}&q=${query.trim().replace(/ /g, '+')}`)
   }
 
   return (
@@ -68,12 +69,14 @@ export default function SearchBar () {
         open={showDropdown} 
         type={selectedType} 
         setType={setSelectedType}
-        suggestions={suggestions}
-        setSuggestions={setSuggestions}
+        data={data}
+        setData={setData}
         loading={loading}
         error={error}
-        fetch={fetchSuggestions}
+        fetch={() => fetchSuggestions(1)}
       />
+      
+
 
     </div>
     

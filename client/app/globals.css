@@ -33,6 +33,21 @@
   transform-origin: 0% 50%;
 }
 
+:root {
+  --shadow-white: 0 0 10px rgba(255, 255, 255, 0.5);
+  --shadow-cyan: 0 0 15px rgba(0, 255, 255, 0.8);
+}
+
+.hover-white-glow:hover {
+  box-shadow: var(--shadow-white);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.focus-cyan-glow:focus {
+  box-shadow: var(--shadow-cyan);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
