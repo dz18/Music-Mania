@@ -44,7 +44,12 @@ export default function MainDisplay ({profile} : {profile: UserProfile}) {
         </div>
         {session &&
           session?.user.id === profile.id ? (
-            <button className="border rounded cursor-pointer">Edit Profile</button> 
+            <button 
+              className="border rounded cursor-pointer"
+              onClick={() => router.push(`/profile/${profile.id}/edit`)}
+            >
+              Edit Profile
+            </button> 
           ) : ( 
             <button 
               className="border rounded cursor-pointer hover:bg-white/10 active:bg-white/20"
