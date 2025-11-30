@@ -188,6 +188,7 @@ const songReviews = async(req, res) => {
 
 }
 
+// Fetches a specific review
 const user = async (req, res) => {
   const {userId, itemId, type} = req.query
 
@@ -497,6 +498,189 @@ const itemRatings = async (req, res) => {
 
 }
 
+const userArtists = async (req, res) => {
+  const userId = req.query.userId
+  const page = Number(req.query.page) || null
+
+  const limit = 25
+
+  if (!userId || !page) {
+    // error handling
+  }
+
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+
+    const [
+      artistReviews,
+      stats,
+      reviewStats
+    ] = await Promise.all([
+      prisma.userArtistReviews.findMany({
+        where: { userId: userId, status: 'PUBLISHED'},
+        include: { artist: true },
+        take: limit,
+        skip: (page - 1) * limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.userArtistReviews.aggregate({
+        where: { userId: userId, status: 'PUBLISHED'},
+        _count: true
+      }),
+      prisma.userArtistReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: userId, status: 'PUBLISHED' }
+      })
+    ])
+
+    const starStats = calcStarStats(reviewStats)
+    
+    const data = {
+      data: { 
+        reviews: artistReviews,
+        starStats: starStats
+      },
+      currentPage: page,
+      pages: Math.ceil(stats._count / limit),
+      count: stats._count,
+      limit: limit
+    }
+
+    console.log(data.data.reviews)
+
+    res.json(data)
+    successApiCall(req.method, req.originalUrl)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+    return res.status(500).json({error: `Error fetching users artist reviews`})
+  }
+
+}
+
+const userReleases = async (req, res) => {
+  const userId = req.query.userId
+  const page = Number(req.query.page) || null
+
+  const limit = 25
+
+  if (!userId || !page) {
+    // error handling
+  }
+
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+
+    const [
+      releaseReviews,
+      stats,
+      reviewStats
+    ] = await Promise.all([
+      prisma.userReleaseReviews.findMany({
+        where: { userId: userId, status: 'PUBLISHED'},
+        include: { release: true},
+        take: limit,
+        skip: (page - 1) * limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.userReleaseReviews.aggregate({
+        where: { userId: userId, status: 'PUBLISHED'},
+        _count: true
+      }),
+      prisma.userReleaseReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: userId, status: 'PUBLISHED' }
+      })
+    ])
+
+    const starStats = calcStarStats(reviewStats)
+    
+    const data = {
+      data: { 
+        reviews: releaseReviews,
+        starStats: starStats
+      },
+      currentPage: page,
+      pages: Math.ceil(stats._count / limit),
+      count: stats._count,
+      limit: limit
+    }
+
+    console.log(data)
+
+    res.json(data)
+    successApiCall(req.method, req.originalUrl)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+    return res.status(500).json({error: `Error fetching users artist reviews`})
+  }
+
+}
+
+const userSongs = async (req, res) => {
+  const userId = req.query.userId
+  const page = Number(req.query.page) || null
+
+  const limit = 25
+
+  if (!userId || !page) {
+    // error handling
+  }
+
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+
+    const [
+      songReviews,
+      stats,
+      reviewStats
+    ] = await Promise.all([
+      prisma.userSongReviews.findMany({
+        where: { userId: userId, status: 'PUBLISHED'},
+        include: { song: true },
+        take: limit,
+        skip: (page - 1) * limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.userSongReviews.aggregate({
+        where: { userId: userId, status: 'PUBLISHED'},
+        _count: true
+      }),
+      prisma.userSongReviews.groupBy({
+        by: ['rating'],
+        _count: { rating: true },
+        where: { userId: userId, status: 'PUBLISHED' }
+      })
+    ])
+
+    const starStats = calcStarStats(reviewStats)
+    
+    const data = {
+      data: { 
+        reviews: songReviews,
+        starStats: starStats
+      },
+      currentPage: page,
+      pages: Math.ceil(stats._count / limit),
+      count: stats._count,
+      limit: limit
+    }
+
+    console.log(data)
+
+    res.json(data)
+    successApiCall(req.method, req.originalUrl)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+    return res.status(500).json({error: `Error fetching users artist reviews`})
+  }
+
+}
+
 module.exports = {
   user,
   publishOrDraft,
@@ -504,5 +688,8 @@ module.exports = {
   artistReviews,
   releaseReviews,
   songReviews,
-  itemRatings
+  itemRatings,
+  userArtists,
+  userReleases,
+  userSongs
 }

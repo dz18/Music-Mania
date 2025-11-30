@@ -1,7 +1,6 @@
 'use client'
 
-import { use, useState } from "react"
-import fetchProfile from "@/app/hooks/api/profile/useFetchProfile"
+import { use } from "react"
 import ArtistReviews from "@/app/components/pages/profile/artistReviews"
 import ReleaseReviews from "@/app/components/pages/profile/releaseReviews"
 import SongReviews from "@/app/components/pages/profile/songReviews"
@@ -12,6 +11,7 @@ import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchProfile from "@/app/hooks/api/profile/useFetchProfile"
+import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
 
 
 export default function Profile ({
@@ -21,16 +21,12 @@ export default function Profile ({
 }) {
 
   const { userId } = use(params)
-  const { profile, loading, error, fetchProfilePage} = useFetchProfile(userId)
-  const [selected, setSelected] = useState('Statistics')
-
-  type ReviewKeys = keyof Pick<UserProfile, 'artistReviews' | 'releaseReviews' | 'songReviews'>
-  const tabs : {label: string, key?: ReviewKeys}[] = [
-    {label: 'Statistics'},
-    {label: 'Artist Reviews', key: 'artistReviews' },
-    {label: 'Release Reviews', key: 'releaseReviews' },
-    {label: 'Song Reviews', key: 'songReviews' },
-  ]
+  const { 
+    profile, loading, error, fetchTab,
+    fetchProfilePage, tabs, selected, tabLoad,
+    setSelected, follow, unfollow, followLoad,
+    artistReviews, releaseReviews, songReviews,
+  } = useFetchProfile(userId)
 
   if (loading) {
     return (
@@ -91,7 +87,7 @@ export default function Profile ({
         func={fetchProfilePage}
         title="Profile Page"
         loading={loading}
-        note={'User not found or data fetching failed.'}
+        note={error ?? "Unknown Error Occurred. Try Again."}
       />
     )
   }
@@ -101,7 +97,12 @@ export default function Profile ({
 
       {/* Main Section */}
       <section className="flex gap-4">
-        <MainDisplay profile={profile}/>
+        <MainDisplay 
+          profile={profile}
+          follow={follow}
+          unfollow={unfollow}
+          followLoad={followLoad}
+        />
       </section>
 
       {/* About Me */}
@@ -126,31 +127,34 @@ export default function Profile ({
                 key={tab.label}
                 className={`
                   py-1 px-2 cursor-pointer 
-                  ${selected === tab.label ? 'bg-teal-800' : 'bg-gray-800 hover:bg-gray-700'}
+                  ${selected === tab.key ? 'bg-teal-800' : 'bg-gray-800 hover:bg-gray-700'}
                   disabled:bg-gray-900 disabled:text-gray-500 disabled:cursor-default
                 `}
-                onClick={() => setSelected(tab.label)}
-                disabled={typeof tab.key === "string" && profile?.[tab.key]?.length === 0}
+                onClick={() => setSelected(tab.key)}
+                disabled={profile?.[tab.key] === 0}
               >
-                {tab.label}
-                {tab.key && (
-                  <>
-                    {' '}
-                    [<span className="text-teal-500">
-                      {profile?.[tab.key]?.length ?? 0}
-                    </span>]
-                  </>
-                )}
+                {tab.label}{' '}
+                {tab.key !== 'starStats' &&
+                  <span className="text-teal-500">
+                    {profile?.[tab.key]}
+                  </span>
+                }
               </button>
             ))}
           </div>
         </div>
 
         <div className="mt-2 pb-2 border-b">
-          {selected === 'Statistics' && <Statistics stats={profile.starStats}/>}
-          {selected === 'Artist Reviews' && <ArtistReviews profile={profile}/>}
-          {selected === 'Release Reviews' && <ReleaseReviews profile={profile}/>}
-          {selected === 'Song Reviews' && <SongReviews profile={profile}/>}
+          {tabLoad ?(
+            <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+          ):(
+            <>
+              {selected === 'starStats' && <Statistics stats={profile.starStats}/>}
+              {selected === 'artistReviews' && <ArtistReviews data={artistReviews} fetchData={fetchTab} />}
+              {selected === 'releaseReviews' && <ReleaseReviews data={releaseReviews} fetchData={fetchTab}/>}
+              {selected === 'songReviews' && <SongReviews data={songReviews} fetchData={fetchTab}/>}
+            </>
+          )}
         </div>
 
       </section>

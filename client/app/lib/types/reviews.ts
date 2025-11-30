@@ -26,6 +26,7 @@ interface UserReleaseReview {
         name: string
     }[]
     type: string
+    coverArt: string
   }
   rating: number
   title?: string
@@ -45,7 +46,8 @@ interface UserSongReview {
     artistCredit: {
       joinphrase: string,
       name: string
-    }[]
+    }[],
+    coverArt: string
   }
   rating: number
   title?: string
