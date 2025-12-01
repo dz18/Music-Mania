@@ -1,5 +1,6 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
+const { calcStarStats } = require('./functions/calcStarStats')
 
 // Gets all users
 const getUsers = async (req, res) => {
@@ -268,82 +269,107 @@ const query = async (req, res) => {
 
 // Get profile page details for a user
 const profile = async (req, res) => {
-  const { id } = req.query
+  const { profileId, userId } = req.query
 
   logApiCall(req.method, req.originalUrl)
-
-  if (!id) {
-    errorApiCall(req.method, req.originalUrl, 'Missing User ID.')
-    return res.status(400).json({error: 'Missing User ID'})
-  }
-
   try {
 
-    const [userProfile, artistStats, releaseStats, songStats] = await Promise.all([
-      await prisma.user.findUnique({
-        where: { id },
+  
+    const promises = [
+      prisma.user.findUnique({
+        where: { id: profileId },
         include: {
           favArtists: { include: { artist: true } },
           favReleases: { include: { release: true } },
           favSongs: { include: { song: true } },
-          artistReviews: { include: { artist: true } },
-          releaseReviews: { include: { release: true }},
-          songReviews: { include: { song: true }},
+          _count: {
+            select: {
+              artistReviews: true,
+              releaseReviews: true,
+              songReviews: true,
+              followers: true,
+              following: true
+            }
+          }
         },
         omit: { password: true, email: true, phoneNumber: true }
       }),
-      await prisma.userArtistReviews.groupBy({
+      prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: id }
+        where: { userId: profileId }
       }),
-      await prisma.userReleaseReviews.groupBy({
+      prisma.userReleaseReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: id }
+        where: { userId: profileId }
       }),
-      await prisma.userSongReviews.groupBy({
+      prisma.userSongReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: id }
-      }),
-    ])
+        where: { userId: profileId }
+      })
+    ]
 
-    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-
-    for (const group of [...artistStats, ...releaseStats, ...songStats]) {
-      starCount[group.rating] += group._count.rating
+    // Only add follow check if userId exists
+    if (userId) {
+      promises.push(
+        prisma.follow.findUnique({
+          where: {
+            followerId_followingId: {
+              followerId: userId,
+              followingId: profileId
+            }
+          }
+        })
+      )
     }
 
-    const starStats = Object.entries(starCount)
-      .map(([rating, count]) => ({ rating: +rating, count }))
-      .sort((a, b) => b.rating - a.rating)
+    const results = await Promise.all(promises)
+
+    const [
+      userProfile,
+      artistStats,
+      releaseStats,
+      songStats,
+      isFollowingRes
+    ] = results
 
     if (!userProfile) {
       errorApiCall(req.method, req.originalUrl, 'User not found')
       return res.status(404).json({ error: 'User not found.' })
     }
 
-    const allReviews = [
-      ...userProfile.artistReviews,
-      ...userProfile.releaseReviews,
-      ...userProfile.songReviews
-    ]
+    const isFollowing = userId ? Boolean(isFollowingRes) : null;
 
-    const totalReviewCount = allReviews.length
+    const starStats = calcStarStats(
+      [...artistStats, ...releaseStats, ...songStats]
+    )
+
+    const totalReviewCount =
+      userProfile._count.artistReviews +
+      userProfile._count.releaseReviews +
+      userProfile._count.songReviews 
+
+    const { _count, ...rest } = userProfile
+    const counts = userProfile._count
 
     const profile = {
-      ...userProfile,
-      totalReviewCount,
-      starStats
+      ...rest,
+      totalReviewCount: totalReviewCount,
+      starStats,
+      ...counts,
+      isFollowing: isFollowing,
+      followingSince: userId && isFollowing ? isFollowingRes.createdAt : null
     }
+
+    console.log(profile)
 
     successApiCall(req.method, req.originalUrl)
     res.json(profile)
   } catch (error) {
     errorApiCall(req.method, req.originalUrl, error)
   }
-
 }
 
 const isFollowing = async (req, res) => {
@@ -369,6 +395,7 @@ const isFollowing = async (req, res) => {
   }
 }
 
+// Follow a user
 const follow = async (req, res) => {
   const { userId, profileId } = req.body
 
@@ -390,6 +417,7 @@ const follow = async (req, res) => {
 
 }
 
+// Unfollow a user
 const unfollow = async (req, res) => {
   const { userId, profileId } = req.body
 
@@ -412,6 +440,7 @@ const unfollow = async (req, res) => {
   }
 }
 
+// Return the amount of followers and followers a user has
 const countFollow = async (req, res) => {
   const { profileId } = req.query
 
@@ -541,5 +570,5 @@ module.exports = {
   follow,
   unfollow,
   countFollow,
-  allFollowers
+  allFollowers,
 };
