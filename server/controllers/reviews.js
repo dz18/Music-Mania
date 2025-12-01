@@ -501,6 +501,7 @@ const itemRatings = async (req, res) => {
 const userArtists = async (req, res) => {
   const userId = req.query.userId
   const page = Number(req.query.page) || null
+  const star = Number(req.query.star) || null
 
   const limit = 25
 
@@ -518,14 +519,14 @@ const userArtists = async (req, res) => {
       reviewStats
     ] = await Promise.all([
       prisma.userArtistReviews.findMany({
-        where: { userId: userId, status: 'PUBLISHED'},
+        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
         include: { artist: true },
         take: limit,
         skip: (page - 1) * limit,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.userArtistReviews.aggregate({
-        where: { userId: userId, status: 'PUBLISHED'},
+        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
         _count: true
       }),
       prisma.userArtistReviews.groupBy({
@@ -562,6 +563,7 @@ const userArtists = async (req, res) => {
 const userReleases = async (req, res) => {
   const userId = req.query.userId
   const page = Number(req.query.page) || null
+  const star = Number(req.query.star) || null
 
   const limit = 25
 
@@ -579,14 +581,14 @@ const userReleases = async (req, res) => {
       reviewStats
     ] = await Promise.all([
       prisma.userReleaseReviews.findMany({
-        where: { userId: userId, status: 'PUBLISHED'},
+        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
         include: { release: true},
         take: limit,
         skip: (page - 1) * limit,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.userReleaseReviews.aggregate({
-        where: { userId: userId, status: 'PUBLISHED'},
+        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
         _count: true
       }),
       prisma.userReleaseReviews.groupBy({
@@ -623,6 +625,7 @@ const userReleases = async (req, res) => {
 const userSongs = async (req, res) => {
   const userId = req.query.userId
   const page = Number(req.query.page) || null
+  const star = Number(req.query.star) || null
 
   const limit = 25
 
@@ -640,14 +643,14 @@ const userSongs = async (req, res) => {
       reviewStats
     ] = await Promise.all([
       prisma.userSongReviews.findMany({
-        where: { userId: userId, status: 'PUBLISHED'},
+        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
         include: { song: true },
         take: limit,
         skip: (page - 1) * limit,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.userSongReviews.aggregate({
-        where: { userId: userId, status: 'PUBLISHED'},
+        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
         _count: true
       }),
       prisma.userSongReviews.groupBy({

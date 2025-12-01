@@ -2,7 +2,7 @@ import { Star } from "lucide-react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function Statistics({ stats }: { stats: StarCount[] }) {
+export default function Statistics({ stats, filter = true }: { stats: StarCount[], filter?: boolean }) {
   const maxCount = Math.max(...stats.map(s => s.count))
   const router = useRouter()
   const pathname = usePathname()
@@ -43,13 +43,20 @@ export default function Statistics({ stats }: { stats: StarCount[] }) {
     <div>
       {stats.map((stat) => (
         <div key={stat.rating} className="flex items-center gap-2 mb-2">
-          <span 
-            className={`${currentStar && currentStar === stat.rating ? "font-bold text-amber-500" : "font-semibold"}
-              w-4 text-right mr-2 font-mono text-lg hover:underline cursor-pointer` }
+          <button
             onClick={() => handleRatingRoute(stat)}
+            disabled={!filter}
           >
-            {stat.rating}
-          </span>
+            <span 
+              className={`
+                ${currentStar && currentStar === stat.rating && filter ? "font-bold text-amber-500" : "font-semibold"}
+                ${filter && 'hover:underline cursor-pointer'}
+                w-4 text-right mr-2 font-mono text-lg` 
+              }
+            >
+              {stat.rating}
+            </span>
+          </button>
           <div className="flex-1 flex bg-gray-700 h-7 items-center pr-2">
             {stat.count !== 0 &&
               <div

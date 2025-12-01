@@ -3,7 +3,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export default function useFetchProfile (id: string) {
+export default function useFetchProfile (id: string, star: number | null) {
 
 	const { data: session, status } = useSession()
 
@@ -52,38 +52,37 @@ export default function useFetchProfile (id: string) {
 		}
 	}, [id, session?.user.id, status])
 
-	const fetchTab = useCallback(async (page: number) => {
+const fetchTab = useCallback(async (page: number) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
-		let url = null
-		let params: any = { userId: id, page }
-		let setter: ((data: any) => void) | null = null
+  let url: string | null = null
+  let setter: ((data: any) => void) | null = null
 
-		const apiUrl = process.env.NEXT_PUBLIC_API_URL
-		if (selected === "artistReviews" && !artistReviews) {
-			url = `${apiUrl}/api/reviews/user/artists`
-			setter = setArtistReviews
-		} else if (selected === "releaseReviews" && !releaseReviews) {
-			url = `${apiUrl}/api/reviews/user/releases`
-			setter = setReleaseReviews
-		} else if (selected === "songReviews" && !songReviews) {
-			url = `${apiUrl}/api/reviews/user/songs`
-			setter = setSongReviews
-		}
+  if (selected === "artistReviews") {
+    url = `${apiUrl}/api/reviews/user/artists`
+    setter = setArtistReviews
+  } else if (selected === "releaseReviews") {
+    url = `${apiUrl}/api/reviews/user/releases`
+    setter = setReleaseReviews
+  } else if (selected === "songReviews") {
+    url = `${apiUrl}/api/reviews/user/songs`
+    setter = setSongReviews
+  }
 
-		if (!url || !setter) return
+  if (!url || !setter) return
 
-		try {
-			setTabLoad(true)
-			console.log('url:',url)
-			const res = await axios.get(url, { params })
-			setter(res.data)
-		} catch (error: any) {
-			setTabError(error.response?.data?.error || error.message)
-		} finally {
-			setTabLoad(false)
-		}
-		
-	}, [selected, id])
+  const params = { userId: id, page, star }
+
+  try {
+    setTabLoad(true)
+    const res = await axios.get(url, { params })
+    setter(res.data)
+  } catch (error: any) {
+    setTabError(error.response?.data?.error || error.message)
+  } finally {
+    setTabLoad(false)
+  }
+}, [selected, id, star])
 
   const follow = useCallback(async () => {
     try {
@@ -162,7 +161,7 @@ export default function useFetchProfile (id: string) {
 	useEffect(() => {
   	if (!selected) return
 		fetchTab(1)
-	}, [selected])
+	}, [selected, star])
 
 	return { 
 		profile, 

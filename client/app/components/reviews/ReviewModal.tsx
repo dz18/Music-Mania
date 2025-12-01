@@ -112,10 +112,10 @@ export default function ReviewModal ({
           <div>
             <label className="text-sm font-mono mb-1 flex justify-between">
               <p>Review: </p>
-              <p className="text-gray-500">{review.length}/1024</p>
+              <p className="text-gray-500">{review?.length}/1024</p>
             </label>
             <textarea
-              value={review}
+              value={review ?? ""}
               onChange={(e) => setReview(e.target.value)}
               className="bg-gray-950 border-black p-1 text-sm w-full"
               maxLength={1024}
