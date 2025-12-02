@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function useIsFollowing (profileId: string) {
 
-  const {data: session} = useSession()
+  const { data: session } = useSession()
 
   const [loading, setLoading] = useState(false)
   const [following, setFollowing] = useState(null)
@@ -16,7 +16,7 @@ export default function useIsFollowing (profileId: string) {
       setLoading(true)
 
       const following = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
-        userId: session?.user.id, profileId
+        userId: session?.user.id, profileId: profileId
       })
 
       setFollowerCount(prev => prev + 1)

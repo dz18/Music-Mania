@@ -6,7 +6,7 @@ export default function Pagination ({
   data,
   fetchData
 } : {
-  data : ApiPageResponse<ApiData>
+  data : ApiPageResponse<any>
   fetchData: (page: number) => Promise<void>
 }) {
 

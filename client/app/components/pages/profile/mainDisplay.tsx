@@ -1,19 +1,23 @@
 import useIsFollowing from "@/app/hooks/api/profile/useFollow";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction } from "react";
 
-export default function MainDisplay ({profile} : {profile: UserProfile}) {
+export default function MainDisplay ({
+  profile,
+  follow,
+  unfollow,
+  followLoad,
+} : {
+  profile: UserProfile, 
+  follow: () => void
+  unfollow: () => void
+  followLoad: boolean
+}) {
 
   const { data: session } = useSession()
   const router = useRouter()
-  const { 
-    following, 
-    follow, 
-    unfollow,
-    followerCount,
-    followingCount
-  } = useIsFollowing(profile.id)
 
   return (
     <div className="flex gap-4">
@@ -35,11 +39,11 @@ export default function MainDisplay ({profile} : {profile: UserProfile}) {
             <p className="font-bold cursor-pointer hover:underline" onClick={() => router.push(`/profile/${profile.id}/followers`)}>
               Followers
             </p>
-            <p>{followerCount}</p>
+            <p>{profile.followers}</p>
           </div>
           <div>
             <p className="font-bold cursor-pointer hover:underline" onClick={() => router.push(`/profile/${profile.id}/followings`)}>Following</p>
-            <p>{followingCount}</p>
+            <p>{profile.following}</p>
           </div>
         </div>
         {session &&
@@ -52,10 +56,17 @@ export default function MainDisplay ({profile} : {profile: UserProfile}) {
             </button> 
           ) : ( 
             <button 
-              className="border rounded cursor-pointer hover:bg-white/10 active:bg-white/20"
-              onClick={following ? unfollow : follow}
+              className={`
+                ${profile.isFollowing ? 'bg-transparent hover:bg-black/80 active:bg-black/60' : 'bg-white text-black hover:bg-white/80 active:bg-white/60'}
+                px-2 py-1 border rounded cursor-pointer  font-mono flex items-center justify-center gap-2`
+              }
+              onClick={profile.isFollowing ? unfollow : follow}
+              disabled={followLoad}
             >
-              {following ? 'Unfollow' : 'Follow'}
+              {profile.isFollowing ? 'Unfollow' : 'Follow'}
+              {followLoad &&
+                <Loader size={18} className="animate-spin"/>
+              }
             </button>
           )
         }

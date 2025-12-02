@@ -1,15 +1,25 @@
+import { ApiPageResponse } from "@/app/lib/types/api";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Statistics from "../../ui/statistics";
+import Pagination from "../../ui/Pagination";
 
-export default function ArtistReviews ({profile} : {profile: UserProfile}) {
+export default function ArtistReviews ({
+  data,
+  fetchData
+} : {
+  data: ApiPageResponse<ProfileArtistReview> | null,
+  fetchData: (page: number) => Promise<void>
+}) {
 
   const router = useRouter()
 
   return (
     <>
-      {profile.artistReviews.length !== 0 ?
+      {data?.data.starStats && <Statistics stats={data?.data.starStats}/>}
+      {data?.data.reviews.length !== 0 ?
         <div className="">
-          {profile?.artistReviews.map((r, i) => (
+          {data?.data.reviews.map((r, i) => (
             <div key={r.artistId} 
               className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'} py-1 p-2 text-sm flex flex-col gap-1`}
             >
@@ -29,6 +39,7 @@ export default function ArtistReviews ({profile} : {profile: UserProfile}) {
               <p>{r.review}</p>
             </div>
           ))}
+          {data && <Pagination data={data} fetchData={fetchData}/>}
         </div>
       :
         <div>

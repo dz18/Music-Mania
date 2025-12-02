@@ -3,20 +3,23 @@ import { Artist } from "@/app/lib/types/artist";
 import axios, { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-export default function useFetchArtist (artistId: string) {
+export default function useFetchArtist (artistId: string, star: number | null) {
   
-  const [loading, setLoading] = useState(false)
+  const [reviewsload, setReviewsLoad] = useState(false)
   const [artist, setArtist] = useState<Artist | null>(null)
+  const [artistLoad, setArtistLoad] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ApiPageResponse<ReviewResponse> | null>(null)
 
   const fetchData = useCallback(async (page: number) => {
     try {
-      setLoading(true)
+      setData(null)
+      setReviewsLoad(true)
       setError(null)
 
       const requests = []
       if (!artist) {
+        setArtistLoad(true)
         requests.push(
           axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
             params : {id : artistId}
@@ -26,7 +29,7 @@ export default function useFetchArtist (artistId: string) {
 
       requests.push(
         axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
-          params: { id: artistId, page: page }
+          params: { id: artistId, page: page, star: star }
         })
       )
 
@@ -53,57 +56,21 @@ export default function useFetchArtist (artistId: string) {
         setData(res)
       } else {
         const error = reviewsResult.reason as AxiosError<{ error: string }>
-        console.error("Review fetch failed", error.response?.data.error)
+        console.error("Review fetch failed", error.response?.data.error ?? error.message)
         setError(error.response?.data.error ?? error.message)
       }
     } catch (error) {
-      
+      console.error(error)
     } finally {
-      setLoading(false)
+      setReviewsLoad(false)
+      setArtistLoad(false)
     }
-  }, [])
-
-  // const fetchData = useCallback(async () => {
-  //   try {
-  //     setLoading(true)
-  //     setError(null)
-
-  //     const [artist, reviews] = await Promise.allSettled([
-  //       axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
-  //         params : {id : artistId}
-  //       }),
-  //       axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/artist`, {
-  //         params: {id: artistId}
-  //       })
-  //     ])
-
-  //     if (artist.status === "fulfilled") {
-  //       setArtist(artist.value.data)
-  //     } else {
-  //       const error = artist.reason as AxiosError<{error: string}>
-  //       console.error("Artist fetch failed", error.response?.data.error)
-  //       setError(error.response?.data.error ?? error.message)
-  //     }
-
-  //     if (reviews.status === "fulfilled") {
-  //       setReviews(reviews.value.data)
-  //     } else {
-  //       const error = reviews.reason as AxiosError<{error: string}>
-  //       console.error("Review fetch failed", error.response?.data.error)
-  //       setError(error.response?.data.error ?? error.message)
-  //     }
-
-  //   } catch (error) {
-  //     console.error(error)
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }, [artistId])
+  }, [artistId, star])
 
   useEffect(() => {
     fetchData(1)
   }, [fetchData])
 
-  return { artist, loading, fetchData, setArtist, error, data, setData }
+  return { artist, reviewsload, artistLoad, fetchData, setArtist, error, data, setData }
 
 }
