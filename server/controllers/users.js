@@ -1,6 +1,9 @@
 const prisma = require('../prisma/client')
-const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
-const { calcStarStats } = require('./functions/calcStarStats')
+const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging');
+const { getSignedURL } = require('./AWS/actions');
+const { calcStarStats } = require('./hooks/calcStarStats')
+const jwt = require("jsonwebtoken");
+
 
 // Gets all users
 const getUsers = async (req, res) => {
@@ -46,13 +49,14 @@ const findUserById = async (req, res) => {
       errorApiCall(req.method, req.originalUrl, 'User does not exist')
       return res.status(400).json({error: 'User does not exist.'})
     }
-    // console.log('User data:', user)
+
     successApiCall(req.method, req.originalUrl)
     return res.json({
       username: user.username,
       email: user.email,
       id: user.id,
       avatar: user.avatar,
+      createdAt: user.createdAt,
       phoneNumber: user.phoneNumber,
       favArtists: user.favArtists,
       favSongs: user.favSongs,
@@ -559,6 +563,143 @@ const allFollowers = async (req, res) => {
   }
 }
 
+const editInfo = async (req, res) => {
+  const profileId = req.query.profileId ?? null
+  logApiCall(req.method, req.originalUrl)
+
+  if (!profileId) {
+    errorApiCall(req.method, req.originalUrl, 'Missing Profile ID')
+    return res.status(400).json({ error: "Missing Profile ID" })
+  }
+
+  if (req.user.id !== profileId) {
+    errorApiCall(req.method, req.originalUrl, "Forbidden: cannot access another user's data")
+    return res.status(403).json({ error: "Forbidden: cannot access another user's data" })
+  }
+
+  const userId = req.user
+  console.log('user:', userId)
+
+  try {
+
+    const user = await prisma.user.findUnique({
+      where: {id: profileId}
+    })
+
+    successApiCall(req.method, req.originalUrl)
+    return res.json({
+      avatar: '',
+      id: user.id,
+      username: user.username,
+      aboutMe: user.aboutMe ?? '',
+      createdAt: user.createdAt,
+      email: user.email,
+      phoneNumber: user.phoneNumber ?? '',
+      age: user.age ?? '',
+    })
+
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+}
+
+const edit = async (req, res) => {
+  logApiCall(req.method, req.originalUrl)
+
+  const id = req.user.id
+  const avatar = req.file
+  const {
+    username,
+    aboutMe,
+    email,
+    phoneNumber,
+    updatedAt
+  } = req.body
+  const age = req.body.age !== undefined && req.body.age !== '' 
+    ? Number(req.body.age) : null
+  
+  try {
+
+    // Validation
+    let hasError = false
+    let errors = {}
+
+    const usernameDuplicate = await prisma.user.findFirst({
+      where: { username: username, NOT: { id } }
+    })
+
+    if (usernameDuplicate) {
+      errors.username = 'Username is already taken'
+      hasError = true
+    }
+
+    const emailDuplicate = await prisma.user.findFirst({
+      where: {email: email, NOT: { id }}
+    })
+    if (emailDuplicate){ 
+      errors.username = 'Email is already in use'
+      hasError = true
+    }
+    
+    const phoneNumberDuplicate = await prisma.user.findFirst({
+      where: {phoneNumber: phoneNumber, NOT: {id}}
+    })
+    if (phoneNumberDuplicate) { 
+      errors.phoneNumber = 'Phone Number is already in use'
+      hasError = true
+    }
+
+
+    // Create Avatar URL
+    let url = null
+    if (avatar) {
+      const signedUrlRes = await getSignedURL(`avatars/${id}`, avatar.mimetype, avatar.size)
+      if (signedUrlRes.success) {
+        url = signedUrlRes.success.url
+      } else {
+        errors.avatar = signedUrlRes.error
+        hasError = true
+      }
+    }
+
+    if (hasError) {
+      return res.status(409).json({errors})
+    }
+
+    // Update information
+    const data = await prisma.user.update({
+      where: { id: id },
+      data: {
+        username, 
+        aboutMe,
+        email,
+        phoneNumber,
+        age,
+        updatedAt
+      },
+      select: {
+        id: true,
+        username: true, 
+        aboutMe: true, 
+        createdAt: true,
+        email: true, 
+        phoneNumber: true, 
+        age: true,
+      }
+    })
+
+    successApiCall(req.method, req.originalUrl)
+    res.status(200).json({
+      message: "Profile Updated Successfully",
+      data: {...data, age: String(data.age), avatar: ''},
+      url: url
+    })
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+
+}
+
 module.exports = {
   getUsers,
   findUserById,
@@ -571,4 +712,6 @@ module.exports = {
   unfollow,
   countFollow,
   allFollowers,
+  editInfo,
+  edit
 };

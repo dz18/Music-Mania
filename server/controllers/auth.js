@@ -109,8 +109,58 @@ const signIn = async (req, res) => {
 
 }
 
+const confirmPassword = async (req, res) => {
+
+  try {
+    const {email, password} = req.body
+
+    logApiCall(req.method, req.originalUrl)
+    const user = await prisma.user.findUnique({ 
+      where: { email }, 
+      select: { password: true }
+    })
+    const passwordMatch = await bcrypt.compare(password, user.password)
+
+    if (!passwordMatch) {
+      errorApiCall(req.method, req.originalUrl, 'Invalid password')
+      return res.status(401).json({ error: 'Invalid password' })
+    }
+
+    res.json({success: true})
+
+    successApiCall(req.method, req.originalUrl)
+  } catch (error) {
+    errorApiCall(req.method, req.originalUrl, error)
+  }
+
+}
+
+const changePassword = async (req, res) => {
+  const { email, newPassword, confirmNewPassword } = req.body
+  
+  logApiCall(req.method, req.originalUrl)
+
+  try {
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await prisma.user.update({ 
+      where: { email },
+      data: {
+        password: hashedPassword
+      }
+    })
+
+    res.json()
+
+    successApiCall(req.method, req.originalUrl)
+  } catch (error) {
+    console.error(req.method, req.originalUrl, error)
+  }
+}
 
 module.exports = {
   register,
   signIn,
+  confirmPassword,
+  changePassword
 }

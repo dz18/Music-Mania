@@ -1,6 +1,7 @@
 import axios from "axios";
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import jwt from "jsonwebtoken";
 
 const handler = NextAuth({
   providers: [
@@ -21,10 +22,22 @@ const handler = NextAuth({
           // console.log(data)
 
           if (data) {
+
+            const rawToken = jwt.sign(
+              {
+                id : data.id,
+                username: data.username,
+                email: data.email,
+              },
+              process.env.NEXTAUTH_SECRET!,
+              {expiresIn: '30d'}
+            )
+
             return {
               id : data.id,
               username: data.username,
               email: data.email,
+              rawToken
             }
           }
           return null
@@ -50,12 +63,13 @@ const handler = NextAuth({
         token.id = user.id,
         token.username = user.username
         token.email = user.email
+        token.raw = user.rawToken
       }
       return token
     },
     async session({ session, token }) {
       try {
-        if (session.user && token?.id) {
+        if (session.user && token.id) {
           const user = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/find`, {
             params: {
               userId : token.id
@@ -72,14 +86,15 @@ const handler = NextAuth({
           session.user.id = data.id
           session.user.username = data.username
           session.user.avatar = data.avatar
+          session.user.createdAt = data.createdAt
           session.user.favArtists = data.favArtists ?? []
           session.user.favSongs = data.favSongs ?? []
           session.user.favReleases = data.favReleases ?? []
+          session.user.token = token.raw
 
-          console.log(session)
+         console.log('session:', session)
+         console.log('data:', data)
           return session
-          // session.user.favSong = data.favSong
-          //session.user.favAlbums = data.favAlbums
         }
       } catch (e) {
         console.warn("Session fetch failed:", e)

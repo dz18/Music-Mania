@@ -13,6 +13,7 @@ export default async function Profile ({
 
   const id = p.userId
   const star = Number(sp.star) ?? null
+  
 
   return <ProfilePage userId={id} star={star}/>
 }
