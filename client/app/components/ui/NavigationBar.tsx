@@ -14,7 +14,7 @@ export default function Nav() {
   const pathname = usePathname()
 
   return (
-    <nav className="absolute top-0 left-0 w-full z-50 px-6 py-3 max-h-15 h-full items-center">
+    <nav className="absolute top-0 left-0 w-full z-50 px-6 py-3 max-h-15 h-full items-center bg-surface">
       <div className="flex items-center gap-3 justify-between h-full">
 
         <div className="items-center gap-6 text-lg flex">

@@ -9,14 +9,17 @@ declare module "next-auth" {
       avatar?: string | null;
       id?: string | null
       phoneNumber?: string | null
+      createdAt: Date | null
       favArtists?: userFavArtist[] | null
       favSongs?: userFavSong[] | null
       favReleases?: userFavRelease[] | null
+      token: any
     };
   }
 
   interface User {
     username?: string | null;
+    rawToken: string
     id?: string | null
   }
 }

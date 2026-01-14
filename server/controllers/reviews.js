@@ -1,6 +1,6 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
-const { calcStarStats } = require('./functions/calcStarStats')
+const { calcStarStats } = require('./hooks/calcStarStats')
 
 const limit = 25
 
