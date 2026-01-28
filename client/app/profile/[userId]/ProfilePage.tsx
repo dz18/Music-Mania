@@ -12,6 +12,7 @@ import RefreshPage from "@/app/components/ui/RefreshPage"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchProfile from "@/app/hooks/api/profile/useFetchProfile"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
+import ProfileFavorites from "@/app/components/pages/profile/ProfileFavorites"
 
 
 export default function ProfilePage ({
@@ -108,28 +109,35 @@ export default function ProfilePage ({
 
       {/* About Me */}
       {profile?.aboutMe &&
-        <section>
+        <section
+          className="bg-surface p-2"
+        >
           <p className="font-mono font-bold">About Me</p>
-          <div className="p-2 border-t border-b my-1">
+          <div className="py-2 border-t border-b border-gray-500 my-1">
             <p>{profile.aboutMe}</p>
           </div>
         </section>
       }
 
       {/* Table */}
-      <section>
-        <p className="font-mono font-bold">
-          Ratings: <span className="text-teal-500">{profile?.totalReviewCount}</span>
-        </p>
-        <div className="p-2 border-t border-b my-1">
+      <section
+        className="bg-surface p-2 border-white/5 border px-4 py-2 rounded-xl"
+      >
+        
+        <div className="font-mono  flex justify-between text-sm items-end">
+          <span className="font-bold text-lg tracking-wider">Ratings</span>
+          <span className="text-gray-500">{profile?.totalReviewCount} total reviews</span>
+        </div>
+
+        <div className="py-2 border-t border-b border-white/5 my-2">
           <div className="flex gap-2 text-sm font-bold">
             {tabs.map(tab => (
               <button
                 key={tab.label}
                 className={`
                   py-1 px-2 cursor-pointer 
-                  ${selected === tab.key ? 'bg-teal-800' : 'bg-gray-800 hover:bg-gray-700'}
-                  disabled:bg-gray-900 disabled:text-gray-500 disabled:cursor-default
+                  ${selected === tab.key ? 'bg-teal-950 border border-teal-300 text-teal-300' : 'bg-surface-elevated border border-white/5 interactive-button interactive-dark'}
+                  disabled:bg-gray-900 disabled:text-gray-500 disabled:cursor-default rounded
                 `}
                 onClick={() => setSelected(tab.key)}
                 disabled={profile?.[tab.key] === 0}
@@ -145,7 +153,7 @@ export default function ProfilePage ({
           </div>
         </div>
 
-        <div className="mt-2 pb-2 border-b">
+        <div>
           {tabLoad ?(
             <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
           ):(
@@ -161,9 +169,18 @@ export default function ProfilePage ({
       </section>
 
       {/* Display Favorites */}
-      <section>
+      {/* <section
+        className="bg-surface px-4 py-2 rounded-xl border border-white/5"
+      >
         <p className="font-mono font-bold">Favorites</p>
         <DisplayFavorites profile={profile}/>
+      </section> */}
+
+      <section
+        className="bg-surface px-4  py-2 rounded-xl border border-white/5"
+      >
+        <p className="text-lg font-mono font-bold mb-2 tracking-wider">Favorites</p>
+        <ProfileFavorites profileId={userId}/>
       </section>
 
     </div>

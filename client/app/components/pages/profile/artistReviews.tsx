@@ -16,12 +16,21 @@ export default function ArtistReviews ({
 
   return (
     <>
-      {data?.data.starStats && <Statistics stats={data?.data.starStats}/>}
+      {data?.data.starStats && 
+        <div
+          className="border-b mb-4 border-gray-500"
+        >
+          <Statistics stats={data?.data.starStats}/>
+        </div>
+      }
       {data?.data.reviews.length !== 0 ?
-        <div className="">
+        <div className="overflow-hidden rounded-xl">
           {data?.data.reviews.map((r, i) => (
             <div key={r.artistId} 
-              className={`${i % 2 == 0 ? 'bg-gray-800' : 'bg-gray-700'} py-1 p-2 text-sm flex flex-col gap-1`}
+              className={`
+                ${i % 2 == 0 ? 'bg-surface-elevated' : 'bg-surface'} 
+                py-2 p-4 text-sm flex flex-col gap-1 border border-white/5
+              `}
             >
               <div className="border-b flex justify-between items-center">
                 <div className="flex gap-2">
@@ -39,7 +48,7 @@ export default function ArtistReviews ({
               <p>{r.review}</p>
             </div>
           ))}
-          {data && <Pagination data={data} fetchData={fetchData}/>}
+          {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
         </div>
       :
         <div>

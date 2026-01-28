@@ -5,6 +5,13 @@ import axios from "axios"
 import { useSession } from "next-auth/react"
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react"
 
+type ReviewParams = {
+  userId: string | null | undefined
+  itemId: string | undefined
+  type: "artist" | "release" | "song"
+  workId?: string
+}
+
 export default function useFetchUserReview (  
   item: Artist | Release | Song | null,
   type: "artist" | "release" | "song",
@@ -21,14 +28,27 @@ export default function useFetchUserReview (
   const [reviewExists, setReviewExist] = useState(false)
   const [review, setReview] = useState<string>('')
   const [currentStatus, setCurrentStatus] = useState<'Published' | 'Draft' | ''>('')
-  const [loading, setLoading] = useState<boolean>(false)
+  const [formLoading, setFormLoading] = useState<boolean>(false)
+  const [actionLoading, setActionLoading] = useState<boolean>(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
+        setFormLoading(true)
+
+        const params: ReviewParams = { 
+          userId: session?.user.id, 
+          itemId: item?.id, 
+          type: type 
+        }
+
+        if (type === 'song') {
+          const workId = (item as Song).workId
+          params.workId = workId
+        }
+
         const review = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/user`, {
-          params: { userId: session?.user.id, itemId: item?.id, type: type }
+          params: params
         })
 
         if (!review.data) return
@@ -40,7 +60,7 @@ export default function useFetchUserReview (
       } catch (error) {
         console.log(error)
       } finally {
-        setLoading(false)
+        setFormLoading(false)
       }
     }
     fetchData()
@@ -106,11 +126,12 @@ export default function useFetchUserReview (
     if (!item) return
 
     try {
-      setLoading(true)
+      setActionLoading(true)
 
-      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/`, {
+      const body = {
         userId: session?.user.id,
         itemId: item?.id,
+        workId: 'workId' in item ? item.workId : item.id,
         title: title,
         rating: rating,
         review: review,
@@ -119,8 +140,10 @@ export default function useFetchUserReview (
         itemName: 'name' in item ? item.name : null,
         itemTitle: 'title' in item ? item.title : null,
         artistCredit: 'artistCredit' in item ? item.artistCredit.map(ac => ({joinphrase: ac.joinphrase, name: ac.name})) : null,
-        coverArt: coverArtUrl
-      })
+        coverArt: coverArtUrl,
+      }
+      console.log(body)
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/`, body)
 
       updateReviews(res, action)
       
@@ -128,17 +151,20 @@ export default function useFetchUserReview (
     } catch (error) {
       console.log(error)
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
   const deleteReview = async () => {
+    if (!item) return
+
     try {
-      setLoading(true)
+      setActionLoading(true)
       const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/`, {
         params: {
           userId: session?.user.id,
           itemId: item?.id,
+          workId: 'workId' in item ? item.workId : item?.id,
           type: type
         }
       })
@@ -149,7 +175,7 @@ export default function useFetchUserReview (
     } catch (error) {
       console.error(error)
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
@@ -163,9 +189,10 @@ export default function useFetchUserReview (
     reviewExists,
     review,
     currentStatus,
-    loading,
-
-    setLoading,
+    formLoading,
+    actionLoading,
+    setActionLoading,
+    setFormLoading,
     setRating,
     setReview,
     setTitle,

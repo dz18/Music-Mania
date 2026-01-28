@@ -28,7 +28,7 @@ export default function ReviewBar ({
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="flex justify-between border-b-1 border-t-1 border-gray-500 py-2 my-2">
+    <div className="flex justify-between border-t-1 border-gray-500 py-2 my-2">
       <div className="flex flex-col">
         <p className="inline-flex font-mono text-sm">Rate:</p>
         <div className="flex gap-1 items-center mt-1">
@@ -41,7 +41,7 @@ export default function ReviewBar ({
       </div>
       <div className="flex text-sm font-mono items-center gap-2">
         <button 
-          className=" px-2 py-1 rounded cursor-pointer border hover:bg-teal-500/20 active:bg-teal-500/40 flex gap-1"
+          className="interactive-button interactive-dark px-2 py-1 rounded border flex gap-1"
           onClick={() => setOpen(true)}
         >
           <NotebookText size={18}/> Review

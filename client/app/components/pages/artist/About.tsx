@@ -25,10 +25,11 @@ export default function About ({
 
   return (
     <div className="flex flex-col gap-4 w-full">
+
       <div className="font-mono flex justify-between">
         <div>
           <p className="text-2xl font-bold">{artist?.name}</p>
-          <p className="text-sm">{artist?.disambiguation}</p>
+          <p className="text-sm text-gray-500">{artist?.disambiguation}</p>
         </div>
         <div>
           <p className="flex items-center gap-2">
@@ -36,9 +37,10 @@ export default function About ({
           </p>
         </div>
       </div>
+
       {artist?.lifeSpan.begin !== null && artist?.lifeSpan.begin !== null &&
         <div>
-          <p className="text-sm text-gray-500 font-bold">
+          <p className="text-sm text-gray-500 font-semibold">
             {artist?.type === 'Person' ? 'Born' : 'Formed'}
           </p>
           <p>{artist?.lifeSpan.begin}</p>
@@ -46,7 +48,7 @@ export default function About ({
       }
       {artist?.lifeSpan.ended &&
         <div>
-          <p className="text-sm text-gray-500 font-bold">
+          <p className="text-sm text-gray-500 font-semibold">
             {artist?.type === 'Person' ? 'Died' : 'Disbanded'}
           </p>
           <p>{artist.lifeSpan.end}</p>
@@ -54,7 +56,7 @@ export default function About ({
       }
       {artist?.membersOfband.length !== 0 &&
         <div>
-          <p className="text-sm text-gray-500 font-bold">
+          <p className="text-sm text-gray-500 font-semibold">
             {artist?.type === 'Person' ? 'Member of' : 'Members'}
           </p>
           {artist?.membersOfband.map((member, i) => (
@@ -74,21 +76,18 @@ export default function About ({
       }
       {aliases.length !== 0 &&
         <div>
-          <p className="text-sm text-gray-500 font-bold">Aliases</p>
+          <p className="text-sm text-gray-500 font-semibold">Aliases</p>
           <p>{aliases.join(', ')}</p>
         </div>
       }
       {artist?.genres.length !== 0 &&
         <div>
-          <p className="text-sm text-gray-500 font-bold">Genres</p>
+          <p className="text-sm text-gray-500 font-semibold">Genres</p>
           {artist?.genres.map((genre, i) => (
             <span 
               key={genre.id}
-              onClick={() => alert(genre.id)}
             > 
-              <span 
-                className="hover:underline cursor-pointer"
-              >
+              <span>
                 {genre.name}
               </span>
               {i < artist.genres.length - 1 && ', '}
@@ -99,9 +98,11 @@ export default function About ({
       {artist?.urls.length !== 0 &&
         <ExternalResources artist={artist}/>
       }
-      <Link href={`${pathname}/discography`} className="inline-flex text-teal-500 font-bold hover:underline">
-        See discography
-      </Link>
+      <div>
+        <Link href={`${pathname}/discography`} className="inline-flex text-teal-500 font-bold hover:underline active:opacity-80">
+          See discography
+        </Link>
+      </div>
     </div>
   )
 }

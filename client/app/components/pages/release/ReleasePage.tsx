@@ -13,6 +13,9 @@ import RefreshPage from "@/app/components/ui/RefreshPage";
 import useFetchRelease from "@/app/hooks/musicbrainz/useFetchRelease";
 import Pagination from "@/app/components/ui/Pagination";
 import TextContent from "@/app/components/pages/release/TextContent";
+import StarStatistics from "../../ui/starStatistics";
+import UserReviewPanel from "../../reviews/UserReviewPanel";
+import { ReviewTypes } from "@/app/lib/types/api";
 
 export default function ReleasePage ({
   releaseId,
@@ -22,7 +25,7 @@ export default function ReleasePage ({
   star: number | null
 }) {
 
-  const { data: session } = useSession()
+  const { status } = useSession()
   const [active, setActive] = useState('reviews')
   const {
     coverArt,
@@ -34,6 +37,7 @@ export default function ReleasePage ({
     setData,
     fetchData
   } = useFetchRelease(releaseId, star)
+  const [review, setReview] = useState<ReviewTypes | null>(null)
 
   if (releaseLoad) {
     return (
@@ -85,7 +89,7 @@ export default function ReleasePage ({
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <div className="flex justify-between">
         {/* Text content */}
         {data &&
@@ -99,25 +103,23 @@ export default function ReleasePage ({
       </div>
 
       {data?.data.starStats &&
-        <div className={`
-          border-t pt-3 mt-2 border-gray-500
-          ${!session && 'pb-2 border-b mb-2'}
-        `}>
-          <Statistics stats={data?.data.starStats}/>
+        <div
+          className="flex gap-2 items-stretch"
+        >
+          <StarStatistics stats={data?.data.starStats}/>
+          {status === 'authenticated' &&
+            <UserReviewPanel 
+              item={release} 
+              itemId={releaseId} 
+              type="release"
+              review={review}
+              setReview={setReview}
+              setData={setData}
+              coverArtUrl={coverArt}
+            />
+          }
         </div>
       }
-
-      {session && !loading && data && 
-        <>
-          <ReviewBar 
-            item={release} 
-            type="artist" 
-            data={data} 
-            setData={setData} 
-          />
-        </>
-      }
-
 
       <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1 mb-2">
         <li 

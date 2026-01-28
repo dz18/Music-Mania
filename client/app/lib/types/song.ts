@@ -16,6 +16,7 @@ export interface Song {
     id: string,
     name: string
   }[]
+  workId: string
 }
 
 interface ArtistCredit {

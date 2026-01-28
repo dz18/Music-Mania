@@ -38,14 +38,6 @@ export default function Nav() {
 
         {session ?
           <div className="flex items-center gap-2">
-            <button 
-              className="flex gap-1 text-sm items-center font-mono border-1 border-white px-2 py-1 rounded-xl cursor-pointer hover:bg-white/10"
-              onClick={() => alert('go to create page')}
-              title="Create"
-            >
-              Create<Plus/>
-            </button>
-            <AlertsDropdown/>
             <UserDropdown/>
           </div>
         :

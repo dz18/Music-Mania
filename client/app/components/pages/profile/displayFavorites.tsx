@@ -5,16 +5,16 @@ export default function DisplayFavorites({profile} : {profile : UserProfile}){
   const router = useRouter()
 
   return (
-    <table className="w-full table-fixed border-t">
+    <table className="w-full table-fixed border-t border-gray-500">
       <thead>
         <tr>
-          <th className="border-b px-4 py-2 text-center font-mono">
+          <th className="border-b border-gray-500 px-4 py-2 text-center font-mono">
             Artist <span className="text-teal-500">{profile.favArtists.length}</span>
           </th>
-          <th className="border-b border-r border-l px-4 py-2 text-center font-mono">
+          <th className="border-b border-r border-l border-gray-500 px-4 py-2 text-center font-mono">
             Release <span className="text-teal-500">{profile.favReleases.length}</span>
           </th>
-          <th className="border-b px-4 py-2 text-center font-mono">
+          <th className="border-b px-4 py-2 text-center font-mono border-gray-500">
             Song <span className="text-teal-500">{profile.favSongs.length}</span>
           </th>
         </tr>
@@ -55,7 +55,7 @@ export default function DisplayFavorites({profile} : {profile : UserProfile}){
               </td>
 
               {/* RELEASE */}
-              <td className="border-l border-r px-4 py-2">
+              <td className="border-l border-r border-gray-500 px-4 py-2">
                 {release ? (
                   <div className="flex items-center gap-2">
                     {release.release.coverArt && (

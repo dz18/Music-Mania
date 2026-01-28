@@ -1,5 +1,8 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
+const { formatArtistCredit } = require('./hooks/formatArtistCredit')
+const { formatTrack } = require('./hooks/formatTracks')
+const { scoreRelease } = require('./hooks/scoreRelease')
 
 const userAgent = process.env.USER_AGENT
 
@@ -10,15 +13,15 @@ const artists = async (req, res) => {
   
   const limit = 50
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!q) {
-    errorApiCall(req.method, req.originalUrl, 'Missing query parameter')
+    errorApiCall(req, 'Missing query parameter')
     return res.status(400).json({error : 'Missing query parameter'})
   }
 
   if (page < 0) {
-    errorApiCall(req.method, req.originalUrl, 'Invalid Page number')
+    errorApiCall(req, 'Invalid Page number')
     return res.status(400).json({error : 'Invalid Page number'})
   }
 
@@ -30,7 +33,7 @@ const artists = async (req, res) => {
     })
 
     if (!query.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${query.status}`)
+      errorApiCall(req, `MusicBrainz error: ${query.status}`)
       return res.status(query.status).json({error: `MusicBrainz server returned an error. Try again later.`})
     }
 
@@ -47,7 +50,7 @@ const artists = async (req, res) => {
       artists.push(filtered)
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json({
       data: {suggestions: artists},
       count: data.count,
@@ -57,7 +60,7 @@ const artists = async (req, res) => {
     })
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(400).json({error : 'Error fetching suggested artists. Refresh results or try again later.'})
   }
 }
@@ -68,10 +71,10 @@ const releases = async (req, res) => {
 
   const limit = 50
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!q) {
-    errorApiCall(req.method, req.originalUrl, 'Missing query parameter')
+    errorApiCall(req, 'Missing query parameter')
     return res.status(400).json({error : 'Missing query parameter'})
   }
 
@@ -84,7 +87,7 @@ const releases = async (req, res) => {
     })
 
     if (!query.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${query.status}`)
+      errorApiCall(req, `MusicBrainz error: ${query.status}`)
       return res.status(query.status).json({error: `MusicBrainz server returned an error. Try again later or check the release ID.`})
     }
 
@@ -104,7 +107,7 @@ const releases = async (req, res) => {
       })
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json({
       data: { suggestions: filtered },
       count: data.count,
@@ -114,7 +117,7 @@ const releases = async (req, res) => {
     })
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(400).json({error : 'Error fetching suggested releases. Refresh Results or try again later.'})
   }
 
@@ -124,10 +127,10 @@ const releases = async (req, res) => {
 const getArtist = async (req, res) => {
   const { id } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!id) {
-    errorApiCall(req.method, req.originalUrl, 'Missing query parameter')
+    errorApiCall(req, 'Missing query parameter')
     return res.status(400).json({error : 'Missing query parameter'})
   }
 
@@ -158,14 +161,14 @@ const getArtist = async (req, res) => {
     })
 
     if (!fetchArtist.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchArtist.status}`)
+      errorApiCall(req, `MusicBrainz error: ${fetchArtist.status}`)
       return res.status(fetchArtist.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
     }
 
     const artistData = await fetchArtist.json()
 
     if (!artistData) {
-      errorApiCall(req.method, req.originalUrl, 'Musicbrainz API failed')
+      errorApiCall(req, 'Musicbrainz API failed')
     }
 
     const membersOfband = []
@@ -336,10 +339,10 @@ const getArtist = async (req, res) => {
       urls: URLRelations
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json(artist)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(400).json({error : 'Error fetching Artist'})
   }
 
@@ -349,31 +352,29 @@ const discography = async (req, res) => {
   const { artistId, type } = req.query
   let page = Number(req.query.page) || 0
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   const limit = 25
 
   if (!artistId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing artistId')
+    errorApiCall(req, 'Missing artistId')
     res.status(400).json({error: 'Missing parameters'})
     return
   }
 
   if (type !== 'album' && type !== 'single' && type !==  'ep') {
-    errorApiCall(req.method, req.originalUrl, 'Incorrect type')
+    errorApiCall(req, 'Incorrect type')
     res.status(400).json({error: 'Incorrect type'})
     return
   }
 
   if (page < 1) {
-    errorApiCall(req.method, req.originalUrl, "Page number doesn't exist.")
+    errorApiCall(req, "Page number doesn't exist.")
     res.status(400).json({error: "Page number doesn't exist."})
     return
   }
 
   try {
-    
-    const start = new Date()
 
     const releases = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
       headers: {
@@ -381,13 +382,10 @@ const discography = async (req, res) => {
       }
     }) 
 
-
     if (!releases.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${releases.status}`)
+      errorApiCall(req, `MusicBrainz error: ${releases.status}`)
       return res.status(releases.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
     }
-
-    
 
     const releasesData = await releases.json()
     const releaseGroups = releasesData['release-groups']
@@ -422,14 +420,11 @@ const discography = async (req, res) => {
           firstReleaseDate: releaseGroup['first-release-date'] || "",
           disambiguation: releaseGroup.disambiguation || "",
           title: releaseGroup.title,
-          averageRating: avgRounded ?? 0,
+          averageRating: nums._avg.rating ? avgRounded : null,
           totalReviews: nums._count.rating ?? 0,
         }
       }
     )) 
-
-    const end = new Date()
-    const duration = (end.getTime() - start.getTime()) / 1000
 
     const data = {
       data: sorted,
@@ -445,31 +440,133 @@ const discography = async (req, res) => {
      
     if (error.cause && error.cause.code === 'ECONNRESET') {
       console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
-      errorApiCall(req.method, req.originalUrl, error.message)
+      errorApiCall(req, error.message)
       return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
     }
     
     console.error('[UNEXPECTED ERROR] Failed fetching discography:', error)
-    errorApiCall(req.method, req.originalUrl, error.message)
+    errorApiCall(req, error.message)
     return res.status(500).json({ error: 'Failed to fetch discography data.' })
   }
   
 }
 
+const discographySingles = async (req, res) => {
+  const { artistId } = req.query
+  let page = Number(req.query.page) || 0
+
+  logApiCall(req)
+
+  const limit = 100
+
+  try {
+    const releases = await fetch(`https://musicbrainz.org/ws/2/release?artist=${artistId}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}&inc=release-groups+recordings+recording-level-rels+work-rels+work-level-rels&status=official&type=single`, {
+      headers: {
+        'User-Agent' : userAgent
+      }
+    }) 
+    const data = await releases.json()
+
+    const rgInfo = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=single&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
+      headers: {
+        'User-Agent' : userAgent
+      }
+    }) 
+    const rgData = await rgInfo.json()
+    
+    const singles = []
+    const seen = new Set()
+    for (const r of data.releases) {
+      const rgid = r['release-group'].id
+      if (seen.has(rgid)) continue
+
+      singles.push(r)
+      seen.add(rgid)
+    }
+
+    const discog = singles.map(s => {
+      const releaseGroup = s['release-group'];
+      const firstTrack = s.media?.[0]?.tracks?.[0]?.recording;
+      let workId = null;
+
+      if (firstTrack?.relations) {
+        const workRel = firstTrack.relations.find(rel => rel.work?.id);
+        if (workRel) workId = workRel.work.id;
+      }
+
+      return {
+        ...releaseGroup,
+        workId
+      };
+    });
+
+    const sorted = await Promise.all(
+      discog.sort((a,b) => (
+        a['secondary-types']?.length - b['secondary-types']?.length
+      )).map(async (rg) => {
+        let data = {
+          type: rg['secondary-types']?.join(' + ') || rg['primary-type'] || "Unknown",
+          id: rg.id,
+          workId: rg.workId,
+          firstReleaseDate: rg['first-release-date'] || "",
+          disambiguation: rg.disambiguation || "",
+          title: rg.title,
+        }
+        if (!rg.workId) {
+          return {
+            ...data,
+            averageRating: null,
+            totalReviews: null,
+          }
+        }
+        
+        let nums = await prisma.userSongReviews.aggregate({
+          where: {songId: rg.workId},
+          _avg: {rating: true},
+          _count: {rating: true}
+        })
+        const average = nums._avg.rating
+        const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+
+        return {
+          ...data,
+          averageRating: nums._avg.rating ? avgRounded : null,
+          totalReviews: nums._count.rating ?? 0,
+        }
+
+      })
+    )
+
+    successApiCall(req)
+    const response = {
+      data: sorted,
+      count: rgData['release-group-count'],
+      currentPage: page,
+      pages: Math.ceil(rgData['release-group-count'] / 100),
+      limit: limit
+    }
+    console.log(response)
+    res.json(response)
+  } catch (error) {
+
+  }
+}
+
 const getRelease = async (req, res) => {
   const { releaseId } = req.query
   
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
-    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${releaseId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups&fmt=json&limit=100&offset=0`, {
+
+    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${releaseId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups+recording-level-rels+work-rels+work-level-rels&fmt=json&limit=100&offset=0`, {
       headers: {
         'User-Agent' : userAgent
       }
     })
 
     if (!albums.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${albums.status}`)
+      errorApiCall(req, `MusicBrainz error: ${albums.status}`)
       return res.status(albums.status).json({error: `MusicBrainz server returned an error. Try again later or check the release ID.`})
     }
 
@@ -507,7 +604,7 @@ const getRelease = async (req, res) => {
         coverArtArchive: album['cover-art-archive'].artwork,
         disambiguation: album.disambiguation,
         date: album['release-group']['first-release-date'],
-        tracks: media.tracks,
+        tracks: media.tracks.map(t => formatTrack(t)),
         format: media.format,
         trackCount: media['track-count'],
         artistCredit: album['artist-credit'],
@@ -517,9 +614,21 @@ const getRelease = async (req, res) => {
       }
     })
 
-    
-
     const first = sorted[0]
+
+    const stats = await Promise.all(first.tracks.map(t => (
+      prisma.userSongReviews.aggregate({
+        where: { songId: t.recording.workId },
+        _count: { rating: true },
+        _avg: { rating: true }
+      })
+    )))
+
+    first.tracks = first.tracks.map((t, i) => ({...t, recording: {
+      ...t.recording, 
+      totalReviews: stats[i]._count.rating,
+      avgRating: stats[i]._count.rating > 0 ? Number(stats[i]._avg.rating).toFixed(2) : null
+    }}))
     
     const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${releaseId}`)
 
@@ -529,7 +638,7 @@ const getRelease = async (req, res) => {
       coverArt = coverArtJSON.images.filter(img => img.front === true)
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json({
       album: first,
       coverArtUrl: coverArt && coverArt[0].image
@@ -538,12 +647,12 @@ const getRelease = async (req, res) => {
   } catch (error) {
     if (error.cause && error.cause.code === 'ECONNRESET') {
       console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
-      errorApiCall(req.method, req.originalUrl, error.message)
+      errorApiCall(req, error.message)
       return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
     }
     
     console.error('[UNEXPECTED ERROR] Failed fetching release:', error)
-    errorApiCall(req.method, req.originalUrl, error.message)
+    errorApiCall(req, error.message)
     return res.status(500).json({ error: 'Failed to fetch release data.' })
   }
 }
@@ -551,23 +660,23 @@ const getRelease = async (req, res) => {
 const getSong = async (req, res) => {
   const { songId } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!songId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing songId')
+    errorApiCall(req, 'Missing songId')
     return res.status(400).json({error : 'Missing songId'})
   }
 
   try {
 
-    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups&status=official`, {
+    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups+work-rels&status=official`, {
       headers: {
         'User-Agent': userAgent
       }
     })
 
     if (!fetchSong.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchSong.status}`)
+      errorApiCall(req, `MusicBrainz error: ${fetchSong.status}`)
       return res.status(fetchSong.status).json({error: `MusicBrainz server returned an error. Try again later or check the song ID.`})
     }
 
@@ -578,6 +687,7 @@ const getSong = async (req, res) => {
       return weight(a) - weight(b) 
     })
 
+    console.log(song[0])
 
     let coverArtUrl = ''
     if (song.releases.length !== 0) {
@@ -604,6 +714,10 @@ const getSong = async (req, res) => {
     }
     partOf = rgs
 
+    const workRel = song?.relations?.find(
+      rel => rel['target-type'] === 'work' && rel.work?.id
+    )
+    const workId = workRel?.work?.id ?? song.id
     songFormatted = {
       id: song.id,
       artistCredit: song['artist-credit'],
@@ -613,23 +727,24 @@ const getSong = async (req, res) => {
       firstReleaseDate: song['first-release-date'],
       partOf: partOf,
       disambiguation: song.disambiguation,
-      video: song.video
+      video: song.video,
+      workId: workId
     }
-    
-    successApiCall(req.method, req.originalUrl)
+    console.log(songFormatted)
+    successApiCall(req)
     return res.json({
       song: songFormatted, 
       coverArtUrl
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
 const findSingleId = async (req, res) => {
   const { rgId } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
     const fetchSingle = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${rgId}&status=official&type=single&inc=release-groups+recordings&fmt=json`, {
@@ -639,7 +754,7 @@ const findSingleId = async (req, res) => {
     })
 
     if (!fetchSingle.ok) {
-      errorApiCall(req.method, req.originalUrl, `MusicBrainz error: ${fetchSingle.status}`)
+      errorApiCall(req, `MusicBrainz error: ${fetchSingle.status}`)
       return res.status(fetchSingle.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
     }
 
@@ -649,19 +764,16 @@ const findSingleId = async (req, res) => {
       res.status(404).json({error : 'No Recordings found'})
     }
    
-    const media = single.releases.map(r => r.media)
-    const recording = media.map(m => m[0].tracks[0].recording)
+    const mostOfficialRelease = single.releases
+      .filter(r => r.status === 'Official')
+      .sort((a, b) => scoreRelease(b) - scoreRelease(a))[0]
+    const recording = mostOfficialRelease.media[0].tracks[0].recording.id
 
-    recording.sort((a, b) => (
-      a.disambiguation.length - b.disambiguation.length
-    ))
-
-
-    successApiCall(req.method, req.originalUrl)
-    return res.json(recording[0].id)
+    successApiCall(req)
+    return res.json(recording)
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
@@ -672,5 +784,6 @@ module.exports = {
   discography,
   getRelease,
   getSong,
-  findSingleId
+  findSingleId,
+  discographySingles
 }

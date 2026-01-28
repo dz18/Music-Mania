@@ -12,6 +12,11 @@ import useFetchSong from "@/app/hooks/musicbrainz/useFetchSong";
 import { ImageOff, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import StarStatistics from "../../ui/starStatistics";
+import UserReviewPanel from "../../reviews/UserReviewPanel";
+import { useState } from "react";
+import { ReviewTypes } from "@/app/lib/types/api";
+import YourReviewSection from "../../reviews/YourReview";
 
 export default function SongPage ({
   songId,
@@ -21,7 +26,7 @@ export default function SongPage ({
   star: number | null
 }) {
 
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const {
     song,
@@ -33,6 +38,7 @@ export default function SongPage ({
     fetchData,
     error
   } = useFetchSong(songId, star)
+  const [review, setReview] = useState<ReviewTypes | null>(null)
 
   if (songLoad) {
     return (
@@ -162,24 +168,26 @@ export default function SongPage ({
       </div>
 
       {data?.data.starStats &&
-        <div className={`
-          border-t pt-3 mt-2 border-gray-500
-          ${!session && 'pb-2 border-b mb-2'}
-        `}>
-          <Statistics stats={data.data.starStats}/>
+        <div className={`my-2 flex gap-2 items-stretch`}>
+          <StarStatistics stats={data.data.starStats}/>
+          {status === 'authenticated' && song?.workId &&
+            <UserReviewPanel 
+              item={song} 
+              itemId={song.workId} 
+              type="song"
+              review={review}
+              setReview={setReview}
+              setData={setData}
+              coverArtUrl={coverArt}
+            />
+          }
         </div>
       }
-
-      {session && data &&
-        <ReviewBar 
-          item={song} 
-          type="song" 
-          data={data} 
-          setData={setData} 
-          coverArtUrl={coverArt}
+      {status === 'authenticated' && review &&
+        <YourReviewSection
+          review={review}
         />
       }
-      
       {loading &&
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
@@ -187,7 +195,7 @@ export default function SongPage ({
       {data?.data.reviews &&
         <>
           <Reviews data={data}/>
-          <Pagination data={data} fetchData={fetchData}/>
+          {data.pages > 0 && <Pagination data={data} fetchData={fetchData}/>}
         </>
       }
 

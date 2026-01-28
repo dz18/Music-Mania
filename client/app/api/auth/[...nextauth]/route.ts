@@ -71,8 +71,8 @@ const handler = NextAuth({
       try {
         if (session.user && token.id) {
           const user = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/find`, {
-            params: {
-              userId : token.id
+            headers: {
+              Authorization: `Bearer ${token.raw}`
             }
           });
 

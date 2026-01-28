@@ -37,6 +37,28 @@
   background-color: #1a1a1a;
 }
 
+.bg-surface-elevated {
+  background-color: #2b2b2b;
+}
+
+.interactive-button {
+  @apply cursor-pointer
+         focus-visible:outline-none
+         focus-visible:ring-2 focus-visible:ring-white/30;
+}
+
+.interactive-dark {
+  @apply hover:bg-white/10
+         active:bg-white/20
+         focus-visible:ring-white/30;
+}
+
+.interactive-light {
+  @apply hover:bg-white/90
+         active:bg-white/80
+         focus-visible:ring-white/70;
+}
+
 :root {
   --shadow-white: 0 0 10px rgba(255, 255, 255, 0.5);
   --shadow-cyan: 0 0 15px rgba(0, 255, 255, 0.8);

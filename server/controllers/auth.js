@@ -10,33 +10,33 @@ const register = async (req, res) => {
     phoneNumber 
   } = req.body
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!email || !password) {
-    errorApiCall(req.method, req.originalUrl, 'Missing email or password')
+    errorApiCall(req, 'Missing email or password')
   }
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
-      errorApiCall(req.method, req.originalUrl, 'Email already in use')
+      errorApiCall(req, 'Email already in use')
     }
 
     const existingUsername = await prisma.user.findUnique({ where: { username } })
     if (existingUsername) {
-      errorApiCall(req.method, req.originalUrl, 'Username already in use')
+      errorApiCall(req, 'Username already in use')
     }
 
     let existingPhoneNumber
     if (phoneNumber) {
       existingPhoneNumber = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber } })
       if (existingPhoneNumber) {
-        errorApiCall(req.method, req.originalUrl, 'Phone Number already in use')
+        errorApiCall(req, 'Phone Number already in use')
       }
     }
 
     if (existingUser || existingUsername || existingPhoneNumber) {
-      errorApiCall(req.method, req.originalUrl, 'Username already in use')
+      errorApiCall(req, 'Username already in use')
       return res.status(409).json({ error: {
         email : existingUser ? 'Email already in use' : null,
         username : existingUsername ? 'Username already in use' : null,
@@ -59,10 +59,10 @@ const register = async (req, res) => {
       },
     })
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.status(201).json({ message: 'User created', user: { id: user.id, email: user.email } })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({ error: 'registering account failed' })
   }
 
@@ -71,10 +71,10 @@ const register = async (req, res) => {
 const signIn = async (req, res) => {
   const {email, password} = req.body
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!email || !password) {
-    errorApiCall(req.method, req.originalUrl, 'Missing email or password')
+    errorApiCall(req, 'Missing email or password')
     return res.status(400).json({ error: 'Email and password are required' })
   }
   
@@ -84,26 +84,26 @@ const signIn = async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
-      errorApiCall(req.method, req.originalUrl, 'User not found')
+      errorApiCall(req, 'User not found')
       return res.status(404).json({ error: 'User not found' })
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) {
-      errorApiCall(req.method, req.originalUrl, 'Invalid password')
+      errorApiCall(req, 'Invalid password')
       return res.status(401).json({ error: 'Invalid password' })
     }
 
     console.log('Passwords match. Signing user in...')
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json({ 
       id: user.id, 
       email: user.email ,
       username: user.username,
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({ error: 'Signin failed' })
   }
 
@@ -114,7 +114,7 @@ const confirmPassword = async (req, res) => {
   try {
     const {email, password} = req.body
 
-    logApiCall(req.method, req.originalUrl)
+    logApiCall(req)
     const user = await prisma.user.findUnique({ 
       where: { email }, 
       select: { password: true }
@@ -122,15 +122,15 @@ const confirmPassword = async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password)
 
     if (!passwordMatch) {
-      errorApiCall(req.method, req.originalUrl, 'Invalid password')
+      errorApiCall(req, 'Invalid password')
       return res.status(401).json({ error: 'Invalid password' })
     }
 
     res.json({success: true})
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 
 }
@@ -138,7 +138,7 @@ const confirmPassword = async (req, res) => {
 const changePassword = async (req, res) => {
   const { email, newPassword, confirmNewPassword } = req.body
   
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -152,9 +152,9 @@ const changePassword = async (req, res) => {
 
     res.json()
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
   } catch (error) {
-    console.error(req.method, req.originalUrl, error)
+    console.error(req, error)
   }
 }
 

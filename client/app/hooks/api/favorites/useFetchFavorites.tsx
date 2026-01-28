@@ -30,7 +30,12 @@ export default function useFetchFavorite (
   }, [type, session?.user.favArtists, session?.user?.favReleases, session?.user?.favSongs])
 
   const isFavorite = useMemo(() => (
-    item ? favorites.some(fav => fav.id === item.id) : false
+    item
+      ? favorites.some(
+          fav =>
+            fav.id === (('workId' in item) ? item.workId : item.id)
+        )
+      : false
   ), [favorites, item])
   
   const updateFavorites = (
@@ -39,9 +44,10 @@ export default function useFetchFavorite (
     since: Date
   ) => {
     if(!item) return
+    
     setFavorites((prev) => {
       if (action === 'add') {
-        return [...prev, {id: item.id, since}]
+        return [...prev, {id: id, since}]
       }
 
       if (action === 'remove') {
@@ -69,13 +75,14 @@ export default function useFetchFavorite (
 
     const since = new Date()
     
-    updateFavorites(item.id, action, since)
+    const id = ('workId' in item) ? item.workId : item.id
+    updateFavorites(id, action, since)
 
     startTransition(async () => {
       try {
         await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/favorite`, {
           userId: session.user.id,
-          id: item.id,
+          id: id,
           name: 'name' in item ? item.name : null,
           title: 'title' in item ? item.title : null,
           artistCredit: 'artistCredit' in item ? artistCredit : null,
@@ -87,20 +94,20 @@ export default function useFetchFavorite (
 
         setFavorites(
           action === 'add'
-            ? [...originalFavorites, {id: item.id, since}]
-            : originalFavorites.filter(f => f.id !== item.id)
+            ? [...originalFavorites, {id: id, since}]
+            : originalFavorites.filter(f => f.id !== id)
         )
         // console.log(newFavArtists)
 
         switch (type) {
           case 'artist': 
-            await update({...session, user: {...session.user, favArtists: {userId: session.user.id, artistId: item.id, since}}})
+            await update({...session, user: {...session.user, favArtists: {userId: session.user.id, artistId: id, since}}})
             break
           case 'release': 
-            await update({...session, user: {...session.user, favReleases: {userId: session.user.id, releaseId: item.id, since}}})
+            await update({...session, user: {...session.user, favReleases: {userId: session.user.id, releaseId: id, since}}})
             break
           case 'song': 
-            await update({...session, user: {...session.user, favSongs: {userId: session.user.id, songId: item.id, since}}})
+            await update({...session, user: {...session.user, favSongs: {userId: session.user.id, songId: id, since}}})
             break
         }
 
