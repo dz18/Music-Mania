@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
 
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
@@ -47,5 +47,25 @@ export async function getSignedURL (key, type, size) {
     return { error: 'Unknown Error' }
   }
   
-
 }
+
+export async function deleteObject(key) {
+  console.log('deleting object now...')
+  if (!key) {
+    return { error: "Missing S3 object key" }
+  }
+
+  const deleteCommand = new DeleteObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+  })
+
+  try {
+    await s3.send(deleteCommand)
+    console.log(`Deleted: ${key}`);
+    return { success: true }
+  } catch (error) {
+    console.error("S3 delete error:", error)
+    return { error: "Failed to delete object" }
+  }
+} 

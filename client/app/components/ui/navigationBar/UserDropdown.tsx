@@ -40,7 +40,7 @@ export default function UserDropdown() {
           <img 
             src={`${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session?.user.id}?v=${Date.now()}`}
             alt="Avatar"
-            className="w-10 h-10 shrink-0 min-w-10"
+            className="w-10 h-10 shrink-0 min-w-10 object-cover"
             onError={e => { e.currentTarget.src = '/default-avatar.jpg'}}
           />
         </div>

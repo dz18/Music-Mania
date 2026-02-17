@@ -1,3 +1,4 @@
+import { msToHMS } from "@/app/hooks/timeMs"
 import { Release, ReviewResponse } from "@/app/lib/types/api"
 import { ImageOff, Loader, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -18,21 +19,17 @@ export default function TextContent ({
 
   const router = useRouter()
 
-  const totalLength = useMemo(() => {
-    return (album?.tracks.reduce((sum, track) => sum + (track.length || 0), 0) ?? 0) / 1000
-  }, [album])
+  const totalLengthMs = album?.media.reduce(
+    (albumSum, m) =>
+      albumSum +
+      m.tracks.reduce(
+        (discSum, t) => discSum + (t.length ?? 0),
+        0
+      ),
+    0
+  ) ?? 0
 
-  const hours = useMemo(() => {
-    return Math.floor(totalLength / 3600)
-  }, [totalLength])
-
-  const minutes = useMemo(() => {
-    return Math.floor((totalLength % 3600) / 60)
-  }, [totalLength])
-
-  const seconds = useMemo(() => {
-    return Math.floor(totalLength % 60)
-  }, [totalLength])
+  const { hours, minutes, seconds } = msToHMS(totalLengthMs)
 
   return (
     <>

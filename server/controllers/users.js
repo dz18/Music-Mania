@@ -1,6 +1,6 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging');
-const { getSignedURL } = require('./AWS/actions');
+const { getSignedURL, deleteObject } = require('./AWS/actions');
 const { calcStarStats } = require('./hooks/calcStarStats')
 
 // Gets all users
@@ -56,7 +56,7 @@ const findUserById = async (req, res) => {
 }
 
 // Get all favorites by user
-const getFavorites = async (req, res) => {
+const getLikes = async (req, res) => {
   try {
     logApiCall(req)
     const { id, active } = req.query
@@ -67,44 +67,44 @@ const getFavorites = async (req, res) => {
     }
 
     const [countArtists, countReleases, countSongs] = await Promise.all([
-      prisma.userFavArtist.count({ where: { userId: id } }),
-      prisma.userFavRelease.count({ where: { userId: id } }),
-      prisma.userFavSong.count({ where: { userId: id } }),
+      prisma.userLikedArtist.count({ where: { userId: id } }),
+      prisma.userLikedRelease.count({ where: { userId: id } }),
+      prisma.userLikedSong.count({ where: { userId: id } }),
     ])
 
-    const favorites = {
+    const liked = {
       _count: {
-        favArtists: countArtists,
-        favReleases: countReleases,
-        favSongs: countSongs,
+        userLikedArtist: countArtists,
+        userLikedRelease: countReleases,
+        userLikedSong: countSongs,
       },
     }
 
     if (active === 'artists') {
-      favorites.favArtists = await prisma.userFavArtist.findMany({
+      liked.userLikedArtist = await prisma.userLikedArtist.findMany({
         where: { userId: id },
         include: { artist: true },
       })
     }
 
     if (active === 'releases') {
-      favorites.favReleases = await prisma.userFavRelease.findMany({
+      liked.userLikedRelease = await prisma.userLikedRelease.findMany({
         where: { userId: id },
         include: { release: true },
       })
     }
 
     if (active === 'songs') {
-      favorites.favSongs = await prisma.userFavSong.findMany({
+      liked.userLikedSong = await prisma.userLikedSong.findMany({
         where: { userId: id },
         include: { song: true },
       })
     }
 
-    //console.log(favorites)
+    console.log(liked)
 
     successApiCall(req)
-    res.json(favorites)
+    res.json(liked)
   } catch (error) {
     errorApiCall(req, error)
   }
@@ -302,35 +302,41 @@ const profile = async (req, res) => {
       prisma.user.findUnique({
         where: { id: profileId },
         include: {
-          favArtists: { include: { artist: true } },
-          favReleases: { include: { release: true } },
-          favSongs: { include: { song: true } },
+          likedArtists: { include: { artist: true } },
+          likedReleases: { include: { release: true } },
+          likedSongs: { include: { song: true } },
           _count: {
             select: {
-              artistReviews: true,
-              releaseReviews: true,
-              songReviews: true,
+              artistReviews: {
+                where: { status: 'PUBLISHED' }
+              },
+              releaseReviews:  {
+                where: { status: 'PUBLISHED' }
+              },
+              songReviews:  {
+                where: { status: 'PUBLISHED' }
+              },
               followers: true,
               following: true
             }
           }
         },
-        omit: { password: true, email: true, phoneNumber: true }
+        omit: { password: true, email: true }
       }),
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: profileId }
+        where: { userId: profileId, status: 'PUBLISHED' }
       }),
       prisma.userReleaseReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: profileId }
+        where: { userId: profileId, status: 'PUBLISHED' }
       }),
       prisma.userSongReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: profileId }
+        where: { userId: profileId, status: 'PUBLISHED' }
       })
     ]
 
@@ -523,12 +529,12 @@ const allFollowers = async (req, res) => {
       include: isFollowingMode
         ? {
             following: {
-              omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
+              omit: { password: true, email: true, aboutMe: true },
             },
           }
         : {
             follower: {
-              omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
+              omit: { password: true, email: true, aboutMe: true },
             },
           },
       skip: (pageNumber - 1) * limit,
@@ -605,6 +611,7 @@ const editInfo = async (req, res) => {
       where: {id: profileId}
     })
 
+    console.log(user)
     successApiCall(req)
     return res.json({
       avatar: '',
@@ -613,7 +620,6 @@ const editInfo = async (req, res) => {
       aboutMe: user.aboutMe ?? '',
       createdAt: user.createdAt,
       email: user.email,
-      phoneNumber: user.phoneNumber ?? '',
       age: user.age ?? '',
     })
 
@@ -630,18 +636,18 @@ const edit = async (req, res) => {
   const {
     username,
     aboutMe,
-    email,
-    phoneNumber,
     updatedAt
   } = req.body
   const age = req.body.age !== undefined && req.body.age !== '' 
     ? Number(req.body.age) : null
+  const resetAvatar = req.body.resetAvatar === 'true'
+
+  // Validation
+  let hasError = false
+  let errors = {}
   
   try {
 
-    // Validation
-    let hasError = false
-    let errors = {}
 
     const usernameDuplicate = await prisma.user.findFirst({
       where: { username: username, NOT: { id } }
@@ -651,32 +657,22 @@ const edit = async (req, res) => {
       errors.username = 'Username is already taken'
       hasError = true
     }
-
-    const emailDuplicate = await prisma.user.findFirst({
-      where: {email: email, NOT: { id }}
-    })
-    if (emailDuplicate){ 
-      errors.username = 'Email is already in use'
-      hasError = true
-    }
-    
-    const phoneNumberDuplicate = await prisma.user.findFirst({
-      where: {phoneNumber: phoneNumber, NOT: {id}}
-    })
-    if (phoneNumberDuplicate) { 
-      errors.phoneNumber = 'Phone Number is already in use'
-      hasError = true
-    }
-
-
+  
     // Create Avatar URL
     let url = null
+    console.log(resetAvatar)
     if (avatar) {
       const signedUrlRes = await getSignedURL(`avatars/${id}`, avatar.mimetype, avatar.size)
       if (signedUrlRes.success) {
         url = signedUrlRes.success.url
       } else {
         errors.avatar = signedUrlRes.error
+        hasError = true
+      }
+    } else if (resetAvatar) {
+      const deleteObjectRes = await deleteObject(`avatars/${id}`)
+      if (deleteObjectRes.error) {
+        errors.avatar = deleteObjectRes.error
         hasError = true
       }
     }
@@ -691,8 +687,6 @@ const edit = async (req, res) => {
       data: {
         username, 
         aboutMe,
-        email,
-        phoneNumber,
         age,
         updatedAt
       },
@@ -702,7 +696,6 @@ const edit = async (req, res) => {
         aboutMe: true, 
         createdAt: true,
         email: true, 
-        phoneNumber: true, 
         age: true,
       }
     })
@@ -715,6 +708,7 @@ const edit = async (req, res) => {
     })
   } catch (error) {
     errorApiCall(req, error)
+    return res.status(409).json({errors})
   }
 
 }
@@ -732,8 +726,13 @@ const reviewPanel = async (req, res) => {
     let like
     if (type === 'artist') {
       review = await prisma.userArtistReviews.findUnique({
-        where: { 
-          userId_artistId: { userId: req.user.id, artistId: itemId }
+        where: { userId_artistId: { userId: req.user.id, artistId: itemId }},
+        include: {
+          tags: {
+            include: {
+              tag: true
+            }
+          }
         }
       })
       like = await prisma.userLikedArtist.findUnique({
@@ -743,22 +742,30 @@ const reviewPanel = async (req, res) => {
       })
     } else if (type === 'release') {
       review = await prisma.userReleaseReviews.findUnique({
-        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId }}
+        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId }},
       })
       like = await prisma.userLikedRelease.findUnique({
         where: { userId_releaseId: { userId: req.user.id, releaseId: itemId}}
       })
+
     } else if (type === 'song') {
       review = await prisma.userSongReviews.findUnique({
-        where: { userId_songId: { userId: req.user.id, songId: itemId }}
+        where: { userId_songId: { userId: req.user.id, songId: itemId }},
       })
       like = await prisma.userLikedSong.findUnique({
         where: { userId_songId: { userId: req.user.id, songId: itemId }}
       })
     }
+    
+    let formattedReview = null;
+
+    if (review) {
+      const tags = review.tags?.map(t => t.tag.name) || [];
+      formattedReview = { ...review, tags };
+    }
 
     successApiCall(req)
-    res.json({review, like})
+    res.json({review: formattedReview, like})
   } catch (error) {
     errorApiCall(req, error)
   }
@@ -880,7 +887,7 @@ const deleteLike = async (req, res) => {
 module.exports = {
   getUsers,
   findUserById,
-  getFavorites,
+  getLikes,
   favorite,
   query,
   profile,

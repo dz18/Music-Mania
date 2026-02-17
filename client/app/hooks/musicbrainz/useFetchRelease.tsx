@@ -7,6 +7,7 @@ export default function useFetchRelease (releaseId: string, star: number | null)
   const [coverArt, setCoverArt] = useState('')
   const [release, setRelease] = useState<Release | null>(null)
   const [releaseLoad, setReleaseLoad] = useState(false)
+  const [starStats, setStarStats] = useState<StarCount[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const [data, setData] = useState<ApiPageResponse<ReviewResponse> | null>(null)
@@ -31,7 +32,7 @@ export default function useFetchRelease (releaseId: string, star: number | null)
           params: {id: releaseId, page: page, star: star}
         })
       )
-
+      
       const results = await Promise.all(requests)
       let index = 0
       if (!release) {
@@ -44,7 +45,7 @@ export default function useFetchRelease (releaseId: string, star: number | null)
 
       const reviewResults = results[index]
       setData(reviewResults.data)
-
+      setStarStats(reviewResults.data.data.starStats)
       setError(null)
     } catch (error : any) {
       const err = error as AxiosError<{ error: string }>
@@ -74,6 +75,8 @@ export default function useFetchRelease (releaseId: string, star: number | null)
     error,
     data,
     setData,
-    releaseLoad
+    releaseLoad,
+    starStats,
+    setStarStats
   }
 }

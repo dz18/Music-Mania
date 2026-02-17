@@ -1,64 +1,64 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 const { calcStarStats } = require('./hooks/calcStarStats')
+const { tagConnectOrCreate } = require('./hooks/tagConnectOrCreate')
 
 const limit = 25
 
-const artistReviews = async(req, res) => {
+const artistReviews = async (req, res) => {
   const { id } = req.query
-  let page = Number(req.query.page) || 0
+  let page = Number(req.query.page) || 1
   let star = Number(req.query.star) || null
 
+  const limit = 10
   logApiCall(req)
 
   try {
-    if (!id) {
-      errorApiCall(req, 'Missing artist id')
-      res.status(400).json({error : 'Missing artist id'})
-    }
+    if (!id) return res.status(400).json({ error: 'Missing artist id' })
+    if (!page) return res.status(400).json({ error: 'Missing page number' })
 
-    
-    if (!page) {
-      errorApiCall(req, 'Missing Page Number')
-      res.status(400).json({error : 'Missing Page Number'})
-    }
+    const reviews = await prisma.userArtistReviews.findMany({
+      where: {
+        artistId: id,
+        status: "PUBLISHED",
+        ...(star ? { rating: star } : {})
+      },
+      include: {
+        user: { omit: { password: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit
+    })
 
-    console.log(star)
-    const [reviews, allStats, filteredStats, artistStats] = await Promise.all([
-      prisma.userArtistReviews.findMany({
-        where: { artistId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},
-        include: { user: { omit: { password: true } } },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit
-      }),
+    const [allStats, filteredStats, artistStats] = await Promise.all([
       prisma.userArtistReviews.aggregate({
         where: { artistId: id, status: 'PUBLISHED' },
         _avg: { rating: true }
       }),
       prisma.userArtistReviews.aggregate({
-        where: { artistId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},
+        where: { artistId: id, status: 'PUBLISHED', ...(star ? { rating: star } : {}) },
         _count: true
       }),
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { artistId: id, status: 'PUBLISHED'}
-      })
+        where: { artistId: id, status: 'PUBLISHED' }
+      }),
     ])
-    const average = allStats._avg.rating
-    const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+
+    const avgRounded = allStats._avg.rating ? +allStats._avg.rating.toFixed(2) : 0
     const starStats = calcStarStats(artistStats)
 
-    const data = {reviews, avgRating: avgRounded ?? 0, starStats}
+    const data = { reviews, avgRating: avgRounded, starStats }
 
     successApiCall(req)
     res.json({
-      data: data,
+      data,
       count: filteredStats._count,
       pages: Math.ceil(filteredStats._count / limit),
       currentPage: page,
-      limit: limit
+      limit
     })
   } catch (error) {
     errorApiCall(req, error)
@@ -112,7 +112,7 @@ const releaseReviews = async(req, res) => {
 
     const data = {reviews, avgRating: avgRounded ?? 0, starStats}
 
-    console.log(data)
+    // console.log(data)
     successApiCall(req)
     res.json({
       data,
@@ -225,7 +225,7 @@ const publishOrDraft = async (req, res) => {
     itemId, title, 
     rating, review, type, 
     status, itemName, itemTitle, 
-    artistCredit, coverArt
+    artistCredit, coverArt, tags
   } = req.body
   
   logApiCall(req)
@@ -264,8 +264,20 @@ const publishOrDraft = async (req, res) => {
 
       published = await prisma.userArtistReviews.upsert({
         where : { userId_artistId: { userId: req.user.id, artistId: itemId } },
-        update: updateData,
-        create: {...createData, artistId: itemId},
+        update: {
+          ...updateData,
+          tags: {
+            deleteMany: {},  // remove old tags
+            create: tagConnectOrCreate(tags)
+          }
+        },
+        create: {
+          ...createData,
+          artistId: itemId,
+          tags: {
+            create: tagConnectOrCreate(tags)
+          }
+        },
         include: { user: { omit: { password: true } }, },
       })
 
@@ -681,7 +693,7 @@ const userSongs = async (req, res) => {
       limit: limit
     }
 
-    console.log(data)
+    console.log(data.data.reviews)
 
     res.json(data)
     successApiCall(req)

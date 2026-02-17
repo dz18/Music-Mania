@@ -1,3 +1,4 @@
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import StarStatisticsBar from "./StarStatisticsBar"
 import StarRatingVisual from "./StarVisual"
 
@@ -10,6 +11,24 @@ export default function StarStatistics ({
 }) {
 
   const maxCount = Math.max(...stats.map(s => s.count))
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const star = searchParams.get("star")
+
+  const handleRatingRoute = (s: number | null) => {
+
+    const params = new URLSearchParams()
+    if (s) {
+      params.set("star", `${s}`)
+    } 
+
+    router.replace(`${pathname}?${params.toString()}`, {
+      scroll: false,
+    })
+  }
 
   return (
     <div
@@ -26,11 +45,25 @@ export default function StarStatistics ({
             Rating Breakdown
           </p>
           {filter &&
-            <p
-              className="text-gray-500"
-            >
-              (Click a rating to filter reviews)
-            </p>
+            star ? (
+              <p
+                className="text-amber-500 flex gap-2 items-end"
+              >
+                {star && `Filtering: ${star} ★`}
+                <button
+                  className="border px-1 rounded interactive-button hover:bg-amber-900 active:bg-amber-800 bg-amber-950"
+                  onClick={() => handleRatingRoute(null)}
+                >
+                  Clear
+                </button>
+              </p>
+            ) : (
+              <p
+                className="text-gray-500"
+              >
+                (Click a rating to filter reviews)
+              </p>
+            )
           }
         </div>
       }
@@ -58,7 +91,11 @@ export default function StarStatistics ({
               `}
             >
               <td 
-                className="text-right px-2 py-1 font-mono text-sm font-semibold interactive-button interactive-dark"
+                className={`
+                  text-right px-2 py-1 font-mono text-sm font-semibold interactive-button interactive-dark
+                  ${star && star === String(s.rating) ? "text-amber-500" : ""}
+                `}
+                onClick={() => handleRatingRoute(s.rating)}
               >
                 {s.rating}
               </td>

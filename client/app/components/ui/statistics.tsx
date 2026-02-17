@@ -7,7 +7,6 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
   const router = useRouter()
   const pathname = usePathname()
 
-  const [filterOn, setFilterOn] = useState(false)
 
   const searchParams = useSearchParams()
   const star = searchParams.get("star")
@@ -17,10 +16,8 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
 
     if (sp !== null) {
       setCurrentStar(Number(sp));
-      setFilterOn(true);
     } else {
       setCurrentStar(null);
-      setFilterOn(false);
     }
   }, [searchParams])
 
@@ -30,9 +27,7 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
     if (s) {
       params.set("star", `${s.rating}`)
       setCurrentStar(Number(s.rating))
-      setFilterOn(true)
     } else {
-      setFilterOn(false)
       setCurrentStar(null)
     }
 

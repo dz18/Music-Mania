@@ -6,11 +6,13 @@ import PrivateInformation from "@/app/components/pages/profile/edit/privateInfor
 import Security from "@/app/components/pages/profile/edit/security"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
+import RefreshPage from "@/app/components/ui/RefreshPage"
 import axios from "axios"
 import { Loader } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { redirect, usePathname } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function EditProfilePage ({
   userId
@@ -18,8 +20,9 @@ export default function EditProfilePage ({
   userId: string
 }) {
 
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const pathname = usePathname()
+  const router = useRouter()
 
   const [originalData, setOriginalData] = useState<EditProfileForm>({
     avatar: '',
@@ -28,8 +31,8 @@ export default function EditProfilePage ({
     aboutMe: '',
     createdAt: new Date(),
     email: '',
-    phoneNumber: '',
-    age: ''
+    age: '',
+    resetAvatar: false
   })
   const [data, setData] = useState<EditProfileForm>({
     avatar: '',
@@ -38,8 +41,8 @@ export default function EditProfilePage ({
     aboutMe: '',
     createdAt: new Date(),
     email: '',
-    phoneNumber: '',
-    age: ''
+    age: '',
+    resetAvatar: false
   })
   const [errors, setErrors] = useState<EditProfileForm>({
     avatar: '',
@@ -48,37 +51,57 @@ export default function EditProfilePage ({
     aboutMe: '',
     createdAt: new Date(),
     email: '',
-    phoneNumber: '',
-    age: ''
+    age: '',
+    resetAvatar: false
   })
+
+  const [hasFetched, setHasFetched] = useState(false)
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState('/default-avatar.jpg')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [result, setResult] = useState('')
 
-  useEffect(() => {
+  const unsaved = JSON.stringify(data) === JSON.stringify(originalData)
+
+  const fetchData = async () => {
     if (!session || status !== 'authenticated') return
+    if (hasFetched) return
+    
+    const token = `Bearer ${session?.user.token}`
 
-    const fetchData = async () => {
-      const token = `Bearer ${session?.user.token}`
-
+    try {
       const res = await axios.get<EditProfileForm>(`${process.env.NEXT_PUBLIC_API_URL}/api/users/edit`, {
         params: { profileId: session.user.id },
         headers: {
           Authorization: token
-        }
+        } 
       })
 
       setData(res.data)
       setOriginalData(res.data)
+      setHasFetched(true)
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data.error)
+      }
+      console.error(error)
     }
+  }
 
+  useEffect(() => {
     fetchData()
-  }, [session?.user.token])
+  }, [session])
 
+  useEffect(() => {
+    if (!session) return
 
-  const unsaved = JSON.stringify(data) === JSON.stringify(originalData)
+    console.log(`${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session.user.id}v=${Date.now()}`)
 
-  if (status === 'loading') {
+    setCurrentAvatarUrl(`${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session.user.id}?v=${Date.now()}`)
+  }, [session])
+
+  if (!hasFetched && !error) {
     return (
       <div className="flex flex-col gap-2">
         <LoadingText text="Loading Profile Information"/>
@@ -88,6 +111,17 @@ export default function EditProfilePage ({
         <LoadingBox className="h-50 w-full"/>
         <LoadingBox className="h-50 w-full"/>
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <RefreshPage
+        func={fetchData}
+        title="Profile Page"
+        loading={loading}
+        note={error ?? "Unknown Error Occurred. Try Again."}
+      />
     )
   }
 
@@ -101,11 +135,11 @@ export default function EditProfilePage ({
     if (avatarFile) formData.append('avatar', avatarFile)
     formData.append('username', data.username)
     formData.append('aboutMe', data.aboutMe)
-    formData.append('email', data.email)
-    formData.append('phoneNumber', data.phoneNumber)
     formData.append('age', data.age)
     const updatedAt = new Date()
     formData.append('updatedAt', updatedAt.toISOString())
+    console.log(data.resetAvatar)
+    if (data.resetAvatar) formData.append('resetAvatar', 'true')
 
     const token = `Bearer ${session?.user.token}`
 
@@ -126,17 +160,32 @@ export default function EditProfilePage ({
         aboutMe: '',
         createdAt: new Date(),
         email: '',
-        phoneNumber: '',
-        age: ''
+        age: '',
+        resetAvatar: false
       })
 
       if (res.data.url) {
         await axios.put(res.data.url, avatarFile)
       }
 
+      setCurrentAvatarUrl(
+        data.resetAvatar ? "/default-avatar.jpg" : `${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session?.user.id}v=${Date.now()}`
+      )
+      
       setResult(res.data.message)
       setData(res.data.data)
       setOriginalData(res.data.data)
+
+      if (session) {
+        await update({
+          ...session,
+          user: {
+            username: res.data.data.username
+          }
+        })
+        
+      }
+
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData: Map<string, string> = error.response?.data.errors
@@ -154,7 +203,7 @@ export default function EditProfilePage ({
   }
   
   return (
-    <div className="flex flex-col gap-2 text-sm">
+    <div className="flex flex-col gap-4 text-sm">
 
       <div>
         <p className="text-xl font-mono font-bold">Edit Profile</p>
@@ -162,10 +211,13 @@ export default function EditProfilePage ({
       </div>
 
       <Avatar
-        avatar={data.avatar}
+        newAvatar={data.avatar}
+        currentAvatar={currentAvatarUrl}
+        reset={data.resetAvatar}
         setAvatarFile={setAvatarFile}
         setData={setData}
         errors={errors}
+
       />
 
       <GeneralInformation
@@ -179,7 +231,6 @@ export default function EditProfilePage ({
 
       <PrivateInformation
         email={data.email}
-        phoneNumber={data.phoneNumber}
         age={data.age}
         setData={setData}
         errors={errors}
@@ -190,7 +241,7 @@ export default function EditProfilePage ({
         setData={setData}
       />
 
-      <div className="flex bg-surface p-4 justify-end items-center gap-2">
+      <div className="flex bg-surface p-4 justify-end items-center gap-2 border border-gray-500 rounded-lg">
         <p className="text-gray-500">{result}</p>
         <button
           className="px-2 py-1 bg-teal-500 rounded cursor-pointer disabled:opacity-40"

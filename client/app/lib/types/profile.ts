@@ -1,4 +1,4 @@
-interface FavArtist {
+interface LikedArtist {
   userId: string
   artistId: string
   since: Date
@@ -8,7 +8,7 @@ interface FavArtist {
   }
 }
 
-interface FavRelease {
+interface LikedRelease {
   userId: string
   releaseId: string
   since: Date
@@ -23,7 +23,7 @@ interface FavRelease {
   }
 }
 
-interface FavSong {
+interface LikedSong {
   userId: string
   songId: string
   since: Date
@@ -69,9 +69,9 @@ interface UserProfile {
   artistReviews: number,
   releaseReviews: number,
   songReviews: number
-  favArtists: FavArtist[]
-  favReleases: FavRelease[]
-  favSongs: FavSong[]
+  LikedArtists: LikedArtist[]
+  LikedReleases: LikedRelease[]
+  LikedSongs: LikedSong[]
   // favArtists: {
   //   data: FavArtist[]
   //   currentPage: number

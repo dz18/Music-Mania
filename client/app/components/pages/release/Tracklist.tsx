@@ -1,6 +1,7 @@
 import { Release } from "@/app/lib/types/api"
 import { useRouter } from "next/navigation"
 import TracklistRatingsBlock from "./TracklistRatingsBlock"
+import { Fragment } from "react/jsx-runtime"
 
 export default function Tracklist ({
   album
@@ -34,7 +35,7 @@ export default function Tracklist ({
         <p
           className="text-gray-500"
         >
-          {album?.trackCount} total tracks
+          {album?.media.reduce((sum, m) => sum + m.trackCount, 0)} total tracks
         </p>
       </div>
 
@@ -49,45 +50,65 @@ export default function Tracklist ({
           >
             <th className="px-4 py-2 w-20 text-right">Pos.</th>
             <th className="px-4 py-2 text-left">Title</th>
-            <th className="px-4 py-2 w-40 text-center">Length</th>
+            <th className="px-4 py-2 w-20 text-center">Length</th>
             <th className="px-4 py-2 w-20 text-center">Reviews</th>
             <th className="px-4 py-2 w-20 text-center">Rating</th>
           </tr>
         </thead>
         <tbody>
-          {album?.tracks.map((t, i) => (
-            <tr
-              key={i}
-              className={`
-                ${i % 2 === 0 ? "" : "bg-surface"}
-                border-t border-b border-white/5 
-                interactive-button interactive-dark
-                text-sm
-              `}
-              title={`View details for ${t.title}`}
-              onClick={() => router.push(`/song/${t.recording.id}`)}
-            >
-              <td className="px-4 py-2 w-20 font-semibold text-right opacity-40">{t.position}</td>
-              <td className="px-4 py-2 text-left truncate">{t.title}</td>
-              <td className="px-4 py-2 w-40 text-center opacity-40">{formatDuration(t.length)}</td>
-              <td 
+        {album?.media.map((media, mediaIndex) => (
+          <Fragment key={mediaIndex}>
+            {/* Optional disc header */}
+            {album.media.length > 1 && (
+              <tr className="bg-black/50 border-b border-white/5">
+                <td colSpan={5} className="px-4 py-2 text-sm font-semibold opacity-60">
+                  Disc {mediaIndex + 1}
+                </td>
+              </tr>
+            )}
+
+            {media.tracks.map((t, trackIndex) => (
+              <tr
+                key={`${mediaIndex}-${trackIndex}`}
                 className={`
-                  px-4 py-2 w-20 text-center opacity-40
+                  ${(trackIndex % 2 === 0) ? "" : "bg-surface"}
+                  border-t border-b border-white/5
+                  interactive-button interactive-dark
+                  text-sm
                 `}
+                title={`View details for ${t.title}`}
+                onClick={() => router.push(`/song/${t.recording.id}`)}
               >
-                {t.recording.totalReviews}
-              </td>
-              <td
-                className={`
-                  px-4 py-2 w-20 text-center font-semibold
-                  ${t.recording.avgRating == null ? "text-gray-600" : "text-white"}
-                  rounded-md p-1
-                `}
-              >
-                <TracklistRatingsBlock track={t}/>
-              </td>
-            </tr>
-          ))}
+                <td className="px-4 py-2 w-20 font-semibold text-right opacity-40">
+                  {t.position}
+                </td>
+
+                <td className="px-4 py-2 text-left truncate">
+                  {t.title}
+                </td>
+
+                <td className="px-4 py-2 w-20 text-center opacity-40">
+                  {formatDuration(t.length)}
+                </td>
+
+                <td className="px-4 py-2 w-20 text-center opacity-40">
+                  {t.recording.totalReviews}
+                </td>
+
+                <td
+                  className={`
+                    px-4 py-2 w-20 text-center font-semibold
+                    ${t.recording.avgRating == null ? "text-gray-600" : "text-white"}
+                    rounded-md
+                  `}
+                >
+                  <TracklistRatingsBlock track={t} />
+                </td>
+              </tr>
+            ))}
+          </Fragment>
+        ))}
+
         </tbody>
       </table>
     </div>

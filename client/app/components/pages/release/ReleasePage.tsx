@@ -1,12 +1,10 @@
 'use client'
 
 import Reviews from "@/app/components/reviews/Reviews";
-import ReviewBar from "@/app/components/reviews/ReviewBar";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import { useSession } from "next-auth/react";
 import { useState } from "react"
 import Tracklist from "@/app/components/pages/release/Tracklist";
-import Statistics from "@/app/components/ui/statistics";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import LoadingText from "@/app/components/ui/loading/LoadingText";
 import RefreshPage from "@/app/components/ui/RefreshPage";
@@ -16,6 +14,7 @@ import TextContent from "@/app/components/pages/release/TextContent";
 import StarStatistics from "../../ui/starStatistics";
 import UserReviewPanel from "../../reviews/UserReviewPanel";
 import { ReviewTypes } from "@/app/lib/types/api";
+import YourReviewSection from "../../reviews/YourReview";
 
 export default function ReleasePage ({
   releaseId,
@@ -35,7 +34,9 @@ export default function ReleasePage ({
     release,
     releaseLoad,
     setData,
-    fetchData
+    fetchData,
+    starStats,
+    setStarStats
   } = useFetchRelease(releaseId, star)
   const [review, setReview] = useState<ReviewTypes | null>(null)
 
@@ -102,11 +103,11 @@ export default function ReleasePage ({
         }
       </div>
 
-      {data?.data.starStats &&
+      {starStats &&
         <div
           className="flex gap-2 items-stretch"
         >
-          <StarStatistics stats={data?.data.starStats}/>
+          <StarStatistics stats={starStats}/>
           {status === 'authenticated' &&
             <UserReviewPanel 
               item={release} 
@@ -116,12 +117,17 @@ export default function ReleasePage ({
               setReview={setReview}
               setData={setData}
               coverArtUrl={coverArt}
+              setStarStats={setStarStats}
             />
           }
         </div>
       }
 
-      <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold my-1 mb-2">
+      {review &&
+        <YourReviewSection review={review}/>
+      }
+
+      <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold mt-2">
         <li 
           className={`px-2 py-1 border-b-2 cursor-pointer ${active === 'reviews' ? 'text-teal-300  bg-teal-800' : "border-transparent"}`}
           onClick={() => setActive('reviews')}
@@ -139,10 +145,9 @@ export default function ReleasePage ({
 
       {active === 'reviews' &&
         <>
-        {loading &&
+        {loading ?
           <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
-        }
-        {data &&
+        : data &&
           <>
             <Reviews data={data}/>
             <Pagination data={data} fetchData={fetchData}/>

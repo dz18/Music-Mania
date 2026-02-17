@@ -88,6 +88,7 @@ export default function DiscographyTable ({
                 >
                   <Image className="w-4 h-4 text-gray-400 shrink-0" />
                   <span className="truncate">{rg.title}</span>
+                  <span className="truncate">{rg.disambiguation}</span>
                 </td>
 
                 <td className="px-3 py-2 text-center text-gray-500">

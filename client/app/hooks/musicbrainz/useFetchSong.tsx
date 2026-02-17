@@ -7,6 +7,7 @@ export default function useFetchSong (songId: string, star: number | null) {
 
   const [song, setSong] = useState<Song | null>(null)
   const [songLoad, setSongLoad] = useState(false)
+  const [starStats, setStarStats] = useState<StarCount[]>([])
   
   const [coverArt, setCoverArt] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -18,30 +19,36 @@ export default function useFetchSong (songId: string, star: number | null) {
     try {
       setLoading(true)
 
-      let songRes
-      if (!song) {
-        setSongLoad(true)
-        const songDetails = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getSong`, {
-          params: { songId: songId }
-        })
-        songRes = songDetails.data
-        console.log(songRes)
-      } 
+      setData(null)
+      let currentSong = song
 
-      if (!song) {
-        setCoverArt(songRes.coverArtUrl)
-        setSong(songRes.song)
+      // Fetch only if not already loaded
+      if (!currentSong) {
+        setSongLoad(true)
+
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getSong`,
+          { params: { songId } }
+        )
+
+        currentSong = data.song
+        setCoverArt(data.coverArtUrl)
+        setSong(data.song)
       }
 
-      const workId = ('workId' in songRes.song) ? 
-        `${songRes.song.workId}` : `${songId}`
+      const workId = currentSong &&
+        "workId" in currentSong
+          ? `${currentSong.workId}`
+          : `${songId}`
 
-      const songReviews = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/song`,{
-        params: { songId: songId, page: page, star: star, workId: workId }
-      })
+      const { data: reviewRes } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/reviews/song`, {
+          params: { songId, page, star, workId },
+        }
+      )
 
-      const reviewResults = songReviews.data
-      setData(reviewResults)
+      setData(reviewRes)
+      setStarStats(reviewRes.data.starStats)
 
     } catch (error) {
       const err = error as AxiosError<{error: string}>
@@ -65,7 +72,9 @@ export default function useFetchSong (songId: string, star: number | null) {
     loading,
     setData,
     fetchData,
-    error
+    error,
+    starStats,
+    setStarStats
   }
 
 }

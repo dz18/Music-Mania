@@ -5,6 +5,11 @@ export default function TracklistRatingsBlock ({
 } : {
   track: Track
 }) {
+
+  const text = track.recording.avgRating != null 
+    ? track.recording.avgRating 
+    : '--'
+
   return (
     <div
       className="rounded bg-opacity-40 border"
@@ -20,7 +25,7 @@ export default function TracklistRatingsBlock ({
           : undefined,
       }}
     >
-      {track.recording.avgRating != null ? track.recording.avgRating : 'N/A'}
+      {text}
     </div>
   )
 }

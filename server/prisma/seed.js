@@ -19,7 +19,6 @@ async function createUsers() {
     username: process.env.USERNAME,
     email: process.env.EMAIL,
     password: hashedPassword,
-    phoneNumber: faker.phone.number(),
     aboutMe: faker.lorem.sentences(3),
     age: faker.number.int({ min: 18, max: 60 })
   });
@@ -30,7 +29,6 @@ async function createUsers() {
       email: faker.internet.email(),
       username: faker.internet.username(),
       password: await bcrypt.hash(faker.internet.password(), 10),
-      phoneNumber: faker.phone.number(),
       aboutMe: faker.lorem.sentences(Math.floor(Math.random() * 6)),
       age: faker.number.int({ min: 18, max: 60 })
     });
@@ -137,13 +135,49 @@ async function createArtistLikes() {
   console.log(`Added ${artistLikes.length} random artist likes`)
 }
 
+async function createFollows(users) {
+  const follows = []
+
+  for (const user of users) {
+    const followCount = faker.number.int({
+      min: 0,
+      max: Math.min(20, users.length - 1),
+    })
+
+    const candidates = users
+      .filter(u => u.id !== user.id)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, followCount)
+
+    for (const target of candidates) {
+      follows.push({
+        followerId: user.id,
+        followingId: target.id,
+      })
+    }
+  }
+
+  await prisma.follow.createMany({
+    data: follows,
+    skipDuplicates: true,
+  })
+
+  console.log(`Added ${follows.length} follow relationships`)
+}
+
 async function main() {
   try {
-    const users = await createUsers()
+    await createUsers()
     await createArtists()
-    await createArtistReviews(users)
+    await createArtistReviews()
+
+    const users = await prisma.user.findMany({
+      select: { id: true }
+    })
+
     await createFollows(users)
-    await createArtistLikes(users)
+    await createArtistLikes()
+
     console.log('Seed completed successfully!')
   } catch (e) {
     console.error(e)
@@ -151,5 +185,4 @@ async function main() {
     await prisma.$disconnect()
   }
 }
-
 main();

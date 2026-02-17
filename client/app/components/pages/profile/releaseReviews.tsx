@@ -1,7 +1,6 @@
 import { ApiPageResponse } from "@/app/lib/types/api";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Statistics from "../../ui/statistics";
 import Pagination from "../../ui/Pagination";
 
 export default function ReleaseReviews ({
@@ -16,22 +15,15 @@ export default function ReleaseReviews ({
 
   return (
     <>
-      {data?.data.starStats && 
-        <div
-          className="border-b mb-4 border-gray-500"
-        >
-          <Statistics stats={data?.data.starStats}/>
-        </div>
-      }
-      {data?.data.reviews.length !== 0 ?
-        <div className="overflow-hidden rounded-xl">
+      {data?.count !== 0 ?
+        <div className="overflow-hidden rounded-lg border border-gray-500">
           {data?.data.reviews.map((r, i) => (
             <div key={r.releaseId} 
               className={`${i % 2 == 0 ? 'bg-surface-elevated' : 'bg-surface'} 
                 py-2 px-4 text-sm flex flex-col gap-1 border border-white/5`}
             >
 
-              <div className="border-b flex justify-between items-center">
+              <div className="border-b border-white/5 flex justify-between items-center">
                 <div className="flex gap-2">
                   <span className="tracking-wide font-bold font-mono hover:underline cursor-pointer pb-1 flex gap-1" onClick={() => router.push(`/release/${r.releaseId}`)}>{r.release.title}</span>
                   <span className="text-gray-500">
@@ -53,8 +45,8 @@ export default function ReleaseReviews ({
                   <img src={r.release.coverArt} className="w-40"/>
                 }
                 <div className="flex flex-col justify-start">
-                  <p className="font-bold font-mono">{r.title}</p>
-                  <p>{r.review}</p>
+                  <p className={`${r.title ? '' : 'text-gray-500'} font-semibold`}>{r.title ? r.title : 'No Title'}</p>
+                  <p className={`${r.review ? '' : 'text-gray-500'}`}>{r.review ? r.review : 'No Description'}</p>     
                 </div>
               </div>
 
@@ -66,7 +58,6 @@ export default function ReleaseReviews ({
         </div>
       :
         <div>
-          <p className="text-center font-mono text-gray-500">None</p>
         </div>
       }
     </>

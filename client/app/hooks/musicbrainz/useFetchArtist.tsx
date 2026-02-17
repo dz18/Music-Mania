@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 export default function useFetchArtist (artistId: string, star: number | null) {
   
   const [reviewsload, setReviewsLoad] = useState(false)
+  const [starStats, setStarStats] = useState<StarCount[]>([])
   const [artist, setArtist] = useState<Artist | null>(null)
   const [artistLoad, setArtistLoad] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -14,8 +15,8 @@ export default function useFetchArtist (artistId: string, star: number | null) {
   const fetchData = useCallback(async (page: number) => {
     try {
       setData(null)
-      setReviewsLoad(true)
       setError(null)
+      setReviewsLoad(true)
 
       const requests = []
       if (!artist) {
@@ -53,7 +54,26 @@ export default function useFetchArtist (artistId: string, star: number | null) {
 
       if (reviewsResult.status === "fulfilled") {
         const res = reviewsResult.value.data
-        setData(res)
+        if (!data) {
+          setStarStats(res.data.starStats)
+          setData(res)
+        }
+        else {
+          setData(prev => {
+            if (!prev) return res
+
+            return {
+              count: res.count,
+              data: {
+                ...prev.data,
+                reviews: res.data.reviews
+              },
+              pages: res.pages,
+              currentPage: res.currentPage,
+              limit: res.limit
+            }
+          })
+        }
       } else {
         const error = reviewsResult.reason as AxiosError<{ error: string }>
         console.error("Review fetch failed", error.response?.data.error ?? error.message)
@@ -71,6 +91,6 @@ export default function useFetchArtist (artistId: string, star: number | null) {
     fetchData(1)
   }, [fetchData])
 
-  return { artist, reviewsload, artistLoad, fetchData, setArtist, error, data, setData }
+  return { artist, reviewsload, artistLoad, fetchData, setArtist, error, data, setData, starStats, setStarStats }
 
 }

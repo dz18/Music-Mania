@@ -90,12 +90,16 @@ export default function Security ({
 
   return (
     <div
-      className="bg-surface p-4 flex flex-col gap-2"
+      className="bg-surface flex flex-col gap-2 rounded-lg overflow-hidden border border-gray-500"
     >
-      <p className="font-mono font-bold text-lg">Security & Privacy</p>
+      <p className="font-mono font-bold text-sm px-4 py-2 bg-surface-elevated">Security</p>
 
+      <div
+        className="px-4 py-2 flex flex-col gap-2"
+      >
+        
         <div>
-          <p>Confirm Password:</p>
+          <p className="mb-1">Confirm Password:</p>
           <input 
             type="password" 
             className="border px-2 py-1 w-full rounded disabled:opacity-40 disabled:cursor-auto"
@@ -103,10 +107,7 @@ export default function Security ({
             onChange={e => setConfirmPassword(e.target.value)}
             disabled={confirmed}
           />
-          <p className="mt-1 text-red-500">{firstError}</p>
-        </div>
-
-        <div>
+          <p className="mt-2 text-red-500">{firstError}</p>
           <button
             className="bg-teal-500 px-2 py-1 rounded cursor-pointer justify-center flex disabled:opacity-40 disabled:cursor-auto"
             onClick={handlePasswordConfirm}
@@ -117,7 +118,7 @@ export default function Security ({
         </div>
 
         <div>
-          <p className={`${!confirmed && 'text-gray-500'}`}>New Password:</p>
+          <p className={`${!confirmed && 'text-gray-500'} mb-1`}>New Password:</p>
           <input 
             type="password" 
             className="border px-2 py-1 w-full rounded disabled:opacity-40"
@@ -128,7 +129,7 @@ export default function Security ({
         </div>
 
         <div>
-          <p className={`${!confirmed && 'text-gray-500'}`}>Re-enter New Password:</p>
+          <p className={`${!confirmed && 'text-gray-500'} mb-1`}>Re-enter New Password:</p>
           <input 
             type="password" 
             className="border px-2 py-1 w-full rounded disabled:opacity-40"
@@ -156,6 +157,7 @@ export default function Security ({
             You will be logged out after changing password
           </p>
         }
+      </div>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { ReviewTypes } from "@/app/lib/types/api"
 import StarRatingVisual from "../ui/StarVisual"
 
 export default function YourReviewSection ({
-  review
+  review, 
 }:{
   review: ReviewTypes | null
 }) {
@@ -21,13 +21,23 @@ export default function YourReviewSection ({
 
       <div className="px-4 py-2 text-sm flex flex-col gap-2 bg-surface">
         <div className="flex border-b border-white/5 items-center justify-between pb-1">
-          <div className="font-semibold font-mono">{review.title}</div>
+          <div className={`
+            ${!review.title ? 'text-gray-500' : 'font-semibold font-mono'}
+          `}>
+            {review.title ? review.title : "No Title"}
+          </div>
           <div className="flex gap-2">
-            <p className="font-semibold">{review.rating}</p>
+            <p className="font-semibold font-mono">{review.rating}</p>
             <StarRatingVisual rating={Number(review.rating) ?? 0}/>
           </div>
         </div>
-        <p>{review.review}</p>          
+        <p
+          className={`
+            ${!review.review && 'text-gray-500'}
+          `}  
+        >
+          {review.review ? review.review : 'No Description'}
+        </p>          
         <p className="text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
       </div>
 

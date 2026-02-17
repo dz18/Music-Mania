@@ -2,11 +2,8 @@
 
 import About from "@/app/components/pages/artist/About"
 import Reviews from "@/app/components/reviews/Reviews"
-import ReviewBar from "@/app/components/reviews/ReviewBar"
-import type { Artist } from "@/app/lib/types/artist"
 import { useSession } from "next-auth/react"
-import { use, useEffect, useState } from "react"
-import Statistics from "@/app/components/ui/statistics"
+import { useState } from "react"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
@@ -14,7 +11,6 @@ import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchArtist from "@/app/hooks/musicbrainz/useFetchArtist"
 import Pagination from "@/app/components/ui/Pagination"
 import StarStatistics from "../../ui/starStatistics"
-import UserReviewSection from "../../reviews/UserReviewPanel"
 import UserReviewPanel from "../../reviews/UserReviewPanel"
 import { ReviewTypes } from "@/app/lib/types/api"
 import YourReviewSection from "../../reviews/YourReview"
@@ -27,10 +23,10 @@ export default function ArtistPage ({
   star: number | null
 }) {
 
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const { 
     artist, reviewsload, artistLoad, fetchData, 
-    error, data, setData
+    error, data, setData, starStats, setStarStats
   } = useFetchArtist(artistId, star)
 
   const [review, setReview] = useState<ReviewTypes | null>(null)
@@ -94,9 +90,9 @@ export default function ArtistPage ({
         }
       </div>
 
-      {data?.data.starStats &&
+      {starStats &&
         <div className={`flex gap-2 items-stretch`}>
-          <StarStatistics stats={data.data.starStats}/>
+          <StarStatistics stats={starStats}/>
           {status === 'authenticated' &&
             <UserReviewPanel 
               item={artist} 
@@ -105,6 +101,7 @@ export default function ArtistPage ({
               review={review}
               setReview={setReview}
               setData={setData}
+              setStarStats={setStarStats}
             />
           }
         </div>
@@ -119,6 +116,7 @@ export default function ArtistPage ({
       {reviewsload &&
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
+
       {data &&
         <>
           <Reviews data={data}/>

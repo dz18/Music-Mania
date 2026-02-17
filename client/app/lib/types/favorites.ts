@@ -1,18 +1,18 @@
 export interface FavoritesResponse {
-    favArtists: FavArtist[]
-    favReleases: FavRelease[]
-    favSongs: FavSong[]
+    userLikedArtist: LikedArtist[]
+    userLikedRelease: LikedRelease[]
+    userLikedSong: LikedSong[]
     _count: {
-        favArtists: number
-        favReleases: number
-        favSongs: number
+        userLikedArtist: number
+        userLikedRelease: number
+        userLikedSong: number
     }
 }
 
-export type FavoriteTabs = {
+export type LikeTabs = {
   label: string
-  value: FavoriteTypes
+  value: LikeTypes
   count: number
 }[]
 
-export type FavoriteTypes = 'artists' | 'releases' | 'songs'
+export type LikeTypes = 'artists' | 'releases' | 'songs'

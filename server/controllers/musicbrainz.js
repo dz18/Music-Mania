@@ -1,7 +1,6 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
-const { formatArtistCredit } = require('./hooks/formatArtistCredit')
-const { formatTrack } = require('./hooks/formatTracks')
+const { formatMedia } = require('./hooks/formatMedia')
 const { scoreRelease } = require('./hooks/scoreRelease')
 
 const userAgent = process.env.USER_AGENT
@@ -434,6 +433,7 @@ const discography = async (req, res) => {
       limit: limit
     }
 
+    console.log(sorted)
     res.json(data)
 
   } catch (error) {
@@ -548,7 +548,15 @@ const discographySingles = async (req, res) => {
     console.log(response)
     res.json(response)
   } catch (error) {
-
+    if (error.cause && error.cause.code === 'ECONNRESET') {
+      console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
+      errorApiCall(req, error.message)
+      return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
+    }
+    
+    console.error('[UNEXPECTED ERROR] Failed fetching release:', error)
+    errorApiCall(req, error.message)
+    return res.status(500).json({ error: 'Failed to fetch release data.' })
   }
 }
 
@@ -574,7 +582,7 @@ const getRelease = async (req, res) => {
     const albumData = albumsJSON.releases
 
     const formatPriority = ["CD", "Digital Media"]
-    const disambiguationPriority = ["clean", "explicit", ""]
+    const disambiguationPriority = ["clean", "", "explicit"]
     const filteredAlbums = albumData.filter(a => a.title === a['release-group'].title)
     const sorted = [...filteredAlbums].sort((a, b) => {
       
@@ -595,7 +603,6 @@ const getRelease = async (req, res) => {
       return aLength - bLength
     })
     .map(album => {
-      const media = album.media[0]
 
       return {
         releaseId: album.id,
@@ -604,9 +611,8 @@ const getRelease = async (req, res) => {
         coverArtArchive: album['cover-art-archive'].artwork,
         disambiguation: album.disambiguation,
         date: album['release-group']['first-release-date'],
-        tracks: media.tracks.map(t => formatTrack(t)),
-        format: media.format,
-        trackCount: media['track-count'],
+        media: album.media.map(m => formatMedia(m)),
+        trackCount: album.media.reduce((sum, m) => sum + (m['track-count'] ?? 0), 0),
         artistCredit: album['artist-credit'],
         language: album['text-representation'].language,
         type: album['release-group']['secondary-types'].length !== 0 ? album['release-group']['secondary-types'] : [album['release-group']['primary-type']],
@@ -616,20 +622,39 @@ const getRelease = async (req, res) => {
 
     const first = sorted[0]
 
-    const stats = await Promise.all(first.tracks.map(t => (
-      prisma.userSongReviews.aggregate({
-        where: { songId: t.recording.workId },
-        _count: { rating: true },
-        _avg: { rating: true }
-      })
-    )))
-
-    first.tracks = first.tracks.map((t, i) => ({...t, recording: {
-      ...t.recording, 
-      totalReviews: stats[i]._count.rating,
-      avgRating: stats[i]._count.rating > 0 ? Number(stats[i]._avg.rating).toFixed(2) : null
-    }}))
+    const stats = await Promise.all(
+      first.media.map(m =>
+        Promise.all(
+          m.tracks.map(t =>
+            prisma.userSongReviews.aggregate({
+              where: { songId: t.recording.workId },
+              _count: { rating: true },
+              _avg: { rating: true }
+            })
+          )
+        )
+      )
+    )
     
+    first.media = first.media.map((m, discIndex) => ({
+      ...m,
+      tracks: m.tracks.map((t, trackIndex) => {
+        const stat = stats[discIndex][trackIndex]
+
+        return {
+          ...t,
+          recording: {
+            ...t.recording,
+            totalReviews: stat._count.rating,
+            avgRating:
+              stat._count.rating > 0
+                ? Number(stat._avg.rating).toFixed(2)
+                : null
+          }
+        }
+      })
+    }))
+
     const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${releaseId}`)
 
     let coverArt = null
@@ -737,7 +762,15 @@ const getSong = async (req, res) => {
       coverArtUrl
     })
   } catch (error) {
-    errorApiCall(req, error)
+    if (error.cause && error.cause.code === 'ECONNRESET') {
+      console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
+      errorApiCall(req, error.message)
+      return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
+    }
+    
+    console.error('[UNEXPECTED ERROR] Failed fetching release:', error)
+    errorApiCall(req, error.message)
+    return res.status(500).json({ error: 'Failed to fetch release data.' })
   }
 }
 

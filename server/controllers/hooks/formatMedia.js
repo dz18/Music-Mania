@@ -7,7 +7,7 @@ function findWorkId (relation, fallback) {
   else return fallback
 }
 
-export function formatTrack (track) {
+function formatTrack (track) {
 
   const workId = findWorkId(track.recording.relations, track.recording.id)
 
@@ -25,3 +25,14 @@ export function formatTrack (track) {
     }
   }
 }
+
+function formatMedia(media) {
+  return {
+    position: media.position,
+    title: media.title,
+    trackCount: media['track-count'],
+    tracks: media.tracks.map(t => formatTrack(t))
+  }
+}
+
+module.exports = { formatMedia }

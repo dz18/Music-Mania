@@ -1,29 +1,40 @@
-import { ImageOff } from "lucide-react"
+import { ImageOff, Star, TriangleAlert } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 
-export default function FavoriteSongs ({
-  favs
+export default function LikedReleases ({
+  likes
 } : {
-  favs: FavSong[] | null
+  likes: LikedRelease[] | null
 }) {
 
   const router = useRouter()
 
+  if (likes && likes?.length <= 0) {
+    return (
+      <p
+        className="text-sm font-mono tracking-wide text-gray-500 flex gap-2 items-center px-4 py-2"
+      >
+        <TriangleAlert className="" size={18}/> No Favorite Artists Yet
+      </p> 
+    )
+  }
+
   return (
-    <ul className="list-none">
+    <ul className="list-none px-4 py-2">
       <li className="flex items-center gap-2 flex-wrap">
-        {favs?.map((f, i) => (
+        {likes?.map((f, i) => (
           <button 
             key={i} 
             className="flex items-center gap-2 px-2 py-2 border bg-surface-elevated border-white/5 rounded interactive-button interactive-dark"
-            onClick={() => router.push(`/release/${f.songId}`)}
+            onClick={() => router.push(`/release/${f.releaseId}`)}
           >
             <div
               className="w-20 h-20 overflow-hidden bg-surface flex items-center justify-center"
             >
-              {f.song.coverArt ?
+              {f.release.coverArt ?
                 <img 
-                  src={f.song.coverArt} 
+                  src={f.release.coverArt} 
                   className="w-full h-full object-cover"
                 />
               :
@@ -36,10 +47,10 @@ export default function FavoriteSongs ({
               <p 
                 className="font-mono font-semibold text-sm tracking-wide"
               >
-                {f.song.title}
+                {f.release.title}
               </p>
               <div>
-                {f.song.artistCredit.map((ac, i) =>
+                {f.release.artistCredit.map((ac, i) =>
                   <p
                     key={i}
                     className="text-xs tracking-wide text-white/50"

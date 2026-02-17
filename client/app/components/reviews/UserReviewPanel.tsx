@@ -1,16 +1,14 @@
-import { CirclePlus, Ear, Headphones, Heart, MessageCircle, Tags, ThumbsUp } from "lucide-react";
+import { ArrowBigDown, ArrowBigUp, CirclePlus, MessageCircle, Tags, ThumbsUp } from "lucide-react";
 import StarRatingVisual from "../ui/StarVisual";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
-import { ApiPageResponse, MusicTypes, Release, ReviewResponse, ReviewTypes } from "@/app/lib/types/api";
-import { Song } from "@/app/lib/types/song";
-import { Artist } from "@/app/lib/types/artist";
+import { ApiPageResponse, MusicTypes, ReviewResponse, ReviewTypes } from "@/app/lib/types/api";
 import LikeButton from "./LikeButton";
 import ReviewModal from "./ReviewModal";
  
 export default function UserReviewPanel ({
-  itemId, item, type, review, setReview, coverArtUrl, setData
+  itemId, item, type, review, setReview, coverArtUrl, setData, setStarStats
 } : {
   itemId: string
   item: MusicTypes | null
@@ -19,12 +17,12 @@ export default function UserReviewPanel ({
   setReview: Dispatch<SetStateAction<ReviewTypes | null>>
   coverArtUrl?: string,
   setData: Dispatch<SetStateAction<ApiPageResponse<ReviewResponse> | null>>
+  setStarStats: Dispatch<SetStateAction<StarCount[]>>
 }) {
 
   const { data: session, status } = useSession()
 
   const [like, setLike] = useState(null)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [openReview, setOpenReview] = useState(false)
 
@@ -82,20 +80,6 @@ export default function UserReviewPanel ({
             <StarRatingVisual rating={Number(review?.rating) ?? 0}/>
           </div>
 
-          <div className="flex justify-between w-full gap-2">
-            <div className="flex flex-col items-center w-full text-gray-400 gap-1">
-              <ThumbsUp size={18}/>
-              <span className="">124</span>
-            </div>
-            <div className="flex flex-col items-center w-full text-gray-400 gap-1">
-              <MessageCircle size={18}/>
-              <span className="">30</span>
-            </div>
-            <div className="flex flex-col items-center w-full text-gray-400 gap-1">
-              <Tags size={18}/>
-              <span className="">2</span>
-            </div>
-          </div>
 
           <div className="flex gap-2 items-center">
             <span className="text-gray-500 text-xs ">
@@ -158,6 +142,7 @@ export default function UserReviewPanel ({
           review={review}
           coverArtUrl={coverArtUrl}
           setData={setData}
+          setStarStats={setStarStats}
         />
       }
 

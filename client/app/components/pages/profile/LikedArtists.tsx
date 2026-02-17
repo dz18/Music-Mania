@@ -1,16 +1,16 @@
 import { Star, TriangleAlert } from "lucide-react"
 import Link from "next/link"
 
-export default function FavoriteArtists ({
-  favs
+export default function LikedArtists ({
+  likes
 } : {
-  favs: FavArtist[] | null
+  likes: LikedArtist[] | null
 }) {
 
-  if (favs && favs?.length <= 0) {
+  if (likes && likes?.length <= 0) {
     return (
       <p
-        className="text-sm font-mono tracking-wide text-gray-500 flex gap-2 items-center"
+        className="text-sm font-mono tracking-wide text-gray-500 flex gap-2 items-center px-4 py-2"
       >
         <TriangleAlert className="" size={18}/> No Favorite Artists Yet
       </p> 
@@ -18,9 +18,9 @@ export default function FavoriteArtists ({
   }
 
   return (
-    <ul className="list-none">
+    <ul className="list-none px-4 py-2">
       <li className="flex items-center gap-2 flex-wrap">
-        {favs?.map((f, i) => (
+        {likes?.map((f, i) => (
           <span key={i} className="flex items-center gap-2">
             <Link 
               href={`/artist/${f.artistId}`}
@@ -29,7 +29,7 @@ export default function FavoriteArtists ({
               {f.artist.name}
             </Link>
 
-            {i < favs.length - 1 && (
+            {i < likes.length - 1 && (
               <Star size={10} className="opacity-40" />
             )}
           </span>

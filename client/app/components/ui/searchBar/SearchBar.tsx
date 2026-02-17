@@ -54,7 +54,7 @@ export default function SearchBar () {
             />
           </button>
           <input 
-            className="block w-full p-1 ps-8 text-sm border-1 rounded-xl hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] focus:shadow-[0_0_15px_rgba(0,255,255,0.8)] focus:outline-none transition-shadow"
+            className="block w-full p-1 ps-8 text-sm border-1 rounded-xl input-glow"
             placeholder="Search"
             type="search" 
             value={query}

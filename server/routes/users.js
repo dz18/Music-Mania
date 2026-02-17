@@ -8,7 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() })
 
 router.get('/total', userController.getUsers)
 router.get('/find', verifyUser, userController.findUserById)
-router.get('/favorites', userController.getFavorites)
+router.get('/likes', userController.getLikes)
 router.get('/query', userController.query)
 router.get('/profile', userController.profile)
 router.get('/edit', verifyUser, userController.editInfo) // Edit
@@ -17,7 +17,7 @@ router.get('/countFollow', userController.countFollow)
 router.get('/allFollowers', userController.allFollowers)
 
 // Get the user info for the review panel component (review & like status)
-router.get('/review', verifyUser, userController.reviewPanel) 
+router.get('/review', verifyUser, userController.reviewPanel)
 
 router.post('/follow', userController.follow)
 router.post('/like', verifyUser, userController.like)

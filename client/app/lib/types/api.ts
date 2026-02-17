@@ -22,6 +22,13 @@ export interface ReleaseGroup {
   workId?: string
 }
 
+export interface Media {
+  tracks: Track[]
+  title: string,
+  trackCount: number
+  position: number
+}
+
 export interface Release {
   releaseId: string
   id: string
@@ -29,8 +36,7 @@ export interface Release {
   coverArtArchive: Object
   disambiguation: string
   date: string
-  tracks: Track[]
-  format: string
+  media: Media[]
   trackCount: number
   artistCredit: ArtistCredit[]
   language: string
