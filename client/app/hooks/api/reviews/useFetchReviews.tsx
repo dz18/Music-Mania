@@ -58,7 +58,7 @@ export default function useFetchUserReview (
         setReview(review.data.review)
         setCurrentStatus(review.data.status.charAt(0) + review.data.status.slice(1).toLowerCase())
       } catch (error) {
-        console.log(error)
+        console.error(error)
       } finally {
         setFormLoading(false)
       }
@@ -68,7 +68,6 @@ export default function useFetchUserReview (
 
   const updateReviews = (res: any, status?: 'PUBLISHED' | 'DRAFT' | 'DELETED') => {
 
-    console.log(res.data)
     setData(prev => {
       if (status === 'PUBLISHED') {
         if (!prev) {
@@ -142,14 +141,14 @@ export default function useFetchUserReview (
         artistCredit: 'artistCredit' in item ? item.artistCredit.map(ac => ({joinphrase: ac.joinphrase, name: ac.name})) : null,
         coverArt: coverArtUrl,
       }
-      console.log(body)
+
       const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/`, body)
 
       updateReviews(res, action)
       
       setOpen(false)
     } catch (error) {
-      console.log(error)
+      console.error(error)
     } finally {
       setActionLoading(false)
     }
@@ -168,7 +167,6 @@ export default function useFetchUserReview (
           type: type
         }
       })
-      console.log(res.data)
 
       updateReviews(res, 'DELETED')
       setOpen(false)

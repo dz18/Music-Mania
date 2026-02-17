@@ -81,20 +81,30 @@ export default function Followings ({
               </div>
 
               {session &&
-                session?.user.id !== f.followingId && 
-                  <div className="flex items-center">
-                    <button 
-                      className={`
-                        ${results.data.isFollowingMap[f.followingId] ? 
-                          'text-white hover:bg-black/20 active:bg-black/40 border' : 
-                          'text-black bg-white hover:bg-white/80 active:bg-white/60'
-                        }
-                        px-2 py-1 rounded w-24 font-mono text-sm cursor-pointer 
-                      `}
-                      onClick={() => results.data.isFollowingMap[f.followingId] ? unfollow(f.followingId) : follow(f.followingId)}
-                    >
-                      {results.data.isFollowingMap[f.followingId] ? 'unfollow' : 'follow'}
-                    </button>
+                session?.user.id !== f.followingId &&
+                  <div className="flex items-center font-mono text-sm">
+
+                    {results.data.isFollowingMap[f.followingId] ? (
+                      <button 
+                        className={`
+                          group border px-2 py-1 rounded interactive-button w-25 
+                          hover:bg-red-950 hover:border-red-500
+                        `}
+                        onClick={() => unfollow(f.followingId)}
+                      >
+                        <span className="block group-hover:hidden">Following</span>
+                        <span className="hidden group-hover:block group-hover:text-red-500">Unfollow</span>
+                      </button>
+                    ) : (
+                      <button 
+                        className={`
+                          group border px-2 py-1 rounded interactive-button w-25 bg-white text-black interactive-light
+                        `}
+                        onClick={() => follow(f.followingId)}
+                      >
+                        <span className="block">Follow</span>
+                      </button>
+                    )}
                   </div>
               }
             </div>

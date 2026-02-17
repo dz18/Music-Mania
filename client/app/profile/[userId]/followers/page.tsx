@@ -82,19 +82,28 @@ export default function Followers ({
 
                 {session &&
                   session?.user.id !== f.followerId &&
-                    <div className="flex items-center">
-                      <button 
-                        className={`
-                          ${results.data.isFollowingMap[f.followerId] ? 
-                            'text-white hover:bg-black/20 active:bg-black/40 border' : 
-                            'text-black bg-white hover:bg-white/80 active:bg-white/60'
-                          }
-                          px-2 py-1 rounded w-24 font-mono text-sm cursor-pointer 
-                        `}
-                        onClick={() => results.data.isFollowingMap[f.followerId] ? unfollow(f.followerId) : follow(f.followerId)}
-                      >
-                        {results.data.isFollowingMap[f.followerId] ? 'unfollow' : 'follow'}
-                      </button>
+                    <div className="flex items-center font-mono text-sm">
+
+                      {results.data.isFollowingMap[f.followerId] ?
+                        <button 
+                          className={`
+                            group border px-2 py-1 rounded interactive-button w-25 hover:bg-red-950 hover:border-red-500
+                          `}
+                          onClick={() => unfollow(f.followerId)}
+                        >
+                          <span className="block group-hover:hidden ">Following</span>
+                          <span className="hidden group-hover:block group-hover:text-red-500">Unfollow</span>
+                        </button>
+                      :
+                        <button 
+                          className={`
+                            group border px-2 py-1 rounded interactive-button w-25 bg-white text-black interactive-light
+                          `}
+                          onClick={() => follow(f.followerId)}
+                        >
+                          <span className="block">Follow</span>
+                        </button>
+                      }
                     </div>
                 }
                 

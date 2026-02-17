@@ -39,7 +39,6 @@ export default function ({
         })
         setLike(null)
       } else {  
-        console.log(item)
         const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users/like`, { 
           itemId, 
           type, 

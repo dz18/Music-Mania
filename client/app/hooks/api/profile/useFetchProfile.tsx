@@ -28,6 +28,7 @@ export default function useFetchProfile (id: string, star: number | null) {
 	const [tabError, setTabError] = useState<string | null>(null)
 	const [followLoad, setFollowLoad] = useState(false)
 	const [starStats, setStarStats] = useState<StarCount[]>([])
+	
 	const fetchProfilePage = useCallback( async () => {
 		if (!id) return
 		if (status === 'loading') return
@@ -41,7 +42,6 @@ export default function useFetchProfile (id: string, star: number | null) {
 				params : { profileId: id, userId: session?.user.id}
 			})
 
-			console.log('profile:',res.data)
 			setProfile(res.data)
 			setStarStats(res.data.starStats)
 			fetchTab(1)
@@ -54,54 +54,58 @@ export default function useFetchProfile (id: string, star: number | null) {
 		}
 	}, [id, session?.user.id, status])
 
-const fetchTab = useCallback(async (page: number) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+	const fetchTab = useCallback(async (page: number) => {
+		const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
-  let url: string | null = null
-  let setter: ((data: any) => void) | null = null
+		let url: string | null = null
+		let setter: ((data: any) => void) | null = null
 
-  if (selected === "artistReviews") {
-    url = `${apiUrl}/api/reviews/user/artists`
-    setter = setArtistReviews
-  } else if (selected === "releaseReviews") {
-    url = `${apiUrl}/api/reviews/user/releases`
-    setter = setReleaseReviews
-  } else if (selected === "songReviews") {
-    url = `${apiUrl}/api/reviews/user/songs`
-    setter = setSongReviews
-  } else {
-		  if (profile?.starStats) {
-				setStarStats(profile.starStats)
-			}
-	}
+		if (selected === "artistReviews") {
+			url = `${apiUrl}/api/reviews/user/artists`
+			setter = setArtistReviews
+		} else if (selected === "releaseReviews") {
+			url = `${apiUrl}/api/reviews/user/releases`
+			setter = setReleaseReviews
+		} else if (selected === "songReviews") {
+			url = `${apiUrl}/api/reviews/user/songs`
+			setter = setSongReviews
+		} else {
+				if (profile?.starStats) {
+					setStarStats(profile.starStats)
+				}
+		}
 
-  if (!url || !setter) return
+		if (!url || !setter) return
 
-  const params = { userId: id, page, star }
+		const params = { userId: id, page, star }
 
-  try {
-    setTabLoad(true)
-    const res = await axios.get(url, { params })
-    setter(res.data)
-		setStarStats(res.data.data.starStats)
-  } catch (error: any) {
-    setTabError(error.response?.data?.error || error.message)
-  } finally {
-    setTabLoad(false)
-  }
-}, [selected, id, star])
+		try {
+			setTabLoad(true)
+			const res = await axios.get(url, { params })
+			setter(res.data)
+			setStarStats(res.data.data.starStats)
+		} catch (error: any) {
+			setTabError(error.response?.data?.error || error.message)
+		} finally {
+			setTabLoad(false)
+		}
+	}, [selected, id, star])
 
   const follow = useCallback(async () => {
     try {
 			if (!id) return
-			if (status === 'unauthenticated') return
-			if (status === 'loading') return
+			if (status !== 'authenticated') return
+			if (id === session.user.id) return
 
       setFollowLoad(true)
 
       const following = await axios.post<Following>(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
-        userId: session?.user.id, profileId: id
-      })
+        profileId: id
+      }, {
+				headers: {
+					Authorization: `Bearer ${session.user.token}`
+				}
+			})
 
 			setProfile(prev => prev ? 
 				{
@@ -123,12 +127,14 @@ const fetchTab = useCallback(async (page: number) => {
   const unfollow = useCallback(async () => {
     try {
 			if (!id) return
-			if (status === 'unauthenticated') return
-			if (status === 'loading') return
+			if (status !== 'authenticated') return
 
       setFollowLoad(true)
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/users/follow`, {
-        data: { userId: session?.user.id, profileId: id }
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/users/unfollow`, {
+        data: { profileId: id },
+				headers: {
+					Authorization: `Bearer ${session?.user.token}`
+				}
       })
 
 			setProfile(prev => prev ?

@@ -65,9 +65,7 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
     
       if (error.response) {
         const {status, data} = error.response
-        console.log(data)
         if (status === 409) {
-          console.log(data.error)
           if (data.error.email) {
             setErrors(prev => ({...prev, email: data.error.email}))
           } 

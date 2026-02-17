@@ -43,7 +43,6 @@ export default function useSearchQuery(query: string, selectedTab: string) {
       }
 
       const data = res.data
-      console.log(data)
       setData(data)
       setShowDropdown(true)
     } catch (error) {

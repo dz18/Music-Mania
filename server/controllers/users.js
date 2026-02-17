@@ -416,7 +416,6 @@ const isFollowing = async (req, res) => {
       }
     })
 
-
     successApiCall(req)
     res.json(isFollowing) 
   } catch (error) {
@@ -426,14 +425,19 @@ const isFollowing = async (req, res) => {
 
 // Follow a user
 const follow = async (req, res) => {
-  const { userId, profileId } = req.body
+  const { profileId } = req.body
 
   logApiCall(req)
+
+  if (!req.user) {
+    errorApiCall(req, 'Unauthorized')
+    return res.status(403).json({error: 'Unauthorized'})
+  }
   
   try {
     const follow = await prisma.follow.create({
       data: {
-        followerId: userId,
+        followerId: req.user.id,
         followingId: profileId
       }
     })
@@ -448,15 +452,19 @@ const follow = async (req, res) => {
 
 // Unfollow a user
 const unfollow = async (req, res) => {
-  const { userId, profileId } = req.body
+  const { profileId } = req.body
 
   logApiCall(req)
   
+  if (!req.user) {
+    return res.status(403).json({error: 'Unauthorized'})
+  }
+
   try {
     await prisma.follow.delete({
       where: {
         followerId_followingId: { 
-          followerId: userId, 
+          followerId: req.user.id, 
           followingId: profileId 
         }
       }

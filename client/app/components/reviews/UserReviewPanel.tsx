@@ -40,7 +40,6 @@ export default function UserReviewPanel ({
           }
         })
 
-        console.log(res.data)
         setReview(res.data.review)
         setLike(res.data.like)
 

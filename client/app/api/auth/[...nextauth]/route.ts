@@ -89,7 +89,7 @@ const handler = NextAuth({
           session.user.createdAt = data.createdAt
           session.user.token = token.raw
 
-         console.log('session:', session)
+          console.log('session:', session)
           return session
         }
       } catch (e) {

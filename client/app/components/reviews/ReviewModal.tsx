@@ -188,7 +188,6 @@ export default function ReviewModal ({
         }
       })
 
-      console.log(res.data)
       setReview(null)
       setStarStats(res.data.starStats)
       setData(prev => {

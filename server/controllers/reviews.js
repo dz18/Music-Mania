@@ -230,9 +230,14 @@ const publishOrDraft = async (req, res) => {
   
   logApiCall(req)
 
+  if (!req.user) {
+    errorApiCall(req, 'Unauthorized')
+    return res.status(401).json({error: 'Unauthorized'})
+  }
+
   if (status !== 'PUBLISHED' && status !== 'DRAFT') {
     errorApiCall(req, 'Invalid Status')
-    return
+    return res.status(400).json({error: 'Invalid Status'})
   }
 
   try {
@@ -285,7 +290,7 @@ const publishOrDraft = async (req, res) => {
         where: { artistId: itemId, status: 'PUBLISHED' },
         _avg: { rating: true },
         _count: true
-      }) 
+      })
 
       stats = await prisma.userArtistReviews.groupBy({
         by: ['rating'],
