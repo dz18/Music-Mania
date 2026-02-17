@@ -8,13 +8,6 @@ import Link from "next/link"
 
 export default function Footer () {
 
-  const [email, setEmail] = useState('')
-
-  const subscribeToNewsletter = (e : FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    alert(`${email} subscribed to the newsletter`)
-  }
-
   return (
     <div className=" py-4 bg-[#1a1a1a]"> 
       <Container>
