@@ -1,56 +1,43 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging');
-const { getSignedURL } = require('./AWS/actions');
+const { getSignedURL, deleteObject } = require('./AWS/actions');
 const { calcStarStats } = require('./hooks/calcStarStats')
-const jwt = require("jsonwebtoken");
-
 
 // Gets all users
 const getUsers = async (req, res) => {
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
     const users = await prisma.user.count()
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json(users)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({error: 'Counting users failed.'})
   }
 }
 
 // Find a user
 const findUserById = async (req, res) => {
-  const { userId } = req.query
-
-  if (!userId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing userId parameter')
-    return res.status(400).json({error: 'Missing userId parameter.'})
-  }
 
   try {
     
-    logApiCall(req.method, req.originalUrl)
+    logApiCall(req)
 
     const user = await prisma.user.findUnique({
       where: { 
-        id: userId
-      },
-      include: {
-        favArtists: true,
-        favReleases: true,
-        favSongs: true
+        id: req.user.id
       }
     })
 
     if (!user) {
-      errorApiCall(req.method, req.originalUrl, 'User does not exist')
+      errorApiCall(req, 'User does not exist')
       return res.status(400).json({error: 'User does not exist.'})
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json({
       username: user.username,
       email: user.email,
@@ -63,58 +50,91 @@ const findUserById = async (req, res) => {
       favReleases: user.favReleases
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({error: 'Finding user failed.'})
   }
 }
 
 // Get all favorites by user
-const getFavorites = async (res, req) => {
-  const { userId } = req.query
-
-  logApiCall(req.method, req.originalUrl)
-
-  if (!userId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing Id')
-    return
-  }
-
+const getLikes = async (req, res) => {
   try {
-    const favorites = prisma.user.findUnique({
-      where: {id : userId},
-      select: {
-        favArtists: true,
-        favRecordings: true,
-        favReleases: true
-      }
-    })
+    logApiCall(req)
+    const { id, active } = req.query
 
-    // console.log(favorites)
-    successApiCall(req.method, req.originalUrl)
-    res.json(favorites)
+    if (!id) {
+      errorApiCall(req, 'Missing Id')
+      return
+    }
+
+    const [countArtists, countReleases, countSongs] = await Promise.all([
+      prisma.userLikedArtist.count({ where: { userId: id } }),
+      prisma.userLikedRelease.count({ where: { userId: id } }),
+      prisma.userLikedSong.count({ where: { userId: id } }),
+    ])
+
+    const liked = {
+      _count: {
+        userLikedArtist: countArtists,
+        userLikedRelease: countReleases,
+        userLikedSong: countSongs,
+      },
+    }
+
+    if (active === 'artists') {
+      liked.userLikedArtist = await prisma.userLikedArtist.findMany({
+        where: { userId: id },
+        include: { artist: true },
+      })
+    }
+
+    if (active === 'releases') {
+      liked.userLikedRelease = await prisma.userLikedRelease.findMany({
+        where: { userId: id },
+        include: { release: true },
+      })
+    }
+
+    if (active === 'songs') {
+      liked.userLikedSong = await prisma.userLikedSong.findMany({
+        where: { userId: id },
+        include: { song: true },
+      })
+    }
+
+    console.log(liked)
+
+    successApiCall(req)
+    res.json(liked)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
 // Add or remove a favorite
 const favorite = async (req, res) => {
-  const { id, name, title, artistCredit, since, userId, type, action, coverArt } = req.body
+  const { 
+    id, name, title, 
+    artistCredit, since, 
+    userId, type, action, 
+    coverArt 
+  } = req.body
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
+
+  console.log(coverArt)
 
   if (type !== 'release' && type !== 'artist' && type !== 'song') {
-    errorApiCall(req.method, req.originalUrl, 'Invalid type')
+    errorApiCall(req, 'Invalid type')
     return res.status(400).json({error: 'Invalid type'})
   }
 
   if (action !== 'add' && action !== 'remove') {
-    errorApiCall(req.method, req.originalUrl, 'Invalid action')
+    errorApiCall(req, 'Invalid action')
     return res.status(400).json({error: 'Invalid action'})
   }
 
   if (!id || !userId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing Id')
+    errorApiCall(req, 'Missing Id')
     return res.status(400).json({error: 'Missing id'})
   }
 
@@ -136,13 +156,13 @@ const favorite = async (req, res) => {
     })
 
     if (user[field].includes(id) && type === 'add') {
-      errorApiCall(req.method, req.originalUrl, `${field} already includes id`)
+      errorApiCall(req, `${field} already includes id`)
       return res.status(400).json({error : 'Artist already set as favorite'})
     }
 
     
     if (!user[field].includes(id) && type === 'remove') {
-      errorApiCall(req.method, req.originalUrl, `${field} does not include the id`)
+      errorApiCall(req, `${field} does not include the id`)
       return res.status(400).json({error : 'Artist already set as favorite'})
     }
 
@@ -202,10 +222,10 @@ const favorite = async (req, res) => {
       }
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json({message: `Artist ${action}ed to favorites`})
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
   
 }
@@ -217,10 +237,10 @@ const query = async (req, res) => {
 
   limit = 50
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (q.length === 0) {
-    errorApiCall(req.method, req.originalUrl, 'Query term length 0')
+    errorApiCall(req, 'Query term length 0')
     return res.status(400).json({error: 'Query term length 0'})
   }
 
@@ -234,7 +254,6 @@ const query = async (req, res) => {
         }
       },
       select: {
-        avatar: true,
         username: true,
         id: true,
         createdAt: true
@@ -257,7 +276,7 @@ const query = async (req, res) => {
       suggestions: query
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json({
       data: data,
       count: count._count,
@@ -267,7 +286,7 @@ const query = async (req, res) => {
     })
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
@@ -275,7 +294,7 @@ const query = async (req, res) => {
 const profile = async (req, res) => {
   const { profileId, userId } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
   try {
 
   
@@ -283,35 +302,41 @@ const profile = async (req, res) => {
       prisma.user.findUnique({
         where: { id: profileId },
         include: {
-          favArtists: { include: { artist: true } },
-          favReleases: { include: { release: true } },
-          favSongs: { include: { song: true } },
+          likedArtists: { include: { artist: true } },
+          likedReleases: { include: { release: true } },
+          likedSongs: { include: { song: true } },
           _count: {
             select: {
-              artistReviews: true,
-              releaseReviews: true,
-              songReviews: true,
+              artistReviews: {
+                where: { status: 'PUBLISHED' }
+              },
+              releaseReviews:  {
+                where: { status: 'PUBLISHED' }
+              },
+              songReviews:  {
+                where: { status: 'PUBLISHED' }
+              },
               followers: true,
               following: true
             }
           }
         },
-        omit: { password: true, email: true, phoneNumber: true }
+        omit: { password: true, email: true }
       }),
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: profileId }
+        where: { userId: profileId, status: 'PUBLISHED' }
       }),
       prisma.userReleaseReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: profileId }
+        where: { userId: profileId, status: 'PUBLISHED' }
       }),
       prisma.userSongReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: profileId }
+        where: { userId: profileId, status: 'PUBLISHED' }
       })
     ]
 
@@ -340,7 +365,7 @@ const profile = async (req, res) => {
     ] = results
 
     if (!userProfile) {
-      errorApiCall(req.method, req.originalUrl, 'User not found')
+      errorApiCall(req, 'User not found')
       return res.status(404).json({ error: 'User not found.' })
     }
 
@@ -369,17 +394,17 @@ const profile = async (req, res) => {
 
     console.log(profile)
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json(profile)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
 const isFollowing = async (req, res) => {
   const { userId, profileId } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
     const isFollowing = await prisma.follow.findUnique({
@@ -392,10 +417,10 @@ const isFollowing = async (req, res) => {
     })
 
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json(isFollowing) 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
@@ -403,7 +428,7 @@ const isFollowing = async (req, res) => {
 const follow = async (req, res) => {
   const { userId, profileId } = req.body
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
   
   try {
     const follow = await prisma.follow.create({
@@ -413,10 +438,10 @@ const follow = async (req, res) => {
       }
     })
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json(follow)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 
 }
@@ -425,7 +450,7 @@ const follow = async (req, res) => {
 const unfollow = async (req, res) => {
   const { userId, profileId } = req.body
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
   
   try {
     await prisma.follow.delete({
@@ -438,9 +463,9 @@ const unfollow = async (req, res) => {
     })
 
     res.json({ success: true })
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
@@ -448,7 +473,7 @@ const unfollow = async (req, res) => {
 const countFollow = async (req, res) => {
   const { profileId } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
   
   try {
     
@@ -463,10 +488,10 @@ const countFollow = async (req, res) => {
 
     const data = {followers, following}
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json(data)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 
 }
@@ -478,7 +503,7 @@ const allFollowers = async (req, res) => {
   const pageNumber = parseInt(page, 10) || 1
   const isFollowingMode = following === 'true'
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -504,12 +529,12 @@ const allFollowers = async (req, res) => {
       include: isFollowingMode
         ? {
             following: {
-              omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
+              omit: { password: true, email: true, aboutMe: true },
             },
           }
         : {
             follower: {
-              omit: { password: true, email: true, phoneNumber: true, aboutMe: true },
+              omit: { password: true, email: true, aboutMe: true },
             },
           },
       skip: (pageNumber - 1) * limit,
@@ -556,24 +581,24 @@ const allFollowers = async (req, res) => {
     //   username: profile.username
     // }
 
-    successApiCall(req.method, req.originalUrl);
+    successApiCall(req);
     res.json(data);
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error);
+    errorApiCall(req, error);
   }
 }
 
 const editInfo = async (req, res) => {
   const profileId = req.query.profileId ?? null
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (!profileId) {
-    errorApiCall(req.method, req.originalUrl, 'Missing Profile ID')
+    errorApiCall(req, 'Missing Profile ID')
     return res.status(400).json({ error: "Missing Profile ID" })
   }
 
   if (req.user.id !== profileId) {
-    errorApiCall(req.method, req.originalUrl, "Forbidden: cannot access another user's data")
+    errorApiCall(req, "Forbidden: cannot access another user's data")
     return res.status(403).json({ error: "Forbidden: cannot access another user's data" })
   }
 
@@ -586,7 +611,8 @@ const editInfo = async (req, res) => {
       where: {id: profileId}
     })
 
-    successApiCall(req.method, req.originalUrl)
+    console.log(user)
+    successApiCall(req)
     return res.json({
       avatar: '',
       id: user.id,
@@ -594,35 +620,34 @@ const editInfo = async (req, res) => {
       aboutMe: user.aboutMe ?? '',
       createdAt: user.createdAt,
       email: user.email,
-      phoneNumber: user.phoneNumber ?? '',
       age: user.age ?? '',
     })
 
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
 const edit = async (req, res) => {
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   const id = req.user.id
   const avatar = req.file
   const {
     username,
     aboutMe,
-    email,
-    phoneNumber,
     updatedAt
   } = req.body
   const age = req.body.age !== undefined && req.body.age !== '' 
     ? Number(req.body.age) : null
+  const resetAvatar = req.body.resetAvatar === 'true'
+
+  // Validation
+  let hasError = false
+  let errors = {}
   
   try {
 
-    // Validation
-    let hasError = false
-    let errors = {}
 
     const usernameDuplicate = await prisma.user.findFirst({
       where: { username: username, NOT: { id } }
@@ -632,32 +657,22 @@ const edit = async (req, res) => {
       errors.username = 'Username is already taken'
       hasError = true
     }
-
-    const emailDuplicate = await prisma.user.findFirst({
-      where: {email: email, NOT: { id }}
-    })
-    if (emailDuplicate){ 
-      errors.username = 'Email is already in use'
-      hasError = true
-    }
-    
-    const phoneNumberDuplicate = await prisma.user.findFirst({
-      where: {phoneNumber: phoneNumber, NOT: {id}}
-    })
-    if (phoneNumberDuplicate) { 
-      errors.phoneNumber = 'Phone Number is already in use'
-      hasError = true
-    }
-
-
+  
     // Create Avatar URL
     let url = null
+    console.log(resetAvatar)
     if (avatar) {
       const signedUrlRes = await getSignedURL(`avatars/${id}`, avatar.mimetype, avatar.size)
       if (signedUrlRes.success) {
         url = signedUrlRes.success.url
       } else {
         errors.avatar = signedUrlRes.error
+        hasError = true
+      }
+    } else if (resetAvatar) {
+      const deleteObjectRes = await deleteObject(`avatars/${id}`)
+      if (deleteObjectRes.error) {
+        errors.avatar = deleteObjectRes.error
         hasError = true
       }
     }
@@ -672,8 +687,6 @@ const edit = async (req, res) => {
       data: {
         username, 
         aboutMe,
-        email,
-        phoneNumber,
         age,
         updatedAt
       },
@@ -683,27 +696,198 @@ const edit = async (req, res) => {
         aboutMe: true, 
         createdAt: true,
         email: true, 
-        phoneNumber: true, 
         age: true,
       }
     })
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.status(200).json({
       message: "Profile Updated Successfully",
       data: {...data, age: String(data.age), avatar: ''},
       url: url
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
+    return res.status(409).json({errors})
   }
 
+}
+
+const reviewPanel = async (req, res) => {
+  try {
+    const {itemId, type} = req.query
+
+    if (!itemId || !type) {
+      errorApiCall(req, 'Missing parameters')
+      return res.status(500).json({error: 'Missing parameters'})
+    }
+
+    let review
+    let like
+    if (type === 'artist') {
+      review = await prisma.userArtistReviews.findUnique({
+        where: { userId_artistId: { userId: req.user.id, artistId: itemId }},
+        include: {
+          tags: {
+            include: {
+              tag: true
+            }
+          }
+        }
+      })
+      like = await prisma.userLikedArtist.findUnique({
+        where: { 
+          userId_artistId: { userId: req.user.id, artistId: itemId } 
+        }
+      })
+    } else if (type === 'release') {
+      review = await prisma.userReleaseReviews.findUnique({
+        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId }},
+      })
+      like = await prisma.userLikedRelease.findUnique({
+        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId}}
+      })
+
+    } else if (type === 'song') {
+      review = await prisma.userSongReviews.findUnique({
+        where: { userId_songId: { userId: req.user.id, songId: itemId }},
+      })
+      like = await prisma.userLikedSong.findUnique({
+        where: { userId_songId: { userId: req.user.id, songId: itemId }}
+      })
+    }
+    
+    let formattedReview = null;
+
+    if (review) {
+      const tags = review.tags?.map(t => t.tag.name) || [];
+      formattedReview = { ...review, tags };
+    }
+
+    successApiCall(req)
+    res.json({review: formattedReview, like})
+  } catch (error) {
+    errorApiCall(req, error)
+  }
+}
+
+const like = async (req, res) => {
+  try {
+    logApiCall(req);
+
+    const { 
+      itemId, type, name, 
+      title, artistCredit, coverArt 
+    } = req.body
+    const userId = req.user.id
+
+    if (!itemId || !type) {
+      errorApiCall(req, 'Missing itemId or type')
+      return res.status(400).json({ error: 'Missing itemId or type' })
+    }
+
+    let newLike
+
+    if (type === 'artist') {
+
+      await prisma.artist.upsert({
+        where: { id: itemId },
+        update: {},
+        create: {
+          id: itemId,
+          name: name,
+        }
+      })
+
+      newLike = await prisma.userLikedArtist.create({
+        data: {
+          userId,
+          artistId: itemId
+        }
+      })
+    } else if (type === 'release') {
+
+      await prisma.release.upsert({
+        where: { id: itemId },
+        update: {},
+        create: {
+          id: itemId,
+          title: title,
+          artistCredit: artistCredit,
+          coverArt: coverArt
+        }
+      })
+
+      newLike = await prisma.userLikedRelease.create({
+        data: {
+          userId,
+          releaseId: itemId
+        }
+      })
+    } else if (type === 'song') {
+
+      await prisma.song.upsert({
+        where: { id: itemId },
+        update: {},
+        create: {
+          id: itemId,
+          title: title,
+          artistCredit: artistCredit,
+          coverArt: coverArt
+        }
+      })
+
+      newLike = await prisma.userLikedSong.create({
+        data: {
+          userId,
+          songId: itemId
+        }
+      })
+    } else {
+      errorApiCall(req, 'Invalid type');
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+
+    successApiCall(req);
+    res.json({ success: true, like: newLike });
+  } catch (error) {
+    errorApiCall(req, error)
+  }
+}
+
+const deleteLike = async (req, res) => {
+  try {
+    logApiCall(req)
+    const { itemId, type } = req.body   
+
+    if (type === 'artist') {
+      await prisma.userLikedArtist.deleteMany({
+        where: { userId: req.user.id, artistId: itemId}
+      })
+    } else if (type === 'release') {
+      await prisma.userLikedRelease.deleteMany({
+        where: { userId: req.user.id, releaseId: itemId}
+      })
+    } else if (type === 'song') {
+      await prisma.userLikedSong.deleteMany({
+        where: { userId: req.user.id, songId: itemId}
+      })
+    } else {
+      errorApiCall(req, 'Invalid type')
+      return res.status()
+    }
+
+    successApiCall(req)
+    res.json({success: true})
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 module.exports = {
   getUsers,
   findUserById,
-  getFavorites,
+  getLikes,
   favorite,
   query,
   profile,
@@ -713,5 +897,8 @@ module.exports = {
   countFollow,
   allFollowers,
   editInfo,
-  edit
+  edit,
+  reviewPanel,
+  like,
+  deleteLike
 };

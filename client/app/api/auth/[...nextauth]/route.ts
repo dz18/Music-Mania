@@ -71,8 +71,8 @@ const handler = NextAuth({
       try {
         if (session.user && token.id) {
           const user = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/find`, {
-            params: {
-              userId : token.id
+            headers: {
+              Authorization: `Bearer ${token.raw}`
             }
           });
 
@@ -87,13 +87,9 @@ const handler = NextAuth({
           session.user.username = data.username
           session.user.avatar = data.avatar
           session.user.createdAt = data.createdAt
-          session.user.favArtists = data.favArtists ?? []
-          session.user.favSongs = data.favSongs ?? []
-          session.user.favReleases = data.favReleases ?? []
           session.user.token = token.raw
 
          console.log('session:', session)
-         console.log('data:', data)
           return session
         }
       } catch (e) {

@@ -5,6 +5,6 @@ type EditProfileForm = {
   aboutMe: string,
   createdAt: Date,
   email: string,
-  phoneNumber: string,
   age: string
+  resetAvatar: boolean
 }

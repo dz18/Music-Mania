@@ -1,13 +1,13 @@
 import { ApiPageResponse, ReviewResponse } from "@/app/lib/types/api"
 import { Song } from "@/app/lib/types/song"
 import axios, { AxiosError } from "axios"
-import { request } from "http"
 import { useCallback, useEffect, useState } from "react"
 
 export default function useFetchSong (songId: string, star: number | null) {
 
   const [song, setSong] = useState<Song | null>(null)
   const [songLoad, setSongLoad] = useState(false)
+  const [starStats, setStarStats] = useState<StarCount[]>([])
   
   const [coverArt, setCoverArt] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -19,34 +19,36 @@ export default function useFetchSong (songId: string, star: number | null) {
     try {
       setLoading(true)
 
-      const requests = []
-      if (!song) {
+      setData(null)
+      let currentSong = song
+
+      // Fetch only if not already loaded
+      if (!currentSong) {
         setSongLoad(true)
-        requests.push(      
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getSong`, {
-            params: { songId: songId }
-          })
+
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getSong`,
+          { params: { songId } }
         )
-      } 
 
-      requests.push(
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/song`,{
-          params: { id: songId, page: page, star: star }
-        })
-      )
-
-      const results = await Promise.all(requests)
-      let index = 0
-      if (!song) {
-        const songResults = results[index]
-        index++
-
-        setCoverArt(songResults.data.coverArtUrl)
-        setSong(songResults.data.song)
+        currentSong = data.song
+        setCoverArt(data.coverArtUrl)
+        setSong(data.song)
       }
 
-      const reviewResults = results[index]
-      setData(reviewResults.data)
+      const workId = currentSong &&
+        "workId" in currentSong
+          ? `${currentSong.workId}`
+          : `${songId}`
+
+      const { data: reviewRes } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/reviews/song`, {
+          params: { songId, page, star, workId },
+        }
+      )
+
+      setData(reviewRes)
+      setStarStats(reviewRes.data.starStats)
 
     } catch (error) {
       const err = error as AxiosError<{error: string}>
@@ -70,7 +72,9 @@ export default function useFetchSong (songId: string, star: number | null) {
     loading,
     setData,
     fetchData,
-    error
+    error,
+    starStats,
+    setStarStats
   }
 
 }

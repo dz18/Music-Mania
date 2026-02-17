@@ -1,4 +1,6 @@
+import { Artist } from "./artist"
 import { DiscographyResponse } from "./discography"
+import { Song } from "./song"
 
 export type ReviewResponse = {
   reviews: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
@@ -6,13 +8,10 @@ export type ReviewResponse = {
   starStats: StarCount[]
 }
 
-export type FavoritesResponse = {
-  favArtists: string[],
-  favRecordings: string[],
-  favReleases: string[]
-}
+export type MusicTypes = Artist | Release | Song
 
-export type ReleaseGroup = {
+export interface ReleaseGroup {
+  avgRating: null
   type: string,
   id: string,
   firstReleaseDate: string,
@@ -20,6 +19,14 @@ export type ReleaseGroup = {
   title: string,
   averageRating: number,
   totalReviews: number
+  workId?: string
+}
+
+export interface Media {
+  tracks: Track[]
+  title: string,
+  trackCount: number
+  position: number
 }
 
 export interface Release {
@@ -29,8 +36,7 @@ export interface Release {
   coverArtArchive: Object
   disambiguation: string
   date: string
-  tracks: Track[]
-  format: string
+  media: Media[]
   trackCount: number
   artistCredit: ArtistCredit[]
   language: string
@@ -47,7 +53,7 @@ export interface Track {
   length: number,
   numbers: string,
   position: number,
-  "artist-credit": ArtistCredit[],
+  artistCredit: ArtistCredit[],
   title: string
   recording: Recording,
   id: string
@@ -70,8 +76,11 @@ export interface Recording {
   length: number
   disambiguation?: string
   video: boolean
-  "artist-credit": ArtistCredit[]
+  artistCredit: ArtistCredit[]
   "first-release-date"?: string
+  workId?: string,
+  totalReviews?: number
+  avgRating?: number
 }
 
 export interface FollowersResponse {
@@ -106,6 +115,9 @@ export interface FollowersResponse {
 export interface ReviewRatingsResponse {
   reviews: UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
 }
+
+export type ReviewsTypes = UserArtistReview[] | UserReleaseReview[] | UserSongReview[]
+export type ReviewTypes = UserArtistReview | UserReleaseReview | UserSongReview
 
 export type SearchTypes = "artists" | "releases" | "users"
 

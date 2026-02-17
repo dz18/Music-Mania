@@ -1,7 +1,5 @@
 'use client'
 
-import Statistics from "@/app/components/ui/statistics";
-import ReviewBar from "@/app/components/reviews/ReviewBar";
 import Reviews from "@/app/components/reviews/Reviews";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
 import LoadingBox from "@/app/components/ui/loading/loadingBox";
@@ -12,6 +10,11 @@ import useFetchSong from "@/app/hooks/musicbrainz/useFetchSong";
 import { ImageOff, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import StarStatistics from "../../ui/starStatistics";
+import UserReviewPanel from "../../reviews/UserReviewPanel";
+import { useState } from "react";
+import { ReviewTypes } from "@/app/lib/types/api";
+import YourReviewSection from "../../reviews/YourReview";
 
 export default function SongPage ({
   songId,
@@ -21,7 +24,7 @@ export default function SongPage ({
   star: number | null
 }) {
 
-  const { data: session } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const {
     song,
@@ -31,8 +34,11 @@ export default function SongPage ({
     data,
     setData,
     fetchData,
-    error
+    error,
+    starStats,
+    setStarStats
   } = useFetchSong(songId, star)
+  const [review, setReview] = useState<ReviewTypes | null>(null)
 
   if (songLoad) {
     return (
@@ -84,7 +90,7 @@ export default function SongPage ({
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
 
       <div className="flex justify-between">
         <div className="flex-1 flex flex-col gap-4 font-mono text-sm mr-4">
@@ -161,25 +167,30 @@ export default function SongPage ({
 
       </div>
 
-      {data?.data.starStats &&
-        <div className={`
-          border-t pt-3 mt-2 border-gray-500
-          ${!session && 'pb-2 border-b mb-2'}
-        `}>
-          <Statistics stats={data.data.starStats}/>
+      {starStats &&
+        <div className={`flex gap-2 items-stretch`}>
+          <StarStatistics stats={starStats}/>
+          {status === 'authenticated' && song?.workId &&
+            <UserReviewPanel 
+              item={song} 
+              itemId={song.workId} 
+              type="song"
+              review={review}
+              setReview={setReview}
+              setData={setData}
+              coverArtUrl={coverArt}
+              setStarStats={setStarStats}
+            />
+          }
         </div>
       }
 
-      {session && data &&
-        <ReviewBar 
-          item={song} 
-          type="song" 
-          data={data} 
-          setData={setData} 
-          coverArtUrl={coverArt}
+      {status === 'authenticated' && review &&
+        <YourReviewSection
+          review={review}
         />
       }
-      
+
       {loading &&
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
@@ -187,7 +198,7 @@ export default function SongPage ({
       {data?.data.reviews &&
         <>
           <Reviews data={data}/>
-          <Pagination data={data} fetchData={fetchData}/>
+          {data.pages > 0 && <Pagination data={data} fetchData={fetchData}/>}
         </>
       }
 

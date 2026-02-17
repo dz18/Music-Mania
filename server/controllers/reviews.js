@@ -1,67 +1,67 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 const { calcStarStats } = require('./hooks/calcStarStats')
+const { tagConnectOrCreate } = require('./hooks/tagConnectOrCreate')
 
 const limit = 25
 
-const artistReviews = async(req, res) => {
+const artistReviews = async (req, res) => {
   const { id } = req.query
-  let page = Number(req.query.page) || 0
+  let page = Number(req.query.page) || 1
   let star = Number(req.query.star) || null
 
-  logApiCall(req.method, req.originalUrl)
+  const limit = 10
+  logApiCall(req)
 
   try {
-    if (!id) {
-      errorApiCall(req.method, req.originalUrl, 'Missing artist id')
-      res.status(400).json({error : 'Missing artist id'})
-    }
+    if (!id) return res.status(400).json({ error: 'Missing artist id' })
+    if (!page) return res.status(400).json({ error: 'Missing page number' })
 
-    
-    if (!page) {
-      errorApiCall(req.method, req.originalUrl, 'Missing Page Number')
-      res.status(400).json({error : 'Missing Page Number'})
-    }
+    const reviews = await prisma.userArtistReviews.findMany({
+      where: {
+        artistId: id,
+        status: "PUBLISHED",
+        ...(star ? { rating: star } : {})
+      },
+      include: {
+        user: { omit: { password: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit
+    })
 
-    console.log(star)
-    const [reviews, allStats, filteredStats, artistStats] = await Promise.all([
-      prisma.userArtistReviews.findMany({
-        where: { artistId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},
-        include: { user: { omit: { password: true } } },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit
-      }),
+    const [allStats, filteredStats, artistStats] = await Promise.all([
       prisma.userArtistReviews.aggregate({
         where: { artistId: id, status: 'PUBLISHED' },
         _avg: { rating: true }
       }),
       prisma.userArtistReviews.aggregate({
-        where: { artistId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},
+        where: { artistId: id, status: 'PUBLISHED', ...(star ? { rating: star } : {}) },
         _count: true
       }),
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { artistId: id, status: 'PUBLISHED'}
-      })
+        where: { artistId: id, status: 'PUBLISHED' }
+      }),
     ])
-    const average = allStats._avg.rating
-    const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
+
+    const avgRounded = allStats._avg.rating ? +allStats._avg.rating.toFixed(2) : 0
     const starStats = calcStarStats(artistStats)
 
-    const data = {reviews, avgRating: avgRounded ?? 0, starStats}
+    const data = { reviews, avgRating: avgRounded, starStats }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json({
-      data: data,
+      data,
       count: filteredStats._count,
       pages: Math.ceil(filteredStats._count / limit),
       currentPage: page,
-      limit: limit
+      limit
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
@@ -70,16 +70,16 @@ const releaseReviews = async(req, res) => {
   let page = Number(req.query.page) || 0
   let star = Number(req.query.star) || null
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
     if (!id) {
-      errorApiCall(req.method, req.originalUrl, 'Missing parameters')
+      errorApiCall(req, 'Missing parameters')
       res.status(400).json({error : 'Missing parameters'})
     }
     
     if (!page) {
-      errorApiCall(req.method, req.originalUrl, 'Missing Page Number')
+      errorApiCall(req, 'Missing Page Number')
       res.status(400).json({error : 'Missing Page Number'})
     }
 
@@ -112,8 +112,8 @@ const releaseReviews = async(req, res) => {
 
     const data = {reviews, avgRating: avgRounded ?? 0, starStats}
 
-    console.log(data)
-    successApiCall(req.method, req.originalUrl)
+    // console.log(data)
+    successApiCall(req)
     res.json({
       data,
       count: filteredStats._count,
@@ -122,29 +122,30 @@ const releaseReviews = async(req, res) => {
       limit: limit
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
   
 }
 
 const songReviews = async(req, res) => {
-  const { id } = req.query
+  const { songId, workId } = req.query
   let page = Number(req.query.page) || 0
   let star = Number(req.query.star) || null
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
-    if (!id) {
-      errorApiCall(req.method, req.originalUrl, 'Missing parameters')
-      res.status(400).json({error : 'Missing parameters'})
+    if (!songId) {
+      errorApiCall(req, 'Missing parameters')
+      return res.status(400).json({error : 'Missing parameters'})
     }
 
     if (!page) {
-      errorApiCall(req.method, req.originalUrl, 'Missing Page Number')
-      res.status(400).json({error : 'Missing Page Number'})
+      errorApiCall(req, 'Missing Page Number')
+      return res.status(400).json({error : 'Missing Page Number'})
     }
 
+    const id = songId === workId ? songId : workId
     const [reviews, allStats, filteredStats, songStats] = await Promise.all([
       prisma.userSongReviews.findMany({
         where: { songId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},
@@ -174,7 +175,7 @@ const songReviews = async(req, res) => {
 
     const data = {reviews, avgRating: avgRounded ?? 0, starStats}
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json({
       data,
       count: filteredStats._count,
@@ -183,16 +184,16 @@ const songReviews = async(req, res) => {
       limit: limit
     })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 
 }
 
 // Fetches a specific review
 const user = async (req, res) => {
-  const {userId, itemId, type} = req.query
+  const {userId, itemId, type, workId} = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
     let review
@@ -205,31 +206,32 @@ const user = async (req, res) => {
         where: { userId_releaseId: { userId, releaseId: itemId}}
       })
     } else if (type === 'song') {
+      const id = itemId === workId ? itemId : workId
       review = await prisma.userSongReviews.findUnique({
-        where: { userId_songId: { userId, songId: itemId}}
+        where: { userId_songId: { userId, songId: id}}
       })
     }
 
     console.log(review)
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     return res.json(review)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
 const publishOrDraft = async (req, res) => {
   const {
-    userId, itemId, title, 
+    itemId, title, 
     rating, review, type, 
     status, itemName, itemTitle, 
-    artistCredit, coverArt
+    artistCredit, coverArt, tags
   } = req.body
   
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   if (status !== 'PUBLISHED' && status !== 'DRAFT') {
-    errorApiCall(req.method, req.originalUrl, 'Invalid Status')
+    errorApiCall(req, 'Invalid Status')
     return
   }
 
@@ -243,7 +245,7 @@ const publishOrDraft = async (req, res) => {
       updatedAt: new Date()
     }
     const createData = {
-      userId: userId,
+      userId: req.user.id,
       title: title,
       rating: rating,
       review: review,
@@ -253,7 +255,7 @@ const publishOrDraft = async (req, res) => {
     let published
     let newAvg
     let stats
-    if (type === 'ARTIST') {
+    if (type === 'artist') {
       await prisma.artist.upsert({
         where: { id: itemId },
         update: {},
@@ -261,9 +263,21 @@ const publishOrDraft = async (req, res) => {
       });
 
       published = await prisma.userArtistReviews.upsert({
-        where : { userId_artistId: { userId, artistId: itemId } },
-        update: updateData,
-        create: {...createData, artistId: itemId},
+        where : { userId_artistId: { userId: req.user.id, artistId: itemId } },
+        update: {
+          ...updateData,
+          tags: {
+            deleteMany: {},  // remove old tags
+            create: tagConnectOrCreate(tags)
+          }
+        },
+        create: {
+          ...createData,
+          artistId: itemId,
+          tags: {
+            create: tagConnectOrCreate(tags)
+          }
+        },
         include: { user: { omit: { password: true } }, },
       })
 
@@ -279,7 +293,7 @@ const publishOrDraft = async (req, res) => {
         where: { artistId: itemId, status: 'PUBLISHED' }
       })
 
-    } else if (type === 'RELEASE') {
+    } else if (type === 'release') {
       await prisma.release.upsert({
         where: { id: itemId },
         update: {},
@@ -287,7 +301,7 @@ const publishOrDraft = async (req, res) => {
       });
 
       published = await prisma.userReleaseReviews.upsert({
-        where : { userId_releaseId: { userId, releaseId: itemId } },
+        where : { userId_releaseId: { userId: req.user.id, releaseId: itemId } },
         update: updateData,
         create: {...createData, releaseId: itemId},
         include: { user: { omit: { password: true } }, },
@@ -305,7 +319,8 @@ const publishOrDraft = async (req, res) => {
         where: { releaseId: itemId, status: 'PUBLISHED' }
       })
 
-    } else if (type === 'SONG') {
+    } else if (type === 'song') {
+
       await prisma.song.upsert({
         where: { id: itemId },
         update: {},
@@ -313,7 +328,7 @@ const publishOrDraft = async (req, res) => {
       })
       
       published = await prisma.userSongReviews.upsert({
-        where : { userId_songId: { userId, songId: itemId } },
+        where : { userId_songId: { userId: req.user.id, songId: itemId } },
         update: updateData,
         create: {...createData, songId: itemId},
         include: { user: { omit: { password: true } }, },
@@ -333,28 +348,30 @@ const publishOrDraft = async (req, res) => {
 
     }
     
+    console.log(newAvg)
     const average = newAvg._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
     const starStats = calcStarStats(stats)
 
-    successApiCall(req.method, req.originalUrl)
-    return res.json({
+    successApiCall(req)
+    const data = {
       review: published, 
       avg: avgRounded ?? 0,
       starStats,
       count: newAvg._count,
       limit: limit
-    })
-
+    }
+    console.log(data)
+    return res.json(data)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
 }
 
 const deleteReview = async (req, res) => {
-  const { userId, itemId, type } = req.query
+  const { itemId, type } = req.query
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -363,11 +380,12 @@ const deleteReview = async (req, res) => {
     let stats
     if (type === 'artist') {
       deleted = await prisma.userArtistReviews.delete({
-        where: { userId_artistId: { userId, artistId: itemId } }
+        where: { userId_artistId: { userId: req.user.id, artistId: itemId } }
       })
       newAvg = await prisma.userArtistReviews.aggregate({
         where: { artistId: itemId, status: 'PUBLISHED'},
-        _avg: { rating: true}
+        _avg: { rating: true},
+        _count: { rating: true}
       })      
       stats = await prisma.userArtistReviews.groupBy({
         by: ['rating'],
@@ -376,11 +394,12 @@ const deleteReview = async (req, res) => {
       })
     } else if (type === 'release') {
       deleted = await prisma.userReleaseReviews.delete({
-        where: { userId_releaseId: { userId, releaseId: itemId } }
+        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId } }
       })
       newAvg = await prisma.userReleaseReviews.aggregate({
         where: { releaseId: itemId, status: 'PUBLISHED'},
-        _avg: { rating: true}
+        _avg: { rating: true},
+        _count: { rating: true}
       })      
       stats = await prisma.userReleaseReviews.groupBy({
         by: ['rating'],
@@ -389,11 +408,12 @@ const deleteReview = async (req, res) => {
       })
     } else if (type === 'song') {
       deleted = await prisma.userSongReviews.delete({
-        where: { userId_songId: { userId, songId: itemId } }
+        where: { userId_songId: { userId: req.user.id, songId: itemId } }
       })
       newAvg = await prisma.userSongReviews.aggregate({
         where: { songId: itemId, status: 'PUBLISHED'},
-        _avg: { rating: true}
+        _avg: { rating: true},
+        _count: { rating: true}
       })      
       stats = await prisma.userSongReviews.groupBy({
         by: ['rating'],
@@ -402,18 +422,18 @@ const deleteReview = async (req, res) => {
       })
     }
 
-    const starCount = { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-    for (const group of [...stats]) {
-      starCount[group.rating] += group._count.rating
-    }
-    const starStats = Object.entries(starCount)
-      .map(([rating, count]) => ({ rating: +rating, count }))
-      .sort((a, b) => b.rating - a.rating)
+    const starStats = calcStarStats(stats)
 
-    successApiCall(req.method, req.originalUrl)
-    return res.json({action: 'DELETED', review: deleted, avg: newAvg._avg.rating, starStats})
+    successApiCall(req)
+    return res.json({
+      action: 'DELETED', 
+      review: deleted, 
+      avg: newAvg._avg.rating, 
+      starStats,
+      count: newAvg._count.rating
+    })
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
   }
   
 }
@@ -423,7 +443,7 @@ const itemRatings = async (req, res) => {
   const page = Number(req.query.page) ?? 1
   const { type, id } = req.params
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -489,10 +509,10 @@ const itemRatings = async (req, res) => {
       limit: limit
     }
 
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
     res.json(data)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({error: `Error fetching ${star || ''} star reviews`})
   }
 
@@ -509,7 +529,7 @@ const userArtists = async (req, res) => {
     // error handling
   }
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -552,9 +572,9 @@ const userArtists = async (req, res) => {
     console.log(data.data.reviews)
 
     res.json(data)
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({error: `Error fetching users artist reviews`})
   }
 
@@ -571,7 +591,7 @@ const userReleases = async (req, res) => {
     // error handling
   }
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -614,9 +634,9 @@ const userReleases = async (req, res) => {
     console.log(data)
 
     res.json(data)
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({error: `Error fetching users artist reviews`})
   }
 
@@ -633,7 +653,7 @@ const userSongs = async (req, res) => {
     // error handling
   }
 
-  logApiCall(req.method, req.originalUrl)
+  logApiCall(req)
 
   try {
 
@@ -673,12 +693,12 @@ const userSongs = async (req, res) => {
       limit: limit
     }
 
-    console.log(data)
+    console.log(data.data.reviews)
 
     res.json(data)
-    successApiCall(req.method, req.originalUrl)
+    successApiCall(req)
   } catch (error) {
-    errorApiCall(req.method, req.originalUrl, error)
+    errorApiCall(req, error)
     return res.status(500).json({error: `Error fetching users artist reviews`})
   }
 
@@ -694,5 +714,5 @@ module.exports = {
   itemRatings,
   userArtists,
   userReleases,
-  userSongs
+  userSongs,
 }

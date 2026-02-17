@@ -58,16 +58,16 @@ export default function SearchPage ({
   return (
     <div>
       <section className="flex mb-2 gap-2">
-        <form onSubmit={handleSubmit} className="flex flex-col w-full">
+        <form onSubmit={handleSubmit} className="flex flex-col w-full text-sm">
           <div className="flex mb-2 gap-2 w-full">
-            <button type="submit" className="p-2 border rounded cursor-pointer" title={`Search ${query}`}>
+            <button type="submit" className="p-2 border rounded interactive-button interactive-dark" title={`Search ${query}`}>
               <Search size={18}/>
             </button>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="p-1 border w-full rounded hover-white-glow focus-cyan-glow focus:outline-none"
+              className="px-2 py-1 border w-full rounded hover-white-glow focus-cyan-glow focus:outline-none"
             />
           </div>
 
@@ -107,13 +107,13 @@ export default function SearchPage ({
       </section>
 
       {/* Select Type */}
-      <section>
+      <section className="flex items-center justify-between items-end">
         <ul className="list-none flex flex-wrap gap-1 box-border">
           {tabs.map(t => (
             <li key={t.id}
               className={`
-                ${tab === t.id ? "border-teal-300 bg-teal-500/20 text-teal-300 border-b-4" : ""}
-                font-mono font-bold p-2 box-border cursor-pointer
+                ${tab === t.id ? "border-teal-300 bg-teal-500/20 text-teal-300 border-b-4" : "interactive-button interactive-dark"}
+                font-mono font-bold p-2 box-border
               `}
               onClick={() => setTab(t.id)}
             >
@@ -122,18 +122,17 @@ export default function SearchPage ({
           ))}
         </ul>
 
+        <div>
+          <span className="font-mono text-sm text-gray-500">{data?.count ? data.count : '0'} total results</span>
+        </div>
       </section>
 
       {/* Suggestions */}
-      <section>
-        <div className="flex justify-between m-1">
+      <section className="border-gray-500 border rounded-xl mt-2">
+        <div className="flex justify-between px-2 py-1 bg-surface-elevated rounded-xl rounded-b-none tracking-wide">
           <div>
-            <span className="text-lg font-mono text-gray-500">Search: </span>
-            <span className="text-lg font-mono font-bold truncate overflow-hidden whitespace-nowrap">{query.trim().replace(/'+'/g, ' ')}</span>
-          </div>
-          <div>
-            <span className="text-lg font-mono text-gray-500">Total: </span>
-            <span className="text-lg font-mono font-bold text-teal-500">{data?.count ? data.count : '0'}</span>
+            <span className="font-semibold font-mono text-gray-500 tracking-wide uppercase">Search: </span>
+            <span className="font-mono font-bold truncate overflow-hidden whitespace-nowrap">{query.trim().replace(/'+'/g, ' ')}</span>
           </div>
         </div>
 
@@ -156,7 +155,7 @@ export default function SearchPage ({
                 </div>
               </div>
             :
-              <ul>
+              <ul className="border-b border-gray-500">
                 {suggestionComponents[tab as SearchTypes]}
               </ul>
           )
@@ -165,7 +164,7 @@ export default function SearchPage ({
           <Pagination data={data} fetchData={fetchSuggestions}/>
         :
           !error  && !loading &&
-            <div className="flex items-center justify-center font-mono mt-[5rem] gap-2 text-gray-500">
+            <div className="flex items-center justify-center font-mono my-[5rem] gap-2 text-gray-500">
               <FileX2/> No data found
             </div>
         }

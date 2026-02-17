@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const reviewController = require('../controllers/reviews')
+const { verifyUser } = require('../middleware/auth')
+
 
 router.get('/artist', reviewController.artistReviews)
 router.get('/release', reviewController.releaseReviews)
@@ -11,8 +13,8 @@ router.get('/user/releases', reviewController.userReleases)
 router.get('/user/songs', reviewController.userSongs)
 router.get('/:type/:id/itemRatings', reviewController.itemRatings)
 
-router.put('/', reviewController.publishOrDraft)
+router.put('/', verifyUser,reviewController.publishOrDraft)
 
-router.delete('/', reviewController.deleteReview)
+router.delete('/', verifyUser, reviewController.deleteReview)
 
 module.exports = router

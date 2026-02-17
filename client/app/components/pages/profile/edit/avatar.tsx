@@ -2,15 +2,16 @@ import { useSession } from "next-auth/react"
 import { Dispatch, SetStateAction, useRef } from "react"
 
 export default function Avatar ({
-  avatar, setAvatarFile, setData, errors
+  newAvatar, currentAvatar, reset, setAvatarFile, setData, errors
 } : {
-  avatar: string
+  newAvatar: string
+  currentAvatar: string
+  reset: boolean
   setAvatarFile: Dispatch<SetStateAction<File | null>>
   setData: Dispatch<SetStateAction<EditProfileForm>>
   errors: EditProfileForm
 }) {
 
-  const { data: session } = useSession()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const changeAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,7 +24,9 @@ export default function Avatar ({
   }
 
   const resetAvatar = () => {
-    setData(prev => ({...prev, avatar: ''}))
+    if (reset) return
+
+    setData(prev => ({...prev, avatar: '', resetAvatar: true}))
     setAvatarFile(null)
 
     if (fileInputRef.current) {
@@ -33,44 +36,44 @@ export default function Avatar ({
 
   return (
     <div
-      className="bg-surface p-4 gap-2 flex flex-col"
+      className="bg-surface gap-2 flex flex-col rounded-lg border border-gray-500 overflow-hidden"
     >
-      <p className="text-lg font-mono font-bold">Avatar</p>
+      <p className="text-sm font-mono font-bold px-4 py-2 bg-surface-elevated">Avatar</p>
 
-      <div className="flex">
+      <div className="flex justify-center">
 
-        <div className="border-dashed border-2 rounded-2xl flex">
+        <div className="rounded-2xl flex">
 
           <div className="my-4 mx-8 flex flex-col items-center gap-2">
             <p className="font-semibold">Current Avatar</p>
             <img 
               className="w-50 h-50 object-cover"
-              src={`${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session?.user.id}?v=${Date.now()}`} 
+              src={currentAvatar} 
               alt="Avatar" 
-              onError={(e) => { e.currentTarget.src = '/default-avatar.jpg' }}
+              onError={(e) => { 
+                e.currentTarget.src = '/default-avatar.jpg' 
+              }}
             />
           </div>
-
-          <div className="border-l-2 border-dashed border-gray-300" />
 
           <div className="my-4 mx-10 flex flex-col items-center gap-2">
             <p className="font-semibold">Updated Avatar</p>
 
             <img
               className="w-50 h-50 object-cover"
-              src={avatar || `${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session?.user.id}?v=${Date.now()}`} 
+              src={newAvatar ? newAvatar : reset ? `/default-avatar.jpg` : currentAvatar} 
               alt="Avatar" 
               onError={(e) => { e.currentTarget.src = '/default-avatar.jpg' }}
             />
             <div className="flex gap-2">
               <button
-                className="border rounded px-2 py-1 cursor-pointer"
+                className="border rounded px-2 py-1 interactive-button interactive-dark"
                 onClick={() => fileInputRef.current?.click()}
               >
                 Change Avatar
               </button>
               <button
-                className="bg-red-500 rounded px-2 py-1 cursor-pointer"
+                className="bg-red-950 text-red-500 border border-red-500 rounded px-2 py-1 interactive-button hover:bg-red-900 active:bg-red-800"
                 onClick={resetAvatar}
               >
                 Reset Avatar

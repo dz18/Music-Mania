@@ -1,5 +1,5 @@
 import { Star } from "lucide-react"
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function Statistics({ stats, filter = true }: { stats: StarCount[], filter?: boolean }) {
@@ -7,7 +7,6 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
   const router = useRouter()
   const pathname = usePathname()
 
-  const [filterOn, setFilterOn] = useState(false)
 
   const searchParams = useSearchParams()
   const star = searchParams.get("star")
@@ -17,10 +16,8 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
 
     if (sp !== null) {
       setCurrentStar(Number(sp));
-      setFilterOn(true);
     } else {
       setCurrentStar(null);
-      setFilterOn(false);
     }
   }, [searchParams])
 
@@ -30,9 +27,7 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
     if (s) {
       params.set("star", `${s.rating}`)
       setCurrentStar(Number(s.rating))
-      setFilterOn(true)
     } else {
-      setFilterOn(false)
       setCurrentStar(null)
     }
 
@@ -51,13 +46,13 @@ export default function Statistics({ stats, filter = true }: { stats: StarCount[
               className={`
                 ${currentStar && currentStar === stat.rating && filter ? "font-bold text-amber-500" : "font-semibold"}
                 ${filter && 'hover:underline cursor-pointer'}
-                w-4 text-right mr-2 font-mono text-lg` 
+                w-4 text-right mr-2 font-mono text-sm` 
               }
             >
               {stat.rating}
             </span>
           </button>
-          <div className="flex-1 flex bg-gray-700 h-7 items-center pr-2">
+          <div className="flex-1 flex bg-surface-elevated h-7 items-center pr-2">
             {stat.count !== 0 &&
               <div
                 className="bg-teal-500 h-5 border-2 border-gray-300 transition-all"

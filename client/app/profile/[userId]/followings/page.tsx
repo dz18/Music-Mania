@@ -47,7 +47,10 @@ export default function Followings ({
   return (
     <div>
 
-      <p className="text-lg font-mono"><span className="font-bold">{results.data.username}</span> Followings</p>
+      <div className="text-lg font-mono mb-2">
+        <p className="font-bold">Following</p>
+        <p className="text-sm text-gray-500">{results?.data.username}</p>
+      </div>
 
       {/* Results */}
       <section>
@@ -55,16 +58,20 @@ export default function Followings ({
           <span className="font-mono font-bold">Total: </span>
           <span className="font-mono text-teal-500 font-bold">{results?.count}</span>
         </div>
+        
+        <div
+          className="rounded-lg overflow-hidden border border-gray-500"
+        >
         {results?.data?.follows?.length !== 0 ?
           results?.data?.follows?.map((f, i) => (
             <div 
               key={i}
               className={`
-                ${i % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'}
-                flex p-2 gap-2
+                ${i % 2 === 0 ? 'bg-surface' : ''}
+                flex p-2 gap-2 border-b border-white/5
               `}
             >
-              <img src={f.following.avatar ?? '/default-avatar.jpg'} className="w-16 h-16 object-cover" />
+              <img src={f.following.avatar ?? '/default-avatar.jpg'} className="w-16 h-16 object-cover border border-gray-500" />
               
               <div className="text-sm grow">
                 <p className="font-mono font-bold hover:underline cursor-pointer" onClick={() => router.push(`/profile/${f.followingId}`)}>
@@ -90,15 +97,12 @@ export default function Followings ({
                     </button>
                   </div>
               }
-              
-              
-              
-
             </div>
           ))
         :
           <div className="font-mono text-gray-500 text-lg">None :(</div>
         }
+        </div>
         
       </section>
 

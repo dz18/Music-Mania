@@ -21,8 +21,6 @@ model User {
   password      String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now())
-  avatar        String?
-  phoneNumber   String? @unique
   aboutMe       String?
   age           Int?
 
@@ -31,9 +29,9 @@ model User {
   following     Follow[] @relation("Following")
   followers     Follow[] @relation("Follower")
 
-  favArtists    UserFavArtist[]
-  favReleases   UserFavRelease[]
-  favSongs      UserFavSong[]
+  likedArtists    UserLikedArtist[]
+  likedReleases   UserLikedRelease[]
+  likedSongs      UserLikedSong[]
 
   artistReviews   UserArtistReviews[]
   releaseReviews  UserReleaseReviews[]
@@ -58,7 +56,7 @@ model Artist {
   id            String @id
   name          String
 
-  favorited     UserFavArtist[]
+  liked         UserLikedArtist[]
   reviews       UserArtistReviews[]
 }
 
@@ -68,7 +66,7 @@ model Release {
   artistCredit  Json
   coverArt      String?
 
-  favorited     UserFavRelease[]
+  liked     UserLikedRelease[]
   reviews       UserReleaseReviews[]
 }
 
@@ -78,11 +76,11 @@ model Song {
   artistCredit  Json
   coverArt      String?
 
-  favorited     UserFavSong[]
+  liked     UserLikedSong[]
   reviews       UserSongReviews[]
 }
 
-model UserFavArtist {
+model UserLikedArtist {
   user User @relation(fields: [userId], references: [id])
   userId String
   artist Artist @relation(fields: [artistId], references: [id])
@@ -92,7 +90,7 @@ model UserFavArtist {
   @@id([userId, artistId])
 }
 
-model UserFavRelease {
+model UserLikedRelease {
   user User @relation(fields: [userId], references: [id])
   userId String
   release Release @relation(fields: [releaseId], references: [id])
@@ -102,7 +100,7 @@ model UserFavRelease {
   @@id([userId, releaseId])
 }
 
-model UserFavSong {
+model UserLikedSong {
   user User @relation(fields: [userId], references: [id])
   userId String
   song Song @relation(fields: [songId], references: [id])
@@ -115,13 +113,16 @@ model UserFavSong {
 model UserArtistReviews {
   user User @relation(fields: [userId], references: [id])
   userId String
+
   artist Artist @relation(fields: [artistId], references: [id])
   artistId String
+
   rating Decimal
   title String?
   review String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tags  ArtistReviewTag[]
   status  Status
 
   @@id([userId, artistId])
@@ -130,13 +131,16 @@ model UserArtistReviews {
 model UserReleaseReviews {
   user User @relation(fields: [userId], references: [id])
   userId String
+
   release Release @relation(fields: [releaseId], references: [id])
   releaseId String
+
   rating Decimal
   title String?
   review String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tags  ReleaseReviewTag[]
   status  Status
 
   @@id([userId, releaseId])
@@ -147,14 +151,66 @@ model UserSongReviews {
   userId String
   song Song @relation(fields: [songId], references: [id])
   songId String
+
   rating Decimal
   title String?
   review String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tags  SongReviewTag[]
   status  Status
 
   @@id([userId, songId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())   // internal, never exposed
+  slug      String   @unique                // URL-safe, lowercase
+  name      String                          // display name
+  createdAt DateTime @default(now())
+
+  artistReviewTags  ArtistReviewTag[]
+  releaseReviewTags ReleaseReviewTag[]
+  songReviewTags    SongReviewTag[]
+}
+
+model ArtistReviewTag {
+  review UserArtistReviews @relation(fields: [reviewUserId, reviewArtistId], references: [userId, artistId], onDelete: Cascade)
+
+  reviewUserId   String
+  reviewArtistId String
+
+  tag   Tag   @relation(fields: [tagId], references: [id])
+  tagId String
+
+  @@id([reviewUserId, reviewArtistId, tagId])
+  @@index([tagId])
+}
+
+model ReleaseReviewTag {
+  review UserReleaseReviews @relation(fields: [reviewUserId, reviewReleaseId], references: [userId, releaseId], onDelete: Cascade)
+
+  reviewUserId    String
+  reviewReleaseId String
+
+  tag Tag @relation(fields: [tagId], references: [id])
+  tagId String
+
+  @@id([reviewUserId, reviewReleaseId, tagId])
+  @@index([tagId])
+}
+
+model SongReviewTag {
+  review UserSongReviews @relation(fields: [reviewUserId, reviewSongId], references: [userId, songId], onDelete: Cascade)
+
+  reviewUserId String
+  reviewSongId String
+
+  tag Tag @relation(fields: [tagId], references: [id])
+  tagId String
+
+  @@id([reviewUserId, reviewSongId, tagId])
+  @@index([tagId])
 }
 
 enum Role {
@@ -172,4 +228,5 @@ enum Type {
   SONG
   RELEASE
 }
+
 

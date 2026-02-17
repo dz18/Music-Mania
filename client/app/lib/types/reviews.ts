@@ -12,6 +12,7 @@ interface UserArtistReview {
   createdAt: Date
   updatedAt: Date
   status: 'DRAFT' | 'PUBLISHED'
+  tags?: string[]
 }
 
 interface UserReleaseReview {
@@ -34,6 +35,7 @@ interface UserReleaseReview {
   createdAt: Date
   updatedAt: Date
   status: 'DRAFT' | 'PUBLISHED'
+  tags?: string[]
 }
 
 interface UserSongReview {
@@ -55,4 +57,13 @@ interface UserSongReview {
   createdAt: Date
   updatedAt: Date
   status: 'DRAFT' | 'PUBLISHED'
+  tags?: string[]
 }
+
+interface ReviewModalErrors {
+    title: string,
+    rating: string,
+    reviewText: string,
+    tag: string,
+    tags: string
+  }

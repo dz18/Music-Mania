@@ -2,17 +2,18 @@
 
 import About from "@/app/components/pages/artist/About"
 import Reviews from "@/app/components/reviews/Reviews"
-import ReviewBar from "@/app/components/reviews/ReviewBar"
-import type { Artist } from "@/app/lib/types/artist"
 import { useSession } from "next-auth/react"
-import { use } from "react"
-import Statistics from "@/app/components/ui/statistics"
+import { useState } from "react"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchArtist from "@/app/hooks/musicbrainz/useFetchArtist"
 import Pagination from "@/app/components/ui/Pagination"
+import StarStatistics from "../../ui/starStatistics"
+import UserReviewPanel from "../../reviews/UserReviewPanel"
+import { ReviewTypes } from "@/app/lib/types/api"
+import YourReviewSection from "../../reviews/YourReview"
 
 export default function ArtistPage ({
   artistId,
@@ -22,11 +23,13 @@ export default function ArtistPage ({
   star: number | null
 }) {
 
-  const { data: session } = useSession()
+  const { status } = useSession()
   const { 
     artist, reviewsload, artistLoad, fetchData, 
-    error, data, setData
+    error, data, setData, starStats, setStarStats
   } = useFetchArtist(artistId, star)
+
+  const [review, setReview] = useState<ReviewTypes | null>(null)
 
   if (artistLoad) {
     return (
@@ -78,52 +81,51 @@ export default function ArtistPage ({
   }
 
   return (
-    <div>
-      <div className="gap-10">
+    <div className="flex flex-col gap-2">
 
-        <div className="flex gap-10">
-          {/* About */}
-          {artist &&
-            <About artist={artist} reviews={data?.data ?? null}/>
+      <div className="flex gap-10">
+        {/* About */}
+        {artist &&
+          <About artist={artist} reviews={data?.data ?? null}/>
+        }
+      </div>
+
+      {starStats &&
+        <div className={`flex gap-2 items-stretch`}>
+          <StarStatistics stats={starStats}/>
+          {status === 'authenticated' &&
+            <UserReviewPanel 
+              item={artist} 
+              itemId={artistId} 
+              type="artist"
+              review={review}
+              setReview={setReview}
+              setData={setData}
+              setStarStats={setStarStats}
+            />
           }
         </div>
+      }
 
-        {data?.data.starStats &&
-          <div className={`
-            border-t pt-3 mt-2 border-gray-500
-            ${!session && 'pb-2 border-b mb-2'}
-          `}>
-            <Statistics stats={data.data.starStats}/>
-          </div>
-        }
+      {status === 'authenticated' && review &&
+        <YourReviewSection
+          review={review}
+        />
+      }
 
-        {/* Make a Review */}
-        {session && !reviewsload && data && 
-          <>
-            <ReviewBar 
-              item={artist} 
-              type="artist" 
-              data={data} 
-              setData={setData} 
-            />
-          </>
-        }
+      {reviewsload &&
+        <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+      }
 
-        <div className="font-mono flex mt-2 justify-between items-center">
-        </div>
-        {reviewsload &&
-          <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
-        }
-        {data &&
-          <>
-            <Reviews data={data}/>
-            <Pagination data={data} fetchData={fetchData}/>
-          </>
+      {data &&
+        <>
+          <Reviews data={data}/>
+          {data.count > data.limit && (
+            <Pagination data={data} fetchData={fetchData} />
+          )}          
+        </>
+      }
 
-        }
-
-          
-      </div>
     </div>
   )
 }

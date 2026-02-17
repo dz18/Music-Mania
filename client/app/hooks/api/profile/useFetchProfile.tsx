@@ -27,7 +27,7 @@ export default function useFetchProfile (id: string, star: number | null) {
 	const [tabLoad, setTabLoad] = useState(false)
 	const [tabError, setTabError] = useState<string | null>(null)
 	const [followLoad, setFollowLoad] = useState(false)
-
+	const [starStats, setStarStats] = useState<StarCount[]>([])
 	const fetchProfilePage = useCallback( async () => {
 		if (!id) return
 		if (status === 'loading') return
@@ -41,7 +41,9 @@ export default function useFetchProfile (id: string, star: number | null) {
 				params : { profileId: id, userId: session?.user.id}
 			})
 
+			console.log('profile:',res.data)
 			setProfile(res.data)
+			setStarStats(res.data.starStats)
 			fetchTab(1)
 
 		} catch (error: any) {
@@ -67,7 +69,11 @@ const fetchTab = useCallback(async (page: number) => {
   } else if (selected === "songReviews") {
     url = `${apiUrl}/api/reviews/user/songs`
     setter = setSongReviews
-  }
+  } else {
+		  if (profile?.starStats) {
+				setStarStats(profile.starStats)
+			}
+	}
 
   if (!url || !setter) return
 
@@ -77,6 +83,7 @@ const fetchTab = useCallback(async (page: number) => {
     setTabLoad(true)
     const res = await axios.get(url, { params })
     setter(res.data)
+		setStarStats(res.data.data.starStats)
   } catch (error: any) {
     setTabError(error.response?.data?.error || error.message)
   } finally {
@@ -181,6 +188,7 @@ const fetchTab = useCallback(async (page: number) => {
 		artistReviews,
 		releaseReviews,
 		songReviews,
-		currentStats
+		currentStats,
+		starStats
 	}
 }

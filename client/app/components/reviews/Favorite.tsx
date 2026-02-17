@@ -2,7 +2,7 @@ import useFetchFavorite from "@/app/hooks/api/favorites/useFetchFavorites";
 import { Release } from "@/app/lib/types/api";
 import { Artist } from "@/app/lib/types/artist";
 import { Song } from "@/app/lib/types/song";
-import { Heart } from "lucide-react";
+import { Heart, Loader, Loader2 } from "lucide-react";
 
 export default function Favorite ({
   item,
@@ -28,9 +28,15 @@ export default function Favorite ({
         onClick={toggleFavorite}
         disabled={isPending}
       >
-        <Heart 
-          className={`${isPending ? 'animate-pulse' : 'hover:fill-pink-500/50'}  transition-colors duration-200 text-pink-500 ${isFavorite ? "fill-pink-500" : "hover:text-pink-500 fill-transparent"}`}
-        />
+        {isPending ?
+          <Loader2
+            className="text-pink-500 animate-spin"
+          />
+        :
+          <Heart 
+            className={`transition-colors duration-200 text-pink-500 ${isFavorite ? "fill-pink-500" : "hover:text-pink-500 fill-transparent"}`}
+          />
+        }
       </button>
     </>
   )

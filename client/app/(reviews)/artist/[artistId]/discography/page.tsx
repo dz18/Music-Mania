@@ -30,21 +30,17 @@ export default function Discography ({
   return (
     <div className="flex flex-col h-full">
 
-      <div className="mb-2">
-        <p className="font-mono font-bold text-2xl">Discography</p>
-      </div>
-      
-      <div className="mb-2">
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-lg font-bold">{artist?.name}</span>
-          <span className="font-mono text-sm text-gray-500">{artist?.disambiguation}</span>
-        </div>
+      <p className="font-mono font-bold text-2xl mb-2">Discography</p>
+    
+      <div className="flex flex-col items-baseline mb-2">
+        <p className="font-mono text-lg font-semibold">{artist?.name}</p>
+        <p className="font-mono text-xs text-gray-400">{artist?.disambiguation}</p>
       </div>
 
       <div className="flex justify-between items-end mb-2">
         <ul className="text-lg font-bold flex flex-wrap list-none gap-3">
           <li 
-            className={`${active === 'album' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
+            className={`${active === 'album' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : 'interactive-button interactive-dark'} px-2 py-1`}
             onClick={() => {
               setActive('album')
             }}
@@ -52,7 +48,7 @@ export default function Discography ({
             Albums
           </li>
           <li 
-            className={`${active === 'ep' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
+            className={`${active === 'ep' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : 'interactive-button interactive-dark'} px-2 py-1`}
             onClick={() => {
               setActive('ep')
             }}
@@ -60,7 +56,7 @@ export default function Discography ({
             EPs
           </li>
           <li 
-            className={`${active === 'single' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : ''} px-2 py-1 cursor-pointer`}
+            className={`${active === 'single' ? 'border-teal-300 bg-teal-500/20 text-teal-300 border-b-4' : 'interactive-button interactive-dark'} px-2 py-1`}
             onClick={() => {
               setActive('single')
             }}
@@ -90,8 +86,10 @@ export default function Discography ({
         ) : (
           data && data?.data.length !== 0 ?
             <>
-              <DiscographyTable discography={data.data} active={active}/>
-              <Pagination data={data} fetchData={fetchData}/>
+              <DiscographyTable discography={data.data} active={active}/>            
+              {data.count > data.limit && (
+                <Pagination data={data} fetchData={fetchData} />
+              )}   
             </>
             
           :

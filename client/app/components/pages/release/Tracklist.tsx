@@ -1,55 +1,114 @@
-import { Album } from "@/app/lib/types/api"
+import { Release } from "@/app/lib/types/api"
 import { useRouter } from "next/navigation"
+import TracklistRatingsBlock from "./TracklistRatingsBlock"
+import { Fragment } from "react/jsx-runtime"
 
 export default function Tracklist ({
   album
 } : {
-  album: Album | null
+  album: Release | null
 }) {
 
   const router = useRouter()
 
+  function formatDuration(ms: number | null | undefined) {
+    if (!ms) return "—"
+
+    const totalSeconds = Math.floor(ms / 1000)
+    const mins = Math.floor(totalSeconds / 60)
+    const secs = totalSeconds % 60
+
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
   return (
-    <div>
-      <p className="font-bold text-xl mb-2">{album?.trackCount} {album?.trackCount === 1 ? 'Track' : 'Tracks'}</p>
-      <table className="border-1 w-full">
-        <thead>
-          <tr className="bg-gray-800 border-b">
-            <th className="py-1">Pos.</th>
-            <th className="py-1 text-left">Title</th>
-            <th className="py-1">length</th>
+    <div
+      className="rounded-lg overflow-hidden border border-gray-500"
+    >
+
+      <div
+        className="flex justify-between px-4 py-2 bg-surface-elevated text-sm font-mono font-semibold tracking-wide text-center"
+      >
+        <p>
+          {album?.title}
+        </p>
+        <p
+          className="text-gray-500"
+        >
+          {album?.media.reduce((sum, m) => sum + m.trackCount, 0)} total tracks
+        </p>
+      </div>
+
+      <table
+        className="table-fixed w-full"
+      >
+        <thead
+          className="bg-surface"
+        >
+          <tr
+            className="tracking-wide uppercase text-gray-400 text-xs"
+          >
+            <th className="px-4 py-2 w-20 text-right">Pos.</th>
+            <th className="px-4 py-2 text-left">Title</th>
+            <th className="px-4 py-2 w-20 text-center">Length</th>
+            <th className="px-4 py-2 w-20 text-center">Reviews</th>
+            <th className="px-4 py-2 w-20 text-center">Rating</th>
           </tr>
         </thead>
         <tbody>
-          {album?.tracks.map((track, i) => {
-            return (
-              <tr
-                key={track.id}
-                className={`${i % 2 === 0 ? 'bg-gray-700 hover:bg-gray-700/80' : 'bg-gray-800 hover:bg-gray-800/80'} border-b border-white group`}
-                onClick={() => router.push(`/song/${track.recording.id}`)}
-              >
-                <td className="px-3 py-2 text-right text-gray-400">{track.position}.</td>
-                <td className="px-3 py-2 flex gap-1 cursor-pointer">
-                  <p 
-                    className="font-semibold truncate group-hover:underline cursor-pointer"
-                  >
-                    {track.recording.title}
-                  </p>
-                  {track.recording["artist-credit"].length > 1 && (
-                    <p className="text-gray-300 text-sm items-center flex truncate">
-                      {"ft. "}
-                      {track.recording["artist-credit"].map((artist, j) => (
-                        j !== 0 && `${artist.name}${artist.joinphrase || ""} `
-                      ))}
-                    </p>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-center">
-                  {Math.floor(track.recording.length / 1000 / 60)} mins {Math.floor((track.recording.length / 1000) % 60)} secs
+        {album?.media.map((media, mediaIndex) => (
+          <Fragment key={mediaIndex}>
+            {/* Optional disc header */}
+            {album.media.length > 1 && (
+              <tr className="bg-black/50 border-b border-white/5">
+                <td colSpan={5} className="px-4 py-2 text-sm font-semibold opacity-60">
+                  Disc {mediaIndex + 1}
                 </td>
               </tr>
-            )
-          })}
+            )}
+
+            {media.tracks.map((t, trackIndex) => (
+              <tr
+                key={`${mediaIndex}-${trackIndex}`}
+                className={`
+                  ${(trackIndex % 2 === 0) ? "" : "bg-surface"}
+                  border-t border-b border-white/5
+                  interactive-button interactive-dark
+                  text-sm
+                `}
+                title={`View details for ${t.title}`}
+                onClick={() => router.push(`/song/${t.recording.id}`)}
+              >
+                <td className="px-4 py-2 w-20 font-semibold text-right opacity-40">
+                  {t.position}
+                </td>
+
+                <td className="px-4 py-2 text-left truncate">
+                  {t.title}
+                </td>
+
+                <td className="px-4 py-2 w-20 text-center opacity-40">
+                  {formatDuration(t.length)}
+                </td>
+
+                <td className="px-4 py-2 w-20 text-center opacity-40">
+                  {t.recording.totalReviews}
+                </td>
+
+                <td
+                  className={`
+                    px-4 py-2 w-20 text-center font-semibold
+                    ${t.recording.avgRating == null ? "text-gray-600" : "text-white"}
+                    rounded-md
+                  `}
+                >
+                  <TracklistRatingsBlock track={t} />
+                </td>
+              </tr>
+            ))}
+          </Fragment>
+        ))}
+
         </tbody>
       </table>
     </div>

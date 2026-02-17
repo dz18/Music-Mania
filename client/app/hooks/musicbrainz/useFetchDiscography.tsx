@@ -25,7 +25,7 @@ export default function useFetchDiscography(
       setTableLoad(true)
       if (!artist) { setArtistLoad(true) }
 
-      const discog = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography`, {
+      let discog = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography${active === 'single' ? 'Singles': ''}`, {
         params: { artistId, type: active, page: page }
       })
       

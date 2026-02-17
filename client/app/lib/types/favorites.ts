@@ -1,17 +1,18 @@
-interface userFavArtist {
-    userId: string,
-    artistId: string,
-    since: Date
+export interface FavoritesResponse {
+    userLikedArtist: LikedArtist[]
+    userLikedRelease: LikedRelease[]
+    userLikedSong: LikedSong[]
+    _count: {
+        userLikedArtist: number
+        userLikedRelease: number
+        userLikedSong: number
+    }
 }
 
-interface userFavRelease {
-    userId: string,
-    releaseId: string,
-    since: Date
-}
+export type LikeTabs = {
+  label: string
+  value: LikeTypes
+  count: number
+}[]
 
-interface userFavSong {
-    userId: string,
-    songId: string,
-    since: Date
-}
+export type LikeTypes = 'artists' | 'releases' | 'songs'

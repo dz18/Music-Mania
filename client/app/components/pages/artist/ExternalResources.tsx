@@ -7,7 +7,6 @@ import Snapchat from "@/app/assets/Snapchat"
 import Spotify from "@/app/assets/Spotify"
 import TikTok from "@/app/assets/TikTok"
 import { Artist } from "@/app/lib/types/artist"
-import { Music } from "lucide-react"
 import { JSX } from "react"
 import { BiShare, BiVideo } from "react-icons/bi"
 import { BsWikipedia } from "react-icons/bs"
@@ -57,13 +56,14 @@ export default function ExternalResources ({
     'lyrics': <MdLyrics size={18} className="text-white"/>,
     'image': <FaImage size={18} className="text-white"/>,
   }
+
   return (
     <>
     
       {artist?.urls &&
         <div>
-          <p className="text-sm text-gray-500 font-bold mb-1">External Resources</p>
-          <div className="flex gap-1 items-center">
+          <p className="text-sm text-gray-500 font-semibold mb-1">External Resources</p>
+          <div className="flex gap-1 items-center ">
             {artist?.urls.map((url, i) => (
               <a key={i} title={url.type} href={url.url} className="cursor-pointer w-6 h-6 flex items-center justify-center" target="_blank">
                 {URLIcons[url.type]}
