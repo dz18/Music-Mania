@@ -110,126 +110,6 @@ const getLikes = async (req, res) => {
   }
 }
 
-// Add or remove a favorite
-const favorite = async (req, res) => {
-  const { 
-    id, name, title, 
-    artistCredit, since, 
-    userId, type, action, 
-    coverArt 
-  } = req.body
-
-  logApiCall(req)
-
-  console.log(coverArt)
-
-  if (type !== 'release' && type !== 'artist' && type !== 'song') {
-    errorApiCall(req, 'Invalid type')
-    return res.status(400).json({error: 'Invalid type'})
-  }
-
-  if (action !== 'add' && action !== 'remove') {
-    errorApiCall(req, 'Invalid action')
-    return res.status(400).json({error: 'Invalid action'})
-  }
-
-  if (!id || !userId) {
-    errorApiCall(req, 'Missing Id')
-    return res.status(400).json({error: 'Missing id'})
-  }
-
-  try {
-    const fieldMap = {
-      release: 'favReleases',
-      artist: 'favArtists',
-      song: 'favSongs',
-    }
-    const field = fieldMap[type]
-
-    const user = await prisma.user.findUnique({
-      where: {id: userId},
-      select: { 
-        favArtists: true,
-        favReleases: true,
-        favSongs: true
-      }
-    })
-
-    if (user[field].includes(id) && type === 'add') {
-      errorApiCall(req, `${field} already includes id`)
-      return res.status(400).json({error : 'Artist already set as favorite'})
-    }
-
-    
-    if (!user[field].includes(id) && type === 'remove') {
-      errorApiCall(req, `${field} does not include the id`)
-      return res.status(400).json({error : 'Artist already set as favorite'})
-    }
-
-    if (type === 'artist') {
-      await prisma.artist.upsert({
-        where: { id },
-        update: {},
-        create: { id, name }
-      })
-
-      if (action === 'add') {
-        await prisma.userFavArtist.create({
-          data: { userId, artistId: id, since }
-        })
-      } else if (action === 'remove') {
-        await prisma.userFavArtist.delete({
-          where: {
-            userId_artistId: { userId, artistId: id }
-          }
-        })
-      }
-    } else if (type === 'release') {
-      await prisma.release.upsert({
-        where: { id },
-        update: {},
-        create: { id, title, artistCredit, coverArt }
-      })
-
-      if (action === 'add') {
-        await prisma.userFavRelease.create({
-          data: { userId, releaseId: id, since }
-        })
-      } else if (action === 'remove') {
-        await prisma.userFavRelease.delete({
-          where: {
-            userId_releaseId: { userId, releaseId: id }
-          }
-        })
-      }
-    } else if (type === 'song') {
-      await prisma.song.upsert({
-        where: {id},
-        update: {},
-        create: {id, title, artistCredit, coverArt}
-      })
-
-      if (action === 'add') {
-        await prisma.userFavSong.create({
-          data: { userId, songId: id, since }
-        })
-      } else if (action === 'remove') {
-        await prisma.userFavSong.delete({
-          where: {
-            userId_songId: { userId, songId: id }
-          }
-        })
-      }
-    }
-
-    successApiCall(req)
-    return res.json({message: `Artist ${action}ed to favorites`})
-  } catch (error) {
-    errorApiCall(req, error)
-  }
-  
-}
-
 // Get a batch of users
 const query = async (req, res) => {
   const { q } = req.query
@@ -416,7 +296,6 @@ const isFollowing = async (req, res) => {
       }
     })
 
-
     successApiCall(req)
     res.json(isFollowing) 
   } catch (error) {
@@ -426,14 +305,19 @@ const isFollowing = async (req, res) => {
 
 // Follow a user
 const follow = async (req, res) => {
-  const { userId, profileId } = req.body
+  const { profileId } = req.body
 
   logApiCall(req)
+
+  if (!req.user) {
+    errorApiCall(req, 'Unauthorized')
+    return res.status(403).json({error: 'Unauthorized'})
+  }
   
   try {
     const follow = await prisma.follow.create({
       data: {
-        followerId: userId,
+        followerId: req.user.id,
         followingId: profileId
       }
     })
@@ -448,15 +332,19 @@ const follow = async (req, res) => {
 
 // Unfollow a user
 const unfollow = async (req, res) => {
-  const { userId, profileId } = req.body
+  const { profileId } = req.body
 
   logApiCall(req)
   
+  if (!req.user) {
+    return res.status(403).json({error: 'Unauthorized'})
+  }
+
   try {
     await prisma.follow.delete({
       where: {
         followerId_followingId: { 
-          followerId: userId, 
+          followerId: req.user.id, 
           followingId: profileId 
         }
       }
@@ -467,33 +355,6 @@ const unfollow = async (req, res) => {
   } catch (error) {
     errorApiCall(req, error)
   }
-}
-
-// Return the amount of followers and followers a user has
-const countFollow = async (req, res) => {
-  const { profileId } = req.query
-
-  logApiCall(req)
-  
-  try {
-    
-    const [followers, following] = await Promise.all([
-      prisma.follow.count({
-        where: {followingId: profileId}
-      }),
-      prisma.follow.count({
-        where: { followerId: profileId }
-      })
-    ])
-
-    const data = {followers, following}
-
-    successApiCall(req)
-    res.json(data)
-  } catch (error) {
-    errorApiCall(req, error)
-  }
-
 }
 
 const allFollowers = async (req, res) => {
@@ -886,19 +747,17 @@ const deleteLike = async (req, res) => {
 
 module.exports = {
   getUsers,
-  findUserById,
-  getLikes,
-  favorite,
   query,
+  getLikes,
   profile,
-  isFollowing,
-  follow,
-  unfollow,
-  countFollow,
   allFollowers,
+  isFollowing,
+  findUserById,
   editInfo,
-  edit,
   reviewPanel,
+  follow,
   like,
-  deleteLike
+  unfollow,
+  deleteLike,
+  edit
 };

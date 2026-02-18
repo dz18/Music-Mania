@@ -6,26 +6,27 @@ const { verifyUser } = require('../middleware/auth')
 const multer = require('multer')
 const upload = multer({ storage: multer.memoryStorage() })
 
+// Public Use
 router.get('/total', userController.getUsers)
-router.get('/find', verifyUser, userController.findUserById)
-router.get('/likes', userController.getLikes)
 router.get('/query', userController.query)
-router.get('/profile', userController.profile)
-router.get('/edit', verifyUser, userController.editInfo) // Edit
-router.get('/follow', userController.isFollowing)
-router.get('/countFollow', userController.countFollow)
-router.get('/allFollowers', userController.allFollowers)
 
-// Get the user info for the review panel component (review & like status)
+// Public User-specific
+router.get('/likes', userController.getLikes)
+router.get('/profile', userController.profile)
+router.get('/allFollowers', userController.allFollowers)
+router.get('/follow', userController.isFollowing)
+
+// Private User-specific
+router.get('/find', verifyUser, userController.findUserById)
+router.get('/edit', verifyUser, userController.editInfo)
 router.get('/review', verifyUser, userController.reviewPanel)
 
-router.post('/follow', userController.follow)
+// Actions
+router.post('/follow', verifyUser, userController.follow)
 router.post('/like', verifyUser, userController.like)
-
-router.delete('/follow', userController.unfollow)
+router.delete('/unfollow', verifyUser, userController.unfollow)
 router.delete('/like', verifyUser, userController.deleteLike)
-
-router.patch('/favorite', userController.favorite)
 router.patch('/edit', verifyUser, upload.single('avatar'), userController.edit)
+
 
 module.exports = router

@@ -96,8 +96,6 @@ export default function EditProfilePage ({
   useEffect(() => {
     if (!session) return
 
-    console.log(`${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session.user.id}v=${Date.now()}`)
-
     setCurrentAvatarUrl(`${process.env.NEXT_PUBLIC_AWS_S3_BASE_URL}/avatars/${session.user.id}?v=${Date.now()}`)
   }, [session])
 
@@ -138,7 +136,7 @@ export default function EditProfilePage ({
     formData.append('age', data.age)
     const updatedAt = new Date()
     formData.append('updatedAt', updatedAt.toISOString())
-    console.log(data.resetAvatar)
+
     if (data.resetAvatar) formData.append('resetAvatar', 'true')
 
     const token = `Bearer ${session?.user.token}`
