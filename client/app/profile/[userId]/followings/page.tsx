@@ -8,6 +8,7 @@ import usefetchFollowers from "@/app/hooks/api/profile/useFetchFollowers";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
+import IndividualFollowing from "./IndividualFollowing";
 export default function Followings ({
   params
 } : {
@@ -64,40 +65,14 @@ export default function Followings ({
         >
         {results?.data?.follows?.length !== 0 ?
           results?.data?.follows?.map((f, i) => (
-            <div 
+            <IndividualFollowing
+              following={f}
+              index={i}
               key={i}
-              className={`
-                ${i % 2 === 0 ? 'bg-surface' : ''}
-                flex p-2 gap-2 border-b border-white/5
-              `}
-            >
-              <img src={f.following.avatar ?? '/default-avatar.jpg'} className="w-16 h-16 object-cover border border-gray-500" />
-              
-              <div className="text-sm grow">
-                <p className="font-mono font-bold hover:underline cursor-pointer" onClick={() => router.push(`/profile/${f.followingId}`)}>
-                  {f.following.username}
-                </p>
-                <p className="text-gray-400">Following since {new Date(f.createdAt).toLocaleDateString('en-us', {year: 'numeric', month: 'long', day: 'numeric'})}</p>
-              </div>
-
-              {session &&
-                session?.user.id !== f.followingId && 
-                  <div className="flex items-center">
-                    <button 
-                      className={`
-                        ${results.data.isFollowingMap[f.followingId] ? 
-                          'text-white hover:bg-black/20 active:bg-black/40 border' : 
-                          'text-black bg-white hover:bg-white/80 active:bg-white/60'
-                        }
-                        px-2 py-1 rounded w-24 font-mono text-sm cursor-pointer 
-                      `}
-                      onClick={() => results.data.isFollowingMap[f.followingId] ? unfollow(f.followingId) : follow(f.followingId)}
-                    >
-                      {results.data.isFollowingMap[f.followingId] ? 'unfollow' : 'follow'}
-                    </button>
-                  </div>
-              }
-            </div>
+              unfollow={unfollow}
+              follow={follow}
+              isFollowingMap={results.data.isFollowingMap}
+            />          
           ))
         :
           <div className="font-mono text-gray-500 text-lg">None :(</div>

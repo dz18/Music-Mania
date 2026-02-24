@@ -161,7 +161,7 @@ const getArtist = async (req, res) => {
 
     if (!fetchArtist.ok) {
       errorApiCall(req, `MusicBrainz error: ${fetchArtist.status}`)
-      return res.status(fetchArtist.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
+      return res.status(fetchArtist.status).json({error: `MusicBrainz API server returned an error. Try again later or check the artist ID.`})
     }
 
     const artistData = await fetchArtist.json()
@@ -383,7 +383,7 @@ const discography = async (req, res) => {
 
     if (!releases.ok) {
       errorApiCall(req, `MusicBrainz error: ${releases.status}`)
-      return res.status(releases.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
+      return res.status(releases.status).json({error: `MusicBrainz API server returned an error. Try again later or check the artist ID.`})
     }
 
     const releasesData = await releases.json()
@@ -446,7 +446,7 @@ const discography = async (req, res) => {
     
     console.error('[UNEXPECTED ERROR] Failed fetching discography:', error)
     errorApiCall(req, error.message)
-    return res.status(500).json({ error: 'Failed to fetch discography data.' })
+    return res.status(500).json({ error: 'Musicbrainz API Failed to fetch discography data. Please try again later.' })
   }
   
 }
@@ -556,7 +556,7 @@ const discographySingles = async (req, res) => {
     
     console.error('[UNEXPECTED ERROR] Failed fetching release:', error)
     errorApiCall(req, error.message)
-    return res.status(500).json({ error: 'Failed to fetch release data.' })
+    return res.status(500).json({ error: 'Musicbrainz API Failed to fetch artists singles data. Please try again later.' })
   }
 }
 
@@ -678,7 +678,7 @@ const getRelease = async (req, res) => {
     
     console.error('[UNEXPECTED ERROR] Failed fetching release:', error)
     errorApiCall(req, error.message)
-    return res.status(500).json({ error: 'Failed to fetch release data.' })
+    return res.status(500).json({ error: 'Musicbrainz API Failed to fetch release data. Please Try Again Later' })
   }
 }
 
@@ -788,7 +788,7 @@ const findSingleId = async (req, res) => {
 
     if (!fetchSingle.ok) {
       errorApiCall(req, `MusicBrainz error: ${fetchSingle.status}`)
-      return res.status(fetchSingle.status).json({error: `MusicBrainz server returned an error. Try again later or check the artist ID.`})
+      return res.status(fetchSingle.status).json({error: `MusicBrainz API server returned an error. Try again later or check the artist ID.`})
     }
 
     const single = await fetchSingle.json()

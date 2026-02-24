@@ -17,8 +17,7 @@ export default function ArtistReviews ({
     <div
       className="flex flex-col gap-2"
     >
-
-      {data?.data.reviews.length !== 0 ?
+      {data?.data.reviews.length !== 0 &&
         <div className="overflow-hidden rounded-lg border border-gray-500">
           {data?.data.reviews.map((r, i) => (
             <div key={r.artistId} 
@@ -42,10 +41,6 @@ export default function ArtistReviews ({
             </div>
           ))}
           {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
-        </div>
-      :
-        <div>
-          <p className="text-center font-mono text-gray-500">None</p>
         </div>
       }
     </div>

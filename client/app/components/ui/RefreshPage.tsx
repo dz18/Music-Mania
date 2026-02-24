@@ -15,7 +15,7 @@ export default function RefreshPage ({
     <div className="flex flex-1 min-h-full items-center justify-center flex-col font-mono gap-2">
       <p className="text-lg">{title}</p>
       <button
-        className="text-black bg-teal-500 px-1 py-2 rounded font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-teal-500/80 active:bg-teal-500/60"
+        className="interactive-button font-semibold text-sm text-orange-500 bg-orange-950 border border-orange-500 flex gap-2 rounded px-2 py-1 hover:bg-orange-900 active:bg-orange-800"
         onClick={func}
         disabled={loading}
       >

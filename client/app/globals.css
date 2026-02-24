@@ -33,15 +33,13 @@
   transform-origin: 0% 50%;
 }
 
-.bg-surface {
-  background-color: #1a1a1a;
-}
-
-.bg-surface-elevated {
-  background-color: #2b2b2b;
-}
-
 @layer utilities {
+  .bg-surface {
+    @apply bg-[#1a1a1a]
+  }
+  .bg-surface-elevated {
+    @apply bg-[#2b2b2b];
+  }
   .input-glow {
     @apply 
       transition-shadow
@@ -53,7 +51,7 @@
     @apply  
       cursor-pointer
       focus-visible:outline-none
-      focus-visible:ring-2 focus-visible:ring-white/30;
+      focus-visible:ring-2 focus-visible:ring-white/30
   }
   .interactive-dark {
     @apply  

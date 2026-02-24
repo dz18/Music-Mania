@@ -15,7 +15,7 @@ export default function ReleaseReviews ({
 
   return (
     <>
-      {data?.count !== 0 ?
+      {data?.count !== 0 &&
         <div className="overflow-hidden rounded-lg border border-gray-500">
           {data?.data.reviews.map((r, i) => (
             <div key={r.releaseId} 
@@ -55,9 +55,6 @@ export default function ReleaseReviews ({
 
           {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
 
-        </div>
-      :
-        <div>
         </div>
       }
     </>

@@ -7,7 +7,6 @@ const register = async (req, res) => {
     email, 
     username,
     password, 
-    phoneNumber 
   } = req.body
 
   logApiCall(req)
@@ -27,20 +26,11 @@ const register = async (req, res) => {
       errorApiCall(req, 'Username already in use')
     }
 
-    let existingPhoneNumber
-    if (phoneNumber) {
-      existingPhoneNumber = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber } })
-      if (existingPhoneNumber) {
-        errorApiCall(req, 'Phone Number already in use')
-      }
-    }
-
-    if (existingUser || existingUsername || existingPhoneNumber) {
+    if (existingUser || existingUsername) {
       errorApiCall(req, 'Username already in use')
       return res.status(409).json({ error: {
         email : existingUser ? 'Email already in use' : null,
         username : existingUsername ? 'Username already in use' : null,
-        phoneNumber : existingPhoneNumber ? 'Phone Number already in use' : null
       } })
     }
 
@@ -52,7 +42,6 @@ const register = async (req, res) => {
         email,
         username, 
         password: hashedPassword, 
-        phoneNumber: phoneNumber || null,
         createdAt: new Date(),
         updatedAt: new Date(),
         role: 'USER'

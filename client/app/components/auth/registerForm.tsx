@@ -12,14 +12,12 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
 
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setErrors] = useState({
     email: '',
     username: '',
-    phoneNumber: '',
     confirmPassword: '',
   })
 
@@ -35,11 +33,7 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
       return
     }
 
-    if (error.email || error.username || 
-      error.phoneNumber || error.confirmPassword
-    ) {
-      return
-    }
+    if (error.email || error.username || error.confirmPassword) return
 
     try {
       setSubmitting(true)
@@ -48,7 +42,6 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
         email: email,
         username: username,
         password: password,
-        phoneNumber: phoneNumber
       }, {
         timeout: 5000
       })
@@ -58,8 +51,6 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
         password,
         callbackUrl: callbackUrl
       })
-      
-      
 
     } catch (error : any) {
     
@@ -73,9 +64,6 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
           } 
           if (data.error.username) {
             setErrors(prev => ({...prev, username: data.error.username}))
-          }
-          if (data.error.phoneNumber){
-            setErrors(prev => ({...prev, phoneNumber: data.error.phoneNumber}))
           }
         }
 
@@ -94,7 +82,7 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
           type="email" 
           id="email" 
           placeholder="Email"
-          className={`text-sm py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all ${error.email && 'border-red-500'}`}
+          className={`text-sm py-1 px-2 border rounded input-glow transition-all ${error.email && 'border-red-500'}`}
           value={email}
           onChange={(e) => {
             setErrors(prev => ({...prev, email : ""}))
@@ -112,7 +100,7 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
           type="text" 
           id="username" 
           placeholder="Username"
-          className={`text-sm py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all ${error.username && 'border-red-500'}`}
+          className={`text-sm py-1 px-2 border rounded input-glow transition-all ${error.username && 'border-red-500'}`}
           value={username}
           onChange={(e) => {
             setErrors(prev => ({...prev, username : ""}))
@@ -125,29 +113,12 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
         }
       </div>
       <div className="flex flex-col mb-1">
-        <label htmlFor="" className="text-sm">Phone Number:</label>
-        <input 
-          type="tel" 
-          id="phone_number" 
-          placeholder="Phone Number"
-          className={`text-sm py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all ${error.phoneNumber && 'border-red-500'}`}
-          value={phoneNumber}
-          onChange={(e) => {
-            setErrors(prev => ({...prev, phoneNumber : ""}))
-            setPhoneNumber(e.target.value)
-          }}
-        />
-        {error.phoneNumber && 
-          <p className="text-sm text-red-500">{error.phoneNumber}</p>
-        }
-      </div>
-      <div className="flex flex-col mb-1">
         <label htmlFor="" className="text-sm">Password:</label>
         <input 
           type="password" 
           id="password" 
           placeholder="Password"
-          className={`text-sm py-1 px-2 border-1 rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all ${error.confirmPassword && 'border-red-500'}`}
+          className={`text-sm py-1 px-2 border rounded input-glow transition-all ${error.confirmPassword && 'border-red-500'}`}
           value={password}
           onChange={(e) => {
             setErrors(prev => ({...prev, confirmPassword : ""}))
@@ -175,7 +146,7 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
         }
       </div>
       <button 
-        className="bg-white text-black px-1 py-2 rounded cursor-pointer font-mono hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] text-sm active:shadow-[0_0_20px_rgba(255,255,255,0.5)] active:bg-white/80 transition-all"
+        className="bg-teal-950 text-teal-300 border border-teal-300 input-glow px-1 py-2 rounded interactive-button font-mono text-sm font-semibold"
         disabled={submitting}
       >
         {submitting ? 

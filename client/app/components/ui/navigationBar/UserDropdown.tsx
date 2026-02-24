@@ -1,4 +1,4 @@
-import { Cog, LogOut, Settings, User } from "lucide-react"
+import { Cog, Hamburger, LogOut, Menu, Settings, User } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -14,6 +14,7 @@ export default function UserDropdown() {
 
   useEffect(() => {
     function clickOutside(event: MouseEvent) {
+      
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpen(false)
       }
@@ -29,12 +30,10 @@ export default function UserDropdown() {
     <div className="relative inline-block" ref={dropdownRef}>
 
       <div
-        onClick={() => setOpen(prev => !prev)}
-        className="flex items-center interactive-button interactive-dark px-2"
+        className="flex items-center px-2"
       >
         <div className="overflow-hidden">
           <p className="truncate font-semibold text-right">{session?.user.username}</p>
-          <p className="truncate text-gray-500 text-sm">{session?.user.email}</p>
         </div>
         <div className="flex p-2 gap-2 items-center">
           <img 
@@ -44,10 +43,20 @@ export default function UserDropdown() {
             onError={e => { e.currentTarget.src = '/default-avatar.jpg'}}
           />
         </div>
+        <button
+          className="interactive-button interactive-dark rounded p-1"
+          onClick={() => setOpen(prev => !prev)}
+        >
+          <Menu size={24}/>
+        </button>
       </div>
 
-      {open &&
-        <div className="absolute right-0 top-full w-max max-w-80 min-w-50 mt-2 border border-gray-500 rounded shadow-lg z-10 bg-surface">
+
+        <div   
+          className={`absolute right-0 top-full mt-2 w-max max-w-80 min-w-50 border border-gray-500 rounded shadow-lg z-10 bg-surface transform transition-all duration-150 ${
+            open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+          }`}
+        >
           
           <ul className="text-base">
 
@@ -65,19 +74,18 @@ export default function UserDropdown() {
               <Settings size={18}/> Settings
             </li>
             
-            <li className="border-b-1 border-gray-500 mx-1"/>
+            <li className="border-b border-gray-500 mx-1"/>
 
             <li
               className="interactive-button interactive-dark p-2 flex gap-2 items-center"
               title="signout"
               onClick={() => signOut()}
             >
-              <LogOut size={18}/>Signout
+              <LogOut size={18}/>Sign Out
             </li>
             
           </ul>
         </div>
-      }
 
     </div>
   )

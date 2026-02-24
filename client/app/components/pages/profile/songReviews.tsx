@@ -12,7 +12,7 @@ export default function SongReviews ({
 
   return (
     <>
-      {data?.data.reviews.length !== 0 ?
+      {data?.data.reviews.length !== 0 &&
         <div className="overflow-hidden rounded-lg border border-gray-500">
           {data?.data.reviews.map((r, i) => (
             <div key={r.songId} 
@@ -52,9 +52,6 @@ export default function SongReviews ({
 
           {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
 
-        </div>
-      :
-        <div>
         </div>
       }
     </>

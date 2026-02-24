@@ -9,7 +9,7 @@ const LoadingBox: React.FC<LoadingBoxProps> = ({ className }) => {
   return (
     <div
       className={`
-        bg-gray-700 
+        bg-surface 
         animate-pulse 
         rounded-md
         ${className || 'w-full h-6'}

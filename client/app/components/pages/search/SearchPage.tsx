@@ -10,6 +10,7 @@ import Pagination from "../../ui/Pagination"
 import IndeterminateLoadingBar from "../../ui/loading/IndeterminateLoadingBar"
 import { FileX2, RefreshCcw, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
+import LoadingBox from "../../ui/loading/loadingBox"
 
 export default function SearchPage ({
   params
@@ -107,7 +108,7 @@ export default function SearchPage ({
       </section>
 
       {/* Select Type */}
-      <section className="flex items-center justify-between items-end">
+      <section className="flex items-center justify-between">
         <ul className="list-none flex flex-wrap gap-1 box-border">
           {tabs.map(t => (
             <li key={t.id}
@@ -138,8 +139,10 @@ export default function SearchPage ({
 
         {tab &&
           loading ? (
-            <div>
-              <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+            <div className="flex flex-col gap-1 py-1">
+              {Array.from({ length: 15 }).map((_, index) => (
+                <LoadingBox key={index} className="rounded-none h-15" />
+              ))}
             </div>
           ) : (
             error ? 

@@ -61,7 +61,7 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
         <input
           type="email" 
           placeholder="Email"
-          className={`py-1 px-2 border-1 text-sm rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all ${error.email && 'border-red-500'}`}
+          className={`py-1 px-2 border text-sm rounded input-glow transition-all ${error.email && 'border-red-500'}`}
           value={email}
           onChange={(e) => {
             setError(prev => ({...prev, email : ''}))
@@ -80,7 +80,7 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
         <input 
           type="password" 
           placeholder="Password"
-          className={`py-1 px-2 border-1 text-sm rounded hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all ${error.password && 'border-red-500'}`}
+          className={`py-1 px-2 border text-sm rounded input-glow transition-all ${error.password && 'border-red-500'}`}
           value={password}
           onChange={(e) => {
             setError(prev => ({...prev, password: ''}))
@@ -94,7 +94,7 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
         }
       </div>
       <button 
-        className="bg-white text-black px-1 py-2 rounded cursor-pointer font-mono hover:shadow-[0_0_10px_rgba(255,255,255,0.5)] text-sm active:shadow-[0_0_20px_rgba(255,255,255,0.5)] active:bg-white/80 transition-all"
+        className="bg-teal-950 text-teal-300 border border-teal-300 input-glow px-1 py-2 rounded interactive-button font-mono text-sm font-semibold"
         disabled={submitting}
       >
         {submitting ? 
@@ -102,7 +102,7 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
             <Loader size={19} className="animate-spin"/> 
           </div>
         : 
-          'Submit'
+          'Sign In'
         }
       </button>
     </form>

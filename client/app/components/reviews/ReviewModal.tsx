@@ -253,14 +253,10 @@ export default function ReviewModal ({
         p-4 w-[90%] max-w-lg relative
       `}>
 
-        <div className={`flex ${review?.status ? 'justify-between' : 'justify-end'} border-b-1 border-gray-500 pb-2`}>
+        <div className={`flex ${review?.status ? 'justify-between' : 'justify-end'} border-b border-gray-500 pb-2`}>
           {review?.status &&
-            <div className="text-xs flex gap-1 items-end tracking-wide">
-              <span
-                className=" font-semibold"
-              >
-                Status: 
-              </span>
+            <div className="text-xs flex gap-1 items-end tracking-wide font-semibold">
+              Status: 
               <span className={`${review?.status === 'DRAFT' ? "text-orange-500" : "text-teal-500"}`}>
                 {review?.status}
               </span>
@@ -291,7 +287,7 @@ export default function ReviewModal ({
               maxLength={MAX_TITLE_LENGTH}
               disabled={loading}
             />
-            {error.title && <p className="text-sm text-red-500">{error.title}</p>}
+            {error.title && <p className="text-xs text-red-500 font-mono">{error.title}</p>}
           </div>
 
           <div>
@@ -305,7 +301,7 @@ export default function ReviewModal ({
             <div className="mt-1 text-xs font-mono">
               {rating}/5
             </div>
-            {error.rating && <p className="text-sm text-red-500">{error.rating}</p>}
+            {error.rating && <p className="text-xs text-red-500 font-mono">{error.rating}</p>}
           </div>
 
           {/* Review */}
@@ -322,7 +318,7 @@ export default function ReviewModal ({
               rows={15}
               disabled={loading}
             />
-            {error.reviewText && <p className="text-sm text-red-500">{error.reviewText}</p>}
+            {error.reviewText && <p className="text-xs text-red-500 font-mono">{error.reviewText}</p>}
           </div>
 
           {/* Tags */}
@@ -339,7 +335,7 @@ export default function ReviewModal ({
                 maxLength={24}
               />
               <button 
-                className="text-sm bg-teal-950 border border-teal-300 text-teal-300 hover:bg-teal-900 active:bg-teal-800 rounded px-2 py-1 cursor"
+                className="text-xs bg-teal-950 border border-teal-300 text-teal-300 hover:bg-teal-900 active:bg-teal-800 rounded px-2 py-1 cursor font-semibold interactive-button"
                 onClick={handleAddTag}
               >
                 Add
@@ -361,14 +357,15 @@ export default function ReviewModal ({
             :
               <p className="font-mono text-gray-500 text-xs m-1">No Tags</p>
             }
-            {error.tags && <p className="text-sm text-red-500">{error.tag}</p>}
+            {error.tags && <p className="text-xs text-red-500 font-mono">{error.tag}</p>}
+            <p className="text-xs text-orange-500 font-semibold font-mono">[NOTE]: Tags will be utilized at a future date.</p>
           </div>
 
 
-          <div className="text-sm flex gap-4 justify-between border-t-1 border-gray-500 pt-4">
+          <div className="text-sm flex gap-4 justify-between border-t border-gray-500 pt-4">
             <div className="flex gap-2">
               <button 
-                className="text-gray-300 px-2 py-1 border-1 border-gray-300 rounded hover:bg-gray-800 cursor-pointer"
+                className="text-white font-semibold px-2 py-1 border rounded hover:bg-gray-800 cursor-pointer"
                 onClick={() => handleSubmittion('DRAFT')}
                 disabled={loading}
               >
@@ -376,7 +373,7 @@ export default function ReviewModal ({
               </button>  
               {review &&
                 <button
-                  className="text-red-500 px-2 py-1 border-1 border-red-500 rounded hover:bg-red-900 cursor-pointer"
+                  className="text-red-500 px-2 py-1 border border-red-500 bg-red-950 rounded hover:bg-red-900 active:bg-red-800 interactive-button font-semibold"
                   onClick={handleDeletion}
                   disabled={loading}
                 >
@@ -386,7 +383,7 @@ export default function ReviewModal ({
             </div>
             <div className="flex gap-2 items-center">
               <button 
-                className="text-teal-300  bg-teal-950 px-2 py-1 border-1 rounded cursor-pointer hover:bg-teal-900"
+                className="text-teal-300  bg-teal-950 px-2 py-1 border rounded cursor-pointer hover:bg-teal-900 font-semibold"
                 onClick={() => handleSubmittion('PUBLISHED')}
                 disabled={loading}
               >

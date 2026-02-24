@@ -1,5 +1,4 @@
 import { AudioLines, ChevronLeft } from "lucide-react";
-import ProviderOptions from "./ProviderOptions";
 import { ReactNode } from "react";
 import Link from "next/link";
 
@@ -26,7 +25,7 @@ export default function AuthContainer({
         Music Mania
       </Link>
 
-      <div className="border-1 rounded p-4 shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+      <div className="border rounded p-4 shadow-[0_0_15px_rgba(255,255,255,0.5)]">
 
         <Link 
           className="hover:bg-white/10 active:bg-white/30 p-1 rounded-full inline-flex items-center cursor-pointer"
@@ -43,17 +42,10 @@ export default function AuthContainer({
           <Link href={linkHref} className="ml-1 hover:font-bold">{linkTitle}</Link>
         </p>
         
-        <div className="border-b-1 w-full mb-4 mt-2"/>
+        <div className="border-b w-full mb-4 mt-2"/>
 
         {form}
-        
-        <div className="flex items-center gap-2 text-xs my-3">
-          <div className="border-b-1 w-full"/>
-          or
-          <div className="border-b-1 w-full"/>
-        </div>
-
-        <ProviderOptions/>
+      
 
       </div>
 
