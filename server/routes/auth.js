@@ -3,8 +3,11 @@ const router = express.Router()
 const authController = require('../controllers/auth')
 const { verifyUser } = require('../middleware/auth')
 
+// Public
 router.post('/register', authController.register)
 router.post('/sign-in', authController.signIn)
+
+// Actions
 router.post('/confirmPassword', verifyUser, authController.confirmPassword)
 router.post('/changePassword', verifyUser, authController.changePassword)
 

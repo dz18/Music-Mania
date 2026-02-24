@@ -1,9 +1,7 @@
-import useIsFollowing from "@/app/hooks/api/profile/useFollow";
 import { CalendarDays, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction } from "react";
 
 export default function MainDisplay ({
   profile,
@@ -21,7 +19,6 @@ export default function MainDisplay ({
   const router = useRouter()
 
   const isOwnProfile = status === 'authenticated' && session?.user.id === profile.id
-  const isFollowing = profile.isFollowing
 
   return (
 
@@ -68,7 +65,7 @@ export default function MainDisplay ({
               Edit Profile
             </Link>
           ) : (
-            status !== 'unauthenticated' && (
+            status === 'authenticated' && (
               <button
                 className={`
                   relative px-2 py-1 border rounded font-mono

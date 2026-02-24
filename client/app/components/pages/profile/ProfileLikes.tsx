@@ -32,7 +32,6 @@ export default function ProfileLikes ({
       })
 
       const data = res.data
-      console.log(data)
       if (active === 'artists') setLikedArtists(data.userLikedArtist)
       if (active === 'releases') setLikedReleases(data.userLikedRelease) 
       if (active === 'songs') setLikedSongs(data.userLikedSong) 

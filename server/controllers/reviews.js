@@ -189,7 +189,6 @@ const songReviews = async(req, res) => {
 
 }
 
-// Fetches a specific review
 const user = async (req, res) => {
   const {userId, itemId, type, workId} = req.query
 
@@ -230,9 +229,14 @@ const publishOrDraft = async (req, res) => {
   
   logApiCall(req)
 
+  if (!req.user) {
+    errorApiCall(req, 'Unauthorized')
+    return res.status(401).json({error: 'Unauthorized'})
+  }
+
   if (status !== 'PUBLISHED' && status !== 'DRAFT') {
     errorApiCall(req, 'Invalid Status')
-    return
+    return res.status(400).json({error: 'Invalid Status'})
   }
 
   try {
@@ -285,7 +289,7 @@ const publishOrDraft = async (req, res) => {
         where: { artistId: itemId, status: 'PUBLISHED' },
         _avg: { rating: true },
         _count: true
-      }) 
+      })
 
       stats = await prisma.userArtistReviews.groupBy({
         by: ['rating'],
@@ -436,86 +440,6 @@ const deleteReview = async (req, res) => {
     errorApiCall(req, error)
   }
   
-}
-
-const itemRatings = async (req, res) => {
-  const star = Number(req.query.star) ?? 5
-  const page = Number(req.query.page) ?? 1
-  const { type, id } = req.params
-
-  logApiCall(req)
-
-  try {
-
-    let reviews
-    let stats
-    if (type === 'artist') {
-      [reviews, stats] = await Promise.all([
-        prisma.userArtistReviews.findMany({
-          where: {status: 'PUBLISHED', artistId: id, rating: star},
-          include: { user: { select: {
-            avatar: true, username: true, id: true, role: true
-          }}},
-          orderBy: { createdAt: 'desc'},
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        prisma.userArtistReviews.aggregate({
-          where: {status: 'PUBLISHED', artistId: id, rating: star},
-          _count: true
-        })
-      ])
-
-    } else if (type === 'release') {
-      [reviews, stats] = await Promise.all([
-        prisma.userReleaseReviews.findMany({
-          where: {status: 'PUBLISHED', releaseId: id, rating: star},
-          include: { user: { select: {
-            avatar: true, username: true, id: true, role: true
-          }}},
-          orderBy: { createdAt: 'desc'},
-          skip: (page - 1) * limit,
-          take: limit
-        }),
-        prisma.userReleaseReviews.aggregate({
-          where: {status: 'PUBLISHED', releaseId: id, rating: star},
-          _count: true
-        })
-      ])
-
-    } else if (type === 'song') {
-      [reviews, stats] = await Promise.all([
-        prisma.userSongReviews.findMany({
-          where: {status: 'PUBLISHED', songId: id, rating: star},
-          include: { user: { select: {
-            avatar: true, username: true, id: true, role: true
-          }}},
-          orderBy: { createdAt: 'desc'},
-          skip: (page - 1) * limit,
-          take: limit
-        }),
-        prisma.userSongReviews.aggregate({
-          where: {status: 'PUBLISHED', songId: id, rating: star},
-          _count: true
-        })
-      ])
-    }
-
-    const data = {
-      data: { reviews: reviews },
-      count: stats._count,
-      pages: Math.ceil(stats._count / limit),
-      currentPage: page,
-      limit: limit
-    }
-
-    successApiCall(req)
-    res.json(data)
-  } catch (error) {
-    errorApiCall(req, error)
-    return res.status(500).json({error: `Error fetching ${star || ''} star reviews`})
-  }
-
 }
 
 const userArtists = async (req, res) => {
@@ -705,14 +629,13 @@ const userSongs = async (req, res) => {
 }
 
 module.exports = {
-  user,
-  publishOrDraft,
-  deleteReview,
   artistReviews,
   releaseReviews,
   songReviews,
-  itemRatings,
+  user,
   userArtists,
   userReleases,
   userSongs,
+  publishOrDraft,
+  deleteReview
 }

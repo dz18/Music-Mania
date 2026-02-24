@@ -5,7 +5,6 @@ const { scoreRelease } = require('./hooks/scoreRelease')
 
 const userAgent = process.env.USER_AGENT
 
-// Search Bar Functions
 const artists = async (req, res) => {
   const { q, type } = req.query
   const page = Number(req.query.page) ?? 1
@@ -122,7 +121,6 @@ const releases = async (req, res) => {
 
 }
 
-// Retrieve Item Functions
 const getArtist = async (req, res) => {
   const { id } = req.query
 
@@ -814,9 +812,9 @@ module.exports = {
   artists,
   releases,
   getArtist,
-  discography,
   getRelease,
   getSong,
-  findSingleId,
-  discographySingles
+  discography,
+  discographySingles,
+  findSingleId
 }
