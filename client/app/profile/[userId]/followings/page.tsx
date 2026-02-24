@@ -81,7 +81,7 @@ export default function Followings ({
         
       </section>
 
-      {results?.data.follows.length !== 0 &&
+      {results?.pages > 1 &&
         <section>
           <Pagination data={results} fetchData={fetchFollows}/>
         </section>

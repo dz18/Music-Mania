@@ -80,7 +80,7 @@ export default function Followers ({
         
       </section>
 
-      {results.count <= 0 && <Pagination data={results} fetchData={fetchFollows}/> }
+      {results?.pages > 1 && <Pagination data={results} fetchData={fetchFollows}/> }
         
 
     </div>
