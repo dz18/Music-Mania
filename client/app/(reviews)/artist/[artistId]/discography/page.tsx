@@ -2,6 +2,7 @@
 
 import DiscographyTable from "@/app/components/pages/artist/DiscographyTable";
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar";
+import LoadingBox from "@/app/components/ui/loading/loadingBox";
 import Pagination from "@/app/components/ui/Pagination";
 import useFetchDiscography from "@/app/hooks/musicbrainz/useFetchDiscography";
 
@@ -75,9 +76,9 @@ export default function Discography ({
       {!tableLoad ?
         error ? (
           <div className="p-2 flex flex-col items-center gap-2 font-mono">
-            <p className="">{error}</p>
+            <p className="text-sm font-semibold">{error}</p>
             <button 
-              className="flex items-center gap-2 px-2 py-1 bg-teal-500 rounded text-black font-bold font-mono cursor-pointer"
+              className="interactive-button font-semibold text-sm text-orange-500 bg-orange-950 border border-orange-500 flex gap-2 rounded px-2 py-1 hover:bg-orange-900 active:bg-orange-800"
               onClick={() => fetchData()}
             >
               Refresh <RefreshCcw size={18}/>
@@ -93,12 +94,17 @@ export default function Discography ({
             </>
             
           :
-            <div className="flex items-center justify-center font-mono mt-[5rem] gap-2 text-gray-500">
+            <div className="flex items-center justify-center font-mono mt-20 gap-2 text-gray-500">
               <FileX2/> No data found
             </div>
         )  
       :
-        <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+        <div className="flex flex-col gap-4">
+          <LoadingBox className="h-40"/>
+          <LoadingBox className="h-40"/>
+          <LoadingBox className="h-40"/>
+          <LoadingBox className="h-40"/>
+        </div>
       }
 
           

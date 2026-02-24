@@ -23,7 +23,7 @@ export default function Nav() {
             href='/'
           >
             <AudioLines className="text-teal-500" size={32}/>
-            <p className="sm:flex hidden font-bold bg-gradient-to-r from-teal-500 via-sky-300 to-pink-300 bg-clip-text text-transparent">Music Mania</p>
+            <p className="sm:flex hidden font-bold bg-linear-to-r from-teal-500 via-sky-300 to-pink-300 bg-clip-text text-transparent">Music Mania</p>
           </Link>
 
         </div>
@@ -42,7 +42,7 @@ export default function Nav() {
           </div>
         :
           <Link 
-            className="bg-teal-500 text-black hover:shadow-[0_0_10px_rgba(0,255,255,0.5)] transition px-2 py-1 rounded text-sm font-bold cursor-pointer font-mono active:bg-teal-500/50"
+            className="border border-teal-300 text-teal-300 bg-teal-950 hover:bg-teal-900 active:bg-teal-800 px-2 py-1 rounded font-mono font-semibold text-sm"
             href={`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`}
           >
             Sign In

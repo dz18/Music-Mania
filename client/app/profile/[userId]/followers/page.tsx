@@ -9,6 +9,7 @@ import { timeAgo } from "@/app/hooks/timeAgo";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
+import { IndividualFollow } from "./IndividualFollow";
 export default function Followers ({
   params
 } : {
@@ -17,8 +18,6 @@ export default function Followers ({
 
   const { userId } = use(params)
   const { results, follow, unfollow, loading, fetchFollows } = usefetchFollowers(userId)
-  const {data: session} = useSession()
-  const router = useRouter()
 
   if (loading) {
     return (
@@ -64,51 +63,14 @@ export default function Followers ({
         >
           {results?.data.follows.length !== 0 ? 
             results?.data.follows?.map((f, i) => (
-              <div 
-                key={i}
-                className={`
-                  ${i % 2 === 0 ? 'bg-surface' : ''}
-                  flex px-4 py-2 gap-2 border-b border-white/5
-                `}
-              >
-                <img src={f.follower.avatar ?? '/default-avatar.jpg'} className="w-16 h-16 object-cover border border-gray-500" />
-                
-                <div className="text-sm grow">
-                  <p className="font-mono font-bold hover:underline cursor-pointer" onClick={() => router.push(`/profile/${f.followerId}`)}>
-                    {f.follower.username}
-                  </p>
-                  <p className="text-gray-400">Since {timeAgo(f.createdAt)}</p>
-                </div>
-
-                {session &&
-                  session?.user.id !== f.followerId &&
-                    <div className="flex items-center font-mono text-sm">
-
-                      {results.data.isFollowingMap[f.followerId] ?
-                        <button 
-                          className={`
-                            group border px-2 py-1 rounded interactive-button w-25 hover:bg-red-950 hover:border-red-500
-                          `}
-                          onClick={() => unfollow(f.followerId)}
-                        >
-                          <span className="block group-hover:hidden ">Following</span>
-                          <span className="hidden group-hover:block group-hover:text-red-500">Unfollow</span>
-                        </button>
-                      :
-                        <button 
-                          className={`
-                            group border px-2 py-1 rounded interactive-button w-25 bg-white text-black interactive-light
-                          `}
-                          onClick={() => follow(f.followerId)}
-                        >
-                          <span className="block">Follow</span>
-                        </button>
-                      }
-                    </div>
-                }
-                
-
-              </div>
+              <IndividualFollow 
+                key={f.id}
+                follower={f} 
+                isFollowingMap={results.data.isFollowingMap}
+                unfollow={unfollow}
+                follow={follow}
+                index={i}
+              />            
             ))
           :
             <div className="font-mono text-gray-500 text-lg">None :(</div>
@@ -118,7 +80,7 @@ export default function Followers ({
         
       </section>
 
-      {results.count <= 0 && <Pagination data={results} fetchData={fetchFollows}/> }
+      {results?.pages > 1 && <Pagination data={results} fetchData={fetchFollows}/> }
         
 
     </div>

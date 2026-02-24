@@ -44,10 +44,6 @@ const findUserById = async (req, res) => {
       id: user.id,
       avatar: user.avatar,
       createdAt: user.createdAt,
-      phoneNumber: user.phoneNumber,
-      favArtists: user.favArtists,
-      favSongs: user.favSongs,
-      favReleases: user.favReleases
     })
   } catch (error) {
     errorApiCall(req, error)

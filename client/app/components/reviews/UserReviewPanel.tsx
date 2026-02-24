@@ -105,6 +105,7 @@ export default function UserReviewPanel ({
 
           <button
             className="border px-2 py-1 items-center rounded flex gap-2 justify-center interactive-button interactive-dark"
+            onClick={() => alert('Feature will be added at a later date.')}
           >
             <CirclePlus size={18}/> Add to list
           </button>
@@ -119,7 +120,7 @@ export default function UserReviewPanel ({
           />
 
           <button
-            className="border border-teal-300 bg-teal-950 text-teal-300 px-2 py-1 rounded interactive-button hover:bg-teal-900 active:bg-teal-800 w-full"
+            className="border border-teal-300 bg-teal-950 text-teal-300 px-2 py-1 rounded interactive-button hover:bg-teal-900 active:bg-teal-800 w-full whitespace-nowrap"
             onClick={() => setOpenReview(true)}
           >
             Leave a Review

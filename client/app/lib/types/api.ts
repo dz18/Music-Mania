@@ -89,7 +89,6 @@ export interface FollowersResponse {
     createdAt: Date
     follower: {
       age: number
-      avatar: string
       createdAt: Date,
       id: string
       role: string
