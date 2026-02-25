@@ -69,7 +69,7 @@ export default function UserDropdown() {
 
             <li
               className="interactive-button interactive-dark p-2 flex items-center gap-2"
-              onClick={() => router.push(`/profile/${session?.user.id}/edit`)}
+              onClick={() => router.push(`/profile/edit`)}
             >
               <Settings size={18}/> Settings
             </li>

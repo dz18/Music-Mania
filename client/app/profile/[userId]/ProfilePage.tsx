@@ -10,7 +10,6 @@ import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchProfile from "@/app/hooks/api/profile/useFetchProfile"
 import StarStatistics from "@/app/components/ui/starStatistics"
 import ProfileLikes from "@/app/components/pages/profile/ProfileLikes"
-import { TabKeys } from "@/app/lib/types/profile"
 
 export default function ProfilePage ({
   userId,
@@ -22,17 +21,9 @@ export default function ProfilePage ({
     profileResults, profileLoading, profileError, profileRefetch,
     artistQuery, releaseQuery, songQuery,
     follow, followLoad, unfollow, unfollowLoad,
-    star, starStats, page, selected, tabs, tabLoading,
+    starStats, selected, tabs, tabLoading,
     setSelected, goToPage
   } = useFetchProfile(userId)
-
-  // const { 
-  //   profile, loading, error, fetchTab,
-  //   fetchProfilePage, tabs, selected, tabLoad,
-  //   setSelected, follow, unfollow, followLoad,
-  //   artistReviews, releaseReviews, songReviews,
-  //   starStats
-  // } = useFetchProfile(userId)
 
   if (profileLoading) {
     return (

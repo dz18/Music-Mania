@@ -265,7 +265,7 @@ const profile = async (req, res) => {
       starStats,
       ...counts,
       isFollowing: isFollowing,
-      followingSince: req.user.id && isFollowing ? isFollowingRes.createdAt : null
+      followingSince: req.user && isFollowing ? isFollowingRes.createdAt : null
     }
 
     console.log(profile)
@@ -448,26 +448,25 @@ const allFollowers = async (req, res) => {
 }
 
 const editInfo = async (req, res) => {
-  const profileId = req.query.profileId ?? null
   logApiCall(req)
 
-  if (!profileId) {
-    errorApiCall(req, 'Missing Profile ID')
-    return res.status(400).json({ error: "Missing Profile ID" })
+  if (!req.user) {
+    errorApiCall(req, "Unauthorized user token.")
+    return res.status(403).json({ error: "Unauthorized user token." })
   }
-
-  if (req.user.id !== profileId) {
-    errorApiCall(req, "Forbidden: cannot access another user's data")
-    return res.status(403).json({ error: "Forbidden: cannot access another user's data" })
-  }
-
-  const userId = req.user
-  console.log('user:', userId)
 
   try {
 
     const user = await prisma.user.findUnique({
-      where: {id: profileId}
+      where: { id: req.user.id },
+      select: { 
+        id: true,
+        username: true,
+        aboutMe: true,
+        age: true,
+        email: true,
+        createdAt: true
+      }
     })
 
     console.log(user)

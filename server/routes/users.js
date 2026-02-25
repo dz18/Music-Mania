@@ -16,17 +16,17 @@ router.get('/profile', softVerifyUser, userController.profile)
 router.get('/allFollowers', userController.allFollowers)
 router.get('/follow', userController.isFollowing)
 
-// Private User-specific
+// Private User-specific Data Retrievals
 router.get('/find', verifyUser, userController.findUserById)
-router.get('/edit', verifyUser, userController.editInfo)
+router.get('/edit', verifyUser, userController.editInfo) 
 router.get('/review', verifyUser, userController.reviewPanel)
 
-// Actions
+// Prive User-specific Actions
+router.patch('/edit', verifyUser, upload.single('avatar'), userController.edit)
 router.post('/follow', verifyUser, userController.follow)
 router.post('/like', verifyUser, userController.like)
 router.delete('/unfollow', verifyUser, userController.unfollow)
 router.delete('/like', verifyUser, userController.deleteLike)
-router.patch('/edit', verifyUser, upload.single('avatar'), userController.edit)
 
 
 module.exports = router

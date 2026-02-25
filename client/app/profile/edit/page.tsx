@@ -7,22 +7,17 @@ import Security from "@/app/components/pages/profile/edit/security"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
 import RefreshPage from "@/app/components/ui/RefreshPage"
+import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { Loader } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { redirect, usePathname } from "next/navigation"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function EditProfilePage ({
-  userId
-} : {
-  userId: string
-}) {
+export default function EditProfilePage () {
 
   const { data: session, status, update } = useSession()
   const pathname = usePathname()
-  const router = useRouter()
 
   const [originalData, setOriginalData] = useState<EditProfileForm>({
     avatar: '',
@@ -34,26 +29,8 @@ export default function EditProfilePage ({
     age: '',
     resetAvatar: false
   })
-  const [data, setData] = useState<EditProfileForm>({
-    avatar: '',
-    id: '',
-    username: '',
-    aboutMe: '',
-    createdAt: new Date(),
-    email: '',
-    age: '',
-    resetAvatar: false
-  })
-  const [errors, setErrors] = useState<EditProfileForm>({
-    avatar: '',
-    id: '',
-    username: '',
-    aboutMe: '',
-    createdAt: new Date(),
-    email: '',
-    age: '',
-    resetAvatar: false
-  })
+  const [data, setData] = useState<EditProfileForm>(originalData)
+  const [errors, setErrors] = useState<EditProfileForm>(originalData)
 
   const [hasFetched, setHasFetched] = useState(false)
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState('/default-avatar.jpg')
