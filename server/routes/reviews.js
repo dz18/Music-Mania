@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const reviewController = require('../controllers/reviews')
-const { verifyUser } = require('../middleware/auth')
+const { verifyUser, softVerifyUser } = require('../middleware/auth')
 
 // All Reviews for ...
 router.get('/artist', reviewController.artistReviews)

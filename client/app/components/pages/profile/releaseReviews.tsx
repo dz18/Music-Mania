@@ -2,13 +2,14 @@ import { ApiPageResponse } from "@/app/lib/types/api";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Pagination from "../../ui/Pagination";
+import { ProfileReleaseReview } from "@/app/lib/types/profile";
 
 export default function ReleaseReviews ({
   data,
-  fetchData
+  onPageChange
 } : {
-  data: ApiPageResponse<ProfileReleaseReview> | null,
-  fetchData: (page: number) => Promise<void>
+  data: ApiPageResponse<ProfileReleaseReview> | undefined,
+  onPageChange: (newPage: number) => void
 }) {
 
   const router = useRouter()
@@ -53,8 +54,13 @@ export default function ReleaseReviews ({
             </div>
           ))}
 
-          {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
-
+          {data && data.count > data.limit && 
+            <Pagination 
+              currentPage={data.currentPage} 
+              totalPages={data.pages}
+              onPageChange={onPageChange}
+            />
+          }
         </div>
       }
     </>

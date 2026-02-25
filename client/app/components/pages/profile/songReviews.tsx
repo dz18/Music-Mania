@@ -1,13 +1,14 @@
 import { ApiPageResponse } from "@/app/lib/types/api";
 import Pagination from "../../ui/Pagination";
 import StarRatingVisual from "../../ui/StarVisual";
+import { ProfileSongReview } from "@/app/lib/types/profile";
 
 export default function SongReviews ({
   data,
-  fetchData
+  onPageChange
 } : {
-  data: ApiPageResponse<ProfileSongReview> | null,
-  fetchData: (page: number) => Promise<void>
+  data: ApiPageResponse<ProfileSongReview> | undefined,
+  onPageChange: (newPage: number) => void
 }) {
 
   return (
@@ -50,8 +51,13 @@ export default function SongReviews ({
             </div>
           ))}
 
-          {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
-
+          {data && data.count > data.limit && 
+            <Pagination 
+              currentPage={data.currentPage} 
+              totalPages={data.pages}
+              onPageChange={onPageChange}
+            />
+          }
         </div>
       }
     </>

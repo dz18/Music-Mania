@@ -1,7 +1,7 @@
 import { fetchFollowers, follow, unfollow } from "@/app/lib/api/follow";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function useFetchFollowers (
   profileId: string,

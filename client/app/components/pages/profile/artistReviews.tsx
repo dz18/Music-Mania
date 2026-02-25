@@ -2,13 +2,14 @@ import { ApiPageResponse } from "@/app/lib/types/api";
 import { useRouter } from "next/navigation";
 import Pagination from "../../ui/Pagination";
 import StarRatingVisual from "../../ui/StarVisual";
+import { ProfileArtistReview } from "@/app/lib/types/profile";
 
 export default function ArtistReviews ({
   data,
-  fetchData
+  onPageChange
 } : {
-  data: ApiPageResponse<ProfileArtistReview> | null,
-  fetchData: (page: number) => Promise<void>
+  data: ApiPageResponse<ProfileArtistReview> | undefined,
+  onPageChange: (newPage: number) => void
 }) {
 
   const router = useRouter()
@@ -40,7 +41,13 @@ export default function ArtistReviews ({
               <p className="text-gray-500">{new Date(r.updatedAt).toLocaleDateString()}</p>
             </div>
           ))}
-          {data && data.count > data.limit && <Pagination data={data} fetchData={fetchData}/>}
+          {data && data.count > data.limit && 
+            <Pagination 
+              currentPage={data.currentPage} 
+              totalPages={data.pages}
+              onPageChange={onPageChange}
+            />
+          }
         </div>
       }
     </div>

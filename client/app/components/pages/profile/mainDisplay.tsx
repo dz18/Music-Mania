@@ -1,3 +1,4 @@
+import { UserProfile } from "@/app/lib/types/profile";
 import { CalendarDays, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -10,8 +11,8 @@ export default function MainDisplay ({
   followLoad,
 } : {
   profile: UserProfile, 
-  follow: () => void
-  unfollow: () => void
+  follow: (profileId: string) => Promise<void>
+  unfollow: (profileId: string) => Promise<void>
   followLoad: boolean
 }) {
 
@@ -77,7 +78,11 @@ export default function MainDisplay ({
                       : 'bg-white text-black interactive-light'
                   }
                 `}
-                onClick={profile.isFollowing ? unfollow : follow}
+                onClick={() =>
+                  profile.isFollowing
+                    ? unfollow(profile.id)
+                    : follow(profile.id)
+                }                
                 disabled={followLoad}
                 aria-busy={followLoad}
               >

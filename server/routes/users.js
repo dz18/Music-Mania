@@ -2,7 +2,7 @@
 const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/users')
-const { verifyUser } = require('../middleware/auth')
+const { verifyUser, softVerifyUser } = require('../middleware/auth')
 const multer = require('multer')
 const upload = multer({ storage: multer.memoryStorage() })
 
@@ -12,7 +12,7 @@ router.get('/query', userController.query)
 
 // Public User-specific
 router.get('/likes', userController.getLikes)
-router.get('/profile', userController.profile)
+router.get('/profile', softVerifyUser, userController.profile)
 router.get('/allFollowers', userController.allFollowers)
 router.get('/follow', userController.isFollowing)
 

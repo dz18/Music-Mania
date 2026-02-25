@@ -168,7 +168,7 @@ const query = async (req, res) => {
 
 // Get profile page details for a user
 const profile = async (req, res) => {
-  const { profileId, userId } = req.query
+  const { profileId } = req.query
 
   logApiCall(req)
   try {
@@ -217,12 +217,12 @@ const profile = async (req, res) => {
     ]
 
     // Only add follow check if userId exists
-    if (userId) {
+    if (req.user) {
       promises.push(
         prisma.follow.findUnique({
           where: {
             followerId_followingId: {
-              followerId: userId,
+              followerId: req.user.id,
               followingId: profileId
             }
           }
@@ -245,7 +245,7 @@ const profile = async (req, res) => {
       return res.status(404).json({ error: 'User not found.' })
     }
 
-    const isFollowing = userId ? Boolean(isFollowingRes) : null;
+    const isFollowing = req.user ? Boolean(isFollowingRes) : null;
 
     const starStats = calcStarStats(
       [...artistStats, ...releaseStats, ...songStats]
@@ -265,7 +265,7 @@ const profile = async (req, res) => {
       starStats,
       ...counts,
       isFollowing: isFollowing,
-      followingSince: userId && isFollowing ? isFollowingRes.createdAt : null
+      followingSince: req.user.id && isFollowing ? isFollowingRes.createdAt : null
     }
 
     console.log(profile)

@@ -10,24 +10,31 @@ import LoadingText from "@/app/components/ui/loading/LoadingText"
 import useFetchProfile from "@/app/hooks/api/profile/useFetchProfile"
 import StarStatistics from "@/app/components/ui/starStatistics"
 import ProfileLikes from "@/app/components/pages/profile/ProfileLikes"
+import { TabKeys } from "@/app/lib/types/profile"
 
 export default function ProfilePage ({
   userId,
-  star
 } : {
   userId: string,
-  star: number | null
 }) {
 
-  const { 
-    profile, loading, error, fetchTab,
-    fetchProfilePage, tabs, selected, tabLoad,
-    setSelected, follow, unfollow, followLoad,
-    artistReviews, releaseReviews, songReviews,
-    starStats
-  } = useFetchProfile(userId, star)
+  const {
+    profileResults, profileLoading, profileError, profileRefetch,
+    artistQuery, releaseQuery, songQuery,
+    follow, followLoad, unfollow, unfollowLoad,
+    star, starStats, page, selected, tabs, tabLoading,
+    setSelected, goToPage
+  } = useFetchProfile(userId)
 
-  if (loading) {
+  // const { 
+  //   profile, loading, error, fetchTab,
+  //   fetchProfilePage, tabs, selected, tabLoad,
+  //   setSelected, follow, unfollow, followLoad,
+  //   artistReviews, releaseReviews, songReviews,
+  //   starStats
+  // } = useFetchProfile(userId)
+
+  if (profileLoading) {
     return (
       <div className="flex flex-col gap-4">
 
@@ -79,13 +86,13 @@ export default function ProfilePage ({
     )
   }
 
-  if (!profile) {
+  if (!profileResults) {
     return (
       <RefreshPage
-        func={fetchProfilePage}
+        func={async () =>  { await profileRefetch() }}
         title="Profile Page"
-        loading={loading}
-        note={error ?? "Unknown Error Occurred. Try Again."}
+        loading={profileLoading}
+        note={profileError?.message ?? "Unknown Error Occurred. Try Again."}
       />
     )
   }
@@ -95,14 +102,14 @@ export default function ProfilePage ({
 
       <section className="flex gap-4">
         <MainDisplay 
-          profile={profile}
-          follow={follow}
-          unfollow={unfollow}
+          profile={profileResults}
+          follow={() => follow(userId)}
+          unfollow={() => unfollow(userId)}
           followLoad={followLoad}
         />
       </section>
 
-      {profile?.aboutMe &&
+      {profileResults?.aboutMe &&
         <section
           className="rounded-lg border-gray-500 border flex flex-col overflow-hidden"
         >
@@ -112,7 +119,7 @@ export default function ProfilePage ({
             About Me
           </p>
           <div className="px-4 py-2 text-sm bg-surface" style={{ whiteSpace: 'pre-line' }}>
-            <p>{profile.aboutMe}</p>
+            <p>{profileResults.aboutMe}</p>
           </div>
         </section>
       }
@@ -127,19 +134,19 @@ export default function ProfilePage ({
               className={`
                 py-1 px-2 rounded
                 ${selected === tab.key ? 'bg-teal-950 border border-teal-300 text-teal-300' : 'bg-surface-elevated border border-white/5'}
-                ${profile?.[tab.key] === 0 
+                ${profileResults?.[tab.key] === 0 
                   ? "opacity-60"
                   : selected !== tab.key 
                     && 'interactive-button interactive-dark'
                 }
               `}
               onClick={() => setSelected(tab.key)}
-              disabled={profile?.[tab.key] === 0 || selected === tab.key || loading}
+              disabled={profileResults?.[tab.key] === 0 || selected === tab.key || tabLoading}
             >
               {tab.label}{' '}
               {tab.key !== 'starStats' &&
                 <span className="opacity-60">
-                  {profile?.[tab.key]}
+                  {profileResults?.[tab.key]}
                 </span>
               }
             </button>
@@ -147,29 +154,27 @@ export default function ProfilePage ({
         </div>
 
         <div className="flex flex-col gap-4">
-          {starStats && 
             <div
               className="border-gray-500"
             >
               <StarStatistics stats={starStats}/>
             </div>
-          }
 
-          {tabLoad ?(
-            <div
-              className="flex flex-col gap-2"
-            >
-              <LoadingBox className="w-full h-40"/>
-              <LoadingBox className="w-full h-40"/>
-              <LoadingBox className="w-full h-40"/>
-            </div>
-          ):(
-            <>
-              {selected === 'artistReviews' && <ArtistReviews data={artistReviews} fetchData={fetchTab} />}
-              {selected === 'releaseReviews' && <ReleaseReviews data={releaseReviews} fetchData={fetchTab}/>}
-              {selected === 'songReviews' && <SongReviews data={songReviews} fetchData={fetchTab}/>}
-            </>
-          )}
+            {artistQuery.isLoading || releaseQuery.isLoading || songQuery.isLoading ?(
+              <div
+                className="flex flex-col gap-2"
+              >
+                <LoadingBox className="w-full h-40"/>
+                <LoadingBox className="w-full h-40"/>
+                <LoadingBox className="w-full h-40"/>
+              </div>  
+            ):(
+              <>
+                {selected === 'artistReviews' && <ArtistReviews data={artistQuery.data} onPageChange={goToPage} />}
+                {selected === 'releaseReviews' && <ReleaseReviews data={releaseQuery.data} onPageChange={goToPage}/>}
+                {selected === 'songReviews' && <SongReviews data={songQuery.data} onPageChange={goToPage}/>}
+              </>
+            )}
         </div>
 
       </section>
