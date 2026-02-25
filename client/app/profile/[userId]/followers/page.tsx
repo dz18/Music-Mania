@@ -5,11 +5,9 @@ import LoadingText from "@/app/components/ui/loading/LoadingText";
 import Pagination from "@/app/components/ui/Pagination";
 import RefreshPage from "@/app/components/ui/RefreshPage";
 import usefetchFollowers from "@/app/hooks/api/profile/useFetchFollowers";
-import { timeAgo } from "@/app/hooks/timeAgo";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { use } from "react";
 import { IndividualFollow } from "./IndividualFollow";
+
 export default function Followers ({
   params
 } : {
@@ -17,7 +15,7 @@ export default function Followers ({
 }) {
 
   const { userId } = use(params)
-  const { results, follow, unfollow, loading, fetchFollows } = usefetchFollowers(userId)
+  const { results, follow, unfollow, loading, refetch, page, goToPage } = usefetchFollowers(userId)
 
   if (loading) {
     return (
@@ -36,7 +34,7 @@ export default function Followers ({
   if (!results) {
     return (
       <RefreshPage
-        func={() => fetchFollows(1)}
+        func={async () => { await refetch() }}
         title="Followers Page"
         loading={loading}
         note="Error Fetching Followers"
@@ -80,7 +78,13 @@ export default function Followers ({
         
       </section>
 
-      {results?.pages > 1 && <Pagination data={results} fetchData={fetchFollows}/> }
+      {results?.pages > 1 && 
+        <Pagination 
+          currentPage={results.currentPage}
+          totalPages={results.pages}
+          onPageChange={goToPage}
+        /> 
+      }
         
 
     </div>

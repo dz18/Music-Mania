@@ -415,6 +415,8 @@ const allFollowers = async (req, res) => {
         targetIds.map(id => [id, followSet.has(id)])
       )
     }
+    console.log("userId:", userId)
+    console.log("data:", isFollowingMap)
 
     const data = {
       data: {
