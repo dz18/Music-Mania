@@ -1,9 +1,7 @@
-import useFetchLikes from "@/app/hooks/likes/useFetchLikes"
+import useFetchLikes from "@/app/hooks/api/likes/useFetchLikes"
 import { MusicTypes } from "@/app/lib/types/api"
-import axios from "axios"
 import { Heart, HeartCrack, Loader2 } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { Dispatch, SetStateAction, useState } from "react"
 
 export default function ({
   item, itemId, type, coverArt

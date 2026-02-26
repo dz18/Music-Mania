@@ -663,7 +663,7 @@ const getRelease = async (req, res) => {
 
     successApiCall(req)
     return res.json({
-      album: first,
+      release: first,
       coverArtUrl: coverArt && coverArt[0].image
     })
 

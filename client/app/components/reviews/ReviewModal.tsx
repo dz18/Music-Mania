@@ -9,7 +9,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { ReviewKind, ReviewModalErrors } from "@/app/lib/types/reviews";
-import useFetchUserReview from "@/app/hooks/reviews/useFetchUserReview";
+import useFetchUserReview from "@/app/hooks/api/reviews/useFetchUserReview";
 
 export default function ReviewModal ({
   item,

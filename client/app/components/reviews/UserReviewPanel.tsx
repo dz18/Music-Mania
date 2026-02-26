@@ -6,7 +6,7 @@ import axios from "axios";
 import { ApiPageResponse, MusicTypes, ReviewResponse, ReviewTypes } from "@/app/lib/types/api";
 import LikeButton from "./LikeButton";
 import ReviewModal from "./ReviewModal";
-import useFetchUserReview from "@/app/hooks/reviews/useFetchUserReview";
+import useFetchUserReview from "@/app/hooks/api/reviews/useFetchUserReview";
 import { ReviewKind } from "@/app/lib/types/reviews";
  
 export default function UserReviewPanel ({

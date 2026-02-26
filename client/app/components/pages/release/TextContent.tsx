@@ -6,22 +6,22 @@ import { useMemo } from "react"
 
 
 export default function TextContent ({
-  album,
+  release,
   reviews,
   coverArt,
   loading
 } : {
-  album: Release | null
-  reviews: ReviewResponse | null
-  coverArt: string
+  release: Release | undefined
+  reviews: ReviewResponse | undefined
+  coverArt: string | undefined
   loading: boolean
 }) {
 
   const router = useRouter()
 
-  const totalLengthMs = album?.media.reduce(
-    (albumSum, m) =>
-      albumSum +
+  const totalLengthMs = release?.media.reduce(
+    (releaseSum, m) =>
+      releaseSum +
       m.tracks.reduce(
         (discSum, t) => discSum + (t.length ?? 0),
         0
@@ -36,7 +36,7 @@ export default function TextContent ({
       <div className="flex-1 flex flex-col gap-4 font-mono text-sm mr-4">
       
         <div className="flex justify-between">
-          <p className="font-bold text-xl">{album?.title}</p>
+          <p className="font-bold text-xl">{release?.title}</p>
           <div className="gap-2 flex font-bold text-lg items-center">
             <p>{reviews?.avgRating}</p>
             <p>/</p>
@@ -50,7 +50,7 @@ export default function TextContent ({
             Made by
           </p>
           <div className="flex flex-wrap gap-1">
-          {album?.artistCredit.map((artist, i) => (
+          {release?.artistCredit.map((artist, i) => (
             <p key={i} 
               onClick={() => router.push(`/artist/${artist.artist.id}`)}
               className="cursor-pointer hover:underline"
@@ -63,18 +63,18 @@ export default function TextContent ({
 
         <div>
           <p className="font-bold text-sm text-gray-500">Released</p>
-          <p>{album?.date}</p>
+          <p>{release?.date}</p>
         </div>
 
         <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Type</p>
-          <p>{album?.type.join(' + ')}</p>
+          <p>{release?.type.join(' + ')}</p>
         </div>
 
         <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Genre</p>
           <div className="flex flex-wrap gap-1">
-          {album?.genres.map((genre, i) => (
+          {release?.genres.map((genre, i) => (
             <span 
               key={genre.id}
               onClick={() => alert(genre.id)}
@@ -84,7 +84,7 @@ export default function TextContent ({
               >
                 {genre.name}
               </span>
-              {i < album.genres.length - 1 && ', '}
+              {i < release.genres.length - 1 && ', '}
             </span>
           ))}
           </div>
@@ -97,8 +97,8 @@ export default function TextContent ({
 
         <div className="flex flex-col">
           <p className="font-bold text-sm text-gray-500">Language</p>
-          {album?.language && 
-            new Intl.DisplayNames(['en'], { type: 'language' }).of(album?.language)
+          {release?.language && 
+            new Intl.DisplayNames(['en'], { type: 'language' }).of(release?.language)
           }
         </div>
 
@@ -107,7 +107,7 @@ export default function TextContent ({
       {/* Image */}
       <div>
       {coverArt ? (
-        <img src={coverArt} className="w-100 flex-shrink-0" />
+        <img src={coverArt} className="w-100 shrink-0" />
       ) : (
         <div className="w-100 h-100 flex items-center justify-center bg-gray-800">
           {!loading ? <ImageOff size={50} className="text-gray-500"/> : <Loader size={50} className="animate-spin text-gray-500 "/>}
