@@ -1,8 +1,9 @@
 import { ApiPageResponse } from "@/app/lib/types/api";
-import { Star } from "lucide-react";
+import { ImageOff, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Pagination from "../../ui/Pagination";
 import { ProfileReleaseReview } from "@/app/lib/types/profile";
+import { UserReleaseReview } from "@/app/lib/types/reviews";
 
 export default function ReleaseReviews ({
   data,
@@ -18,7 +19,7 @@ export default function ReleaseReviews ({
     <>
       {data?.count !== 0 &&
         <div className="overflow-hidden rounded-lg border border-gray-500">
-          {data?.data.reviews.map((r, i) => (
+          {data?.data.reviews.map((r: UserReleaseReview, i) => (
             <div key={r.releaseId} 
               className={`${i % 2 == 0 ? 'bg-surface-elevated' : 'bg-surface'} 
                 py-2 px-4 text-sm flex flex-col gap-1 border border-white/5`}
@@ -42,8 +43,13 @@ export default function ReleaseReviews ({
               </div>
 
               <div className="flex gap-4">
-                {r.release.coverArt &&
-                  <img src={r.release.coverArt} className="w-40"/>
+                {r.release.coverArt ?
+                  <img src={r.release.coverArt} className="w-40 h-40 border-2 border-white/5 object-cover"/>
+                :
+                  <div className="w-40 h-40 flex items-center justify-center text-white/5 border-white/5 border-2 border-dashed flex-col rounded-lg">
+                    <ImageOff size={24}/>
+                    <p className="font-mono text-sm font-bold">N/A</p>
+                  </div>
                 }
                 <div className="flex flex-col justify-start">
                   <p className={`${r.title ? '' : 'text-gray-500'} font-semibold`}>{r.title ? r.title : 'No Title'}</p>
@@ -56,9 +62,7 @@ export default function ReleaseReviews ({
 
           {data && data.count > data.limit && 
             <Pagination 
-              currentPage={data.currentPage} 
               totalPages={data.pages}
-              onPageChange={onPageChange}
             />
           }
         </div>

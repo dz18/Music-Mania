@@ -2,6 +2,8 @@ import { ApiPageResponse } from "@/app/lib/types/api";
 import Pagination from "../../ui/Pagination";
 import StarRatingVisual from "../../ui/StarVisual";
 import { ProfileSongReview } from "@/app/lib/types/profile";
+import { ImageOff } from "lucide-react";
+import { UserSongReview } from "@/app/lib/types/reviews";
 
 export default function SongReviews ({
   data,
@@ -15,7 +17,7 @@ export default function SongReviews ({
     <>
       {data?.data.reviews.length !== 0 &&
         <div className="overflow-hidden rounded-lg border border-gray-500">
-          {data?.data.reviews.map((r, i) => (
+          {data?.data.reviews.map((r : UserSongReview, i) => (
             <div key={r.songId} 
               className={`${i % 2 == 0 ? 'bg-surface-elevated' : 'bg-surface'}
                 py-2 px-4 text-sm flex flex-col gap-1 border border-white/5
@@ -39,8 +41,13 @@ export default function SongReviews ({
                 </div>
               </div>
               <div className="flex gap-4">
-                {r.song.coverArt &&
-                  <img src={r.song.coverArt} className="w-40"/>
+                {r.song.coverArt ?
+                  <img src={r.song.coverArt} className="w-40 h-40 border-2 border-white/5"/>
+                :
+                  <div className="w-40 h-40 flex items-center justify-center text-white/5 border-white/5 border-2 border-dashed flex-col rounded-lg">
+                    <ImageOff size={24}/>
+                    <p className="font-mono text-sm font-bold">N/A</p>
+                  </div>
                 }
                 <div className="flex flex-col justify-start">
 
@@ -53,9 +60,7 @@ export default function SongReviews ({
 
           {data && data.count > data.limit && 
             <Pagination 
-              currentPage={data.currentPage} 
               totalPages={data.pages}
-              onPageChange={onPageChange}
             />
           }
         </div>

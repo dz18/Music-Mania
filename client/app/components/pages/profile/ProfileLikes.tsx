@@ -1,7 +1,6 @@
 'use client'
 
-import { LikesResponse, LikeTabs, LikeTypes } from "@/app/lib/types/favorites"
-import axios from "axios"
+import { LikeTabs, LikeTypes } from "@/app/lib/types/favorites"
 import { JSX, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import IndeterminateLoadingBar from "../../ui/loading/IndeterminateLoadingBar"
@@ -10,8 +9,6 @@ import LikedReleases from "./LikedReleases"
 import LikedSongs from "./LikedSongs"
 import { LikedArtist, LikedRelease, LikedSong } from "@/app/lib/types/profile"
 import { fetchLikes } from "@/app/lib/api/profile"
-
-const API = process.env.NEXT_PUBLIC_API_URL
 
 export default function ProfileLikes ({
   profileId

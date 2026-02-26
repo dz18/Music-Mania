@@ -1,7 +1,8 @@
 const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging');
 const { getSignedURL, deleteObject } = require('./AWS/actions');
-const { calcStarStats } = require('./hooks/calcStarStats')
+const { calcStarStats } = require('./hooks/calcStarStats');
+const { getGradientColors } = require('./hooks/getDominateColor');
 
 // Gets all users
 const getUsers = async (req, res) => {
@@ -81,16 +82,15 @@ const getLikes = async (req, res) => {
         where: { userId: id },
         include: { artist: true },
       })
-    }
-
-    if (active === 'releases') {
+    } else if (active === 'releases') {
       liked.userLikedRelease = await prisma.userLikedRelease.findMany({
         where: { userId: id },
         include: { release: true },
       })
-    }
 
-    if (active === 'songs') {
+      console.log(liked.userLikedRelease)
+      
+    } else if (active === 'songs') {
       liked.userLikedSong = await prisma.userLikedSong.findMany({
         where: { userId: id },
         include: { song: true },
