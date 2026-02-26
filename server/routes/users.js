@@ -20,6 +20,7 @@ router.get('/follow', userController.isFollowing)
 router.get('/find', verifyUser, userController.findUserById)
 router.get('/edit', verifyUser, userController.editInfo) 
 router.get('/review', verifyUser, userController.reviewPanel)
+router.get('/like', verifyUser, userController.checkLike)
 
 // Prive User-specific Actions
 router.patch('/edit', verifyUser, upload.single('avatar'), userController.edit)

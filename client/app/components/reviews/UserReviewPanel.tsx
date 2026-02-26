@@ -6,7 +6,7 @@ import axios from "axios";
 import { ApiPageResponse, MusicTypes, ReviewResponse, ReviewTypes } from "@/app/lib/types/api";
 import LikeButton from "./LikeButton";
 import ReviewModal from "./ReviewModal";
-import useFetchUserReview from "@/app/hooks/musicbrainz/useFetchUserReview";
+import useFetchUserReview from "@/app/hooks/reviews/useFetchUserReview";
 import { ReviewKind } from "@/app/lib/types/reviews";
  
 export default function UserReviewPanel ({
@@ -84,8 +84,6 @@ export default function UserReviewPanel ({
           <LikeButton 
             item={item}
             itemId={itemId}
-            like={like} 
-            setLike={setLike}
             type={type}
             coverArt={coverArtUrl}
           />

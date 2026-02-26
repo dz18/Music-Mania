@@ -12,7 +12,7 @@ import Pagination from "@/app/components/ui/Pagination"
 import StarStatistics from "../../ui/starStatistics"
 import UserReviewPanel from "../../reviews/UserReviewPanel"
 import YourReviewSection from "../../reviews/YourReview"
-import useFetchUserReview from "@/app/hooks/musicbrainz/useFetchUserReview"
+import useFetchUserReview from "@/app/hooks/reviews/useFetchUserReview"
 
 export default function ArtistPage ({
   artistId,

@@ -622,6 +622,58 @@ const reviewPanel = async (req, res) => {
   }
 }
 
+const checkLike = async (req, res) => {
+  logApiCall(req)
+
+  const { itemId, type } = req.query
+
+  if (!itemId || !type) {
+    errorApiCall(req, 'Missing a required query parameter')
+    return res.status(400).json({error: 'Missing a required query parameter'})
+  }
+
+  if (!req.user) {
+    errorApiCall(req, 'Unauthorized User')
+    return res.status(401).json({error: 'Unauthorized User'})
+  }
+
+  try {
+    let like = null
+    if (type === 'artist') {
+      like = await prisma.userLikedArtist.findUnique({
+        where: {
+          userId_artistId: {
+            userId: req.user.id,
+            artistId: itemId
+          }
+        }
+      })
+    }
+    if (type === 'release') {
+      like = await prisma.userLikedRelease.findFirst({
+        where: {
+          userId: req.user.id,
+          releaseId: itemId
+        }
+      })
+    }
+    if (type === 'song') {
+      like = await prisma.userLikedSong.findFirst({
+        where: {
+          userId: req.user.id,
+          songId: itemId
+        }
+      })
+    }
+
+    res.json(like ?? null)
+    successApiCall(req)
+
+  } catch (error) {
+    console.error(error)
+  } 
+}
+
 const like = async (req, res) => {
   try {
     logApiCall(req);
@@ -749,5 +801,6 @@ module.exports = {
   like,
   unfollow,
   deleteLike,
-  edit
+  edit,
+  checkLike
 };
