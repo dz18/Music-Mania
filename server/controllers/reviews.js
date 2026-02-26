@@ -10,7 +10,6 @@ const artistReviews = async (req, res) => {
   let page = Number(req.query.page) || 1
   let star = Number(req.query.star) || null
 
-  const limit = 10
   logApiCall(req)
 
   try {
@@ -145,7 +144,7 @@ const songReviews = async(req, res) => {
       return res.status(400).json({error : 'Missing Page Number'})
     }
 
-    const id = songId === workId ? songId : workId
+    const id = workId || songId
     const [reviews, allStats, filteredStats, songStats] = await Promise.all([
       prisma.userSongReviews.findMany({
         where: { songId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},

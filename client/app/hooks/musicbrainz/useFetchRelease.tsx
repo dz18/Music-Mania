@@ -9,7 +9,6 @@ export default function useFetchRelease (
   releaseId: string,
 ) {
 
-  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
 
   const star = searchParams.get('star')

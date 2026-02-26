@@ -15,30 +15,29 @@ import UserReviewPanel from "../../reviews/UserReviewPanel";
 import { useState } from "react";
 import { ReviewTypes } from "@/app/lib/types/api";
 import YourReviewSection from "../../reviews/YourReview";
+import useFetchUserReview from "@/app/hooks/api/reviews/useFetchUserReview";
 
 export default function SongPage ({
   songId,
-  star
 } : {
   songId: string,
-  star: number | null
 }) {
 
   const { status } = useSession()
   const router = useRouter()
+  
   const {
     song,
+    coverArtUrl,
     songLoad,
-    loading,
-    coverArt,
-    data,
-    setData,
-    fetchData,
+    reviews,
+    reviewsLoad,
     error,
     starStats,
-    setStarStats
-  } = useFetchSong(songId, star)
-  const [review, setReview] = useState<ReviewTypes | null>(null)
+    refetchReviews,
+    refetchsong
+  } = useFetchSong(songId)
+  const {userReview} = useFetchUserReview(songId, 'song')
 
   if (songLoad) {
     return (
@@ -81,10 +80,10 @@ export default function SongPage ({
   if (error) {
     return (
       <RefreshPage
-        func={() => fetchData(1)}
+        func={async () => { await refetchsong()}}
         title={'Song Page'}
-        loading={loading}
-        note={error}
+        loading={songLoad}
+        note={error.message}
       />
     )
   }
@@ -156,11 +155,11 @@ export default function SongPage ({
         
         {/* Image */}
         <div>
-        {coverArt ? (
-          <img src={coverArt} className="w-100 flex-shrink-0" />
+        {coverArtUrl ? (
+          <img src={coverArtUrl} className="w-100 shrink-0" />
         ) : (
           <div className="w-100 h-100 flex items-center justify-center bg-gray-800">
-            {!loading ? <ImageOff size={50} className="text-gray-500"/> : <Loader size={50} className="animate-spin text-gray-500 "/>}
+            {!songLoad ? <ImageOff size={50} className="text-gray-500"/> : <Loader size={50} className="animate-spin text-gray-500 "/>}
           </div>
         )}
         </div>
@@ -175,30 +174,28 @@ export default function SongPage ({
               item={song} 
               itemId={song.workId} 
               type="song"
-              review={review}
-              setReview={setReview}
-              setData={setData}
-              coverArtUrl={coverArt}
-              setStarStats={setStarStats}
+              coverArtUrl={coverArtUrl}
             />
           }
         </div>
       }
 
-      {status === 'authenticated' && review &&
+      {status === 'authenticated' && userReview &&
         <YourReviewSection
-          review={review}
+          review={userReview}
         />
       }
 
-      {loading &&
+      {reviewsLoad &&
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
 
-      {data?.data.reviews &&
+      {reviews &&
         <>
-          <Reviews data={data}/>
-          {data.pages > 0 && <Pagination data={data} fetchData={fetchData}/>}
+          <Reviews data={reviews}/>
+          {reviews.count > reviews.limit && (
+            <Pagination totalPages={reviews.pages}/>
+          )}         
         </>
       }
 

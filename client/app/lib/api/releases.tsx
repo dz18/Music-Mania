@@ -1,6 +1,5 @@
 import axios from "axios"
-import { ApiPageResponse, Release, ReviewResponse } from "../types/api"
-import { UserReleaseReview } from "../types/reviews"
+import { ApiPageResponse, ReviewResponse } from "../types/api"
 import { getReleaseResult } from "../types/release"
 
 export const getRelease = async (

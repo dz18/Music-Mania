@@ -710,15 +710,29 @@ const getSong = async (req, res) => {
       return weight(a) - weight(b) 
     })
 
-    console.log(song[0])
-
     let coverArtUrl = ''
     if (song.releases.length !== 0) {
       const albumId = song.releases[0]['release-group'].id
-      const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${albumId}`)
-      const coverArtJSON = await FetchCoverArt.json()
-      const coverArt = coverArtJSON.images.filter(img => img.front === true)
-      coverArtUrl = coverArt[0].image
+
+      const fetchCoverArt = await fetch(
+        `https://coverartarchive.org/release-group/${albumId}`
+      )
+
+      if (fetchCoverArt.ok) {
+        const coverArtJSON = await fetchCoverArt.json()
+
+        const coverArt = coverArtJSON.images?.find(
+          img => img.front === true
+        )
+
+        if (coverArt) {
+          coverArtUrl = coverArt.image
+        }
+      } else {
+        console.log(
+          `No cover art found for release-group ${albumId}`
+        )
+      }
     }
 
     let partOf
