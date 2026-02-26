@@ -1,5 +1,6 @@
 import { Artist } from "./artist"
 import { DiscographyResponse } from "./discography"
+import { UserArtistReview, UserReleaseReview, UserSongReview } from "./reviews"
 import { Song } from "./song"
 
 export type ReviewResponse = {
@@ -64,7 +65,7 @@ export interface ArtistCredit {
   artist: {
     id: string
     name: string
-    sortName: string
+    sortName?: string
     disambiguation?: string
   }
   joinphrase?: string

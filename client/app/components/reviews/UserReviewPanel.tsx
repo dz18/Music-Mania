@@ -6,53 +6,24 @@ import axios from "axios";
 import { ApiPageResponse, MusicTypes, ReviewResponse, ReviewTypes } from "@/app/lib/types/api";
 import LikeButton from "./LikeButton";
 import ReviewModal from "./ReviewModal";
+import useFetchUserReview from "@/app/hooks/musicbrainz/useFetchUserReview";
+import { ReviewKind } from "@/app/lib/types/reviews";
  
 export default function UserReviewPanel ({
-  itemId, item, type, review, setReview, coverArtUrl, setData, setStarStats
+  itemId, item, type, coverArtUrl
 } : {
   itemId: string
-  item: MusicTypes | null
-  type: 'artist' | 'release' | 'song'
-  review: ReviewTypes | null
-  setReview: Dispatch<SetStateAction<ReviewTypes | null>>
+  item: MusicTypes | undefined
+  type: ReviewKind
   coverArtUrl?: string,
-  setData: Dispatch<SetStateAction<ApiPageResponse<ReviewResponse> | null>>
-  setStarStats: Dispatch<SetStateAction<StarCount[]>>
 }) {
 
-  const { data: session, status } = useSession()
-
   const [like, setLike] = useState(null)
-  const [error, setError] = useState('')
   const [openReview, setOpenReview] = useState(false)
 
-  useEffect(() => {
-    
-    const fetchReview = async () => {
-      if (status !== 'authenticated') return
-
-      try {
-
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/review`, { 
-          params: { itemId, type: type },
-          headers: {
-            Authorization: `Bearer ${session.user.token}`
-          }
-        })
-
-        setReview(res.data.review)
-        setLike(res.data.like)
-
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          setError(error.response?.data.error ?? 'Unknown Error')
-        }
-        console.error(error)
-      }
-    }
-
-    fetchReview()
-  }, [status])
+  const { 
+    userReview 
+  } = useFetchUserReview(itemId, type)
 
   if (!item) return null
 
@@ -76,7 +47,7 @@ export default function UserReviewPanel ({
         >
 
           <div>
-            <StarRatingVisual rating={Number(review?.rating) ?? 0}/>
+            <StarRatingVisual rating={Number(userReview?.rating) ?? 0}/>
           </div>
 
 
@@ -86,8 +57,8 @@ export default function UserReviewPanel ({
             </span>
             <span
               className={`
-                ${review?.status 
-                    ? review?.status === 'PUBLISHED' 
+                ${userReview?.status 
+                    ? userReview?.status === 'PUBLISHED' 
                       ? 'text-teal-300 '
                       : 'text-orange-500'
                     : 'border-gray-500 text-gray-500'
@@ -95,7 +66,7 @@ export default function UserReviewPanel ({
                 rounded-full text-xs font-semibold text-center`
               }
             >
-              {review?.status ? review?.status : 'N/A'}
+              {userReview?.status ? userReview?.status : 'N/A'}
             </span>
           </div>
           
@@ -138,11 +109,7 @@ export default function UserReviewPanel ({
           type={type}
           open={openReview}
           setOpen={setOpenReview}
-          setReview={setReview}
-          review={review}
           coverArtUrl={coverArtUrl}
-          setData={setData}
-          setStarStats={setStarStats}
         />
       }
 

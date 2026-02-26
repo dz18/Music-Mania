@@ -8,6 +8,8 @@ import StarRating from "./StarRating";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { ReviewKind, ReviewModalErrors } from "@/app/lib/types/reviews";
+import useFetchUserReview from "@/app/hooks/musicbrainz/useFetchUserReview";
 
 export default function ReviewModal ({
   item,
@@ -15,32 +17,19 @@ export default function ReviewModal ({
   type,
   open,
   setOpen,
-  review,
-  setReview,
   coverArtUrl,
-  setData,
-  setStarStats
 } : {
   item: Artist | Release | Song,
   itemId: string
-  type: 'artist' | 'release' | 'song'
+  type: ReviewKind
   open: boolean,
   setOpen: Dispatch<SetStateAction<boolean>>
-  review: ReviewTypes | null
-  setReview: Dispatch<SetStateAction<ReviewTypes | null>>
   coverArtUrl?: string
-  setData: Dispatch<SetStateAction<ApiPageResponse<ReviewResponse> | null>>
-  setStarStats: Dispatch<SetStateAction<StarCount[]>>
 }) {
 
   const MAX_REVIEW_LENGTH = 2048;
   const MAX_TITLE_LENGTH = 48;
   const MAX_TAGS = 5;
-
-  const searchParams = useSearchParams()
-  const star = searchParams.get('star')
-
-  const { data: session, status} = useSession()
 
   const [title, setTitle] = useState('')
   const [rating, setRating] = useState(0)
@@ -49,7 +38,6 @@ export default function ReviewModal ({
   const [tags, setTags] = useState<string[]>([])
 
   const [hover, setHover] = useState<number | null>(null)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<ReviewModalErrors>({
     title: '',
     rating: '',
@@ -57,6 +45,15 @@ export default function ReviewModal ({
     tag: '',
     tags: ''
   })
+
+  const {
+    userReview,
+    saveReview,
+    deleteReview,
+    isSaving,
+    isDeleting,
+    isPending
+  } = useFetchUserReview(itemId, type)
 
   const verifyInputs = () => {
     const errors: ReviewModalErrors = {
@@ -93,129 +90,28 @@ export default function ReviewModal ({
     if (hasError) return
 
     try {
-      setLoading(true)
-      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`, {
-        itemId: itemId,
-        title: title,
-        rating: rating,
+      await saveReview({
+        itemId,
+        title,
+        rating,
         review: reviewText,
-        type: type,
-        status: status,
-        itemName: ('name' in item) ? item.name : null,
-        itemTitle: ('title' in item) ? item.title : null,
-        artistCredit: ('artistCredit' in item) ? item.artistCredit : null,
+        type,
+        status,
+        itemName: 'name' in item ? item.name : null,
+        itemTitle: 'title' in item ? item.title : null,
+        artistCredit: 'artistCredit' in item ? item.artistCredit : null,
         coverArt: coverArtUrl,
-        tags: tags
-      }, {
-        headers : {
-          Authorization: `Bearer ${session?.user.token}`
-        }
+        tags,
       })
-
-      if (status === 'PUBLISHED') {
-        setStarStats(res.data.starStats)
-
-          setData(prev => {
-            if (!prev) return prev
-            
-            const exists = prev.data.reviews.some(r => r.userId === session?.user.id)
-            let reviews
-            if (!star || Number(star) === rating) {
-              reviews = exists 
-                ? prev.data.reviews.map(r => r.userId === session?.user.id ? res.data.review : r)
-                : [res.data.review, ...prev.data.reviews]
-            } else {
-              reviews = exists
-                ? prev.data.reviews.filter(r => r.userId !== session?.user.id)
-                : [...prev.data.reviews]
-            }
-
-            return {
-              ...prev,
-              data: {
-                ...prev.data,
-                avgRating: res.data.avg,
-                starStats: res.data.starStats,
-                reviews: reviews
-              },
-              count: res.data.count
-            }
-
-          })
-      }
-
-      if (status === 'DRAFT') {
-        setStarStats(res.data.starStats)
-        setData(prev => {
-          if (!prev) return null
-
-          const exists = prev.data.reviews.some(r => r.userId === session?.user.id)
-          const reviews = prev.data.reviews.filter(r => r.userId !== session?.user.id)
-
-          return {
-            ...prev,
-            data: {
-              ...prev.data,
-              avgRating: res.data.avg,
-              starStats: res.data.starStats,
-              reviews: reviews as typeof prev.data.reviews
-            },
-            count: exists ? prev.count - 1 : prev.count,
-          }
-        })
-      }
-
-      setReview(res.data.review)
       setOpen(false)
     } catch (error) {
       console.error(error)
-    } finally {
-      setLoading(false)
-    }
+    } 
+
   }
 
   const handleDeletion = async () => {
-    try {
-      setLoading(true)
-
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`, {
-        headers: {
-          Authorization: `Bearer ${session?.user.token}`
-        },
-        params: {
-          itemId, 
-          type
-        }
-      })
-
-      setReview(null)
-      setStarStats(res.data.starStats)
-      setData(prev => {
-        if (!prev) return prev
-
-        const reviews = prev.data.reviews.filter(r => r.userId !== res.data.review.userId) 
-
-        return {
-          ...prev,
-          data: {
-            ...prev.data,
-            avgRating: res.data.avg,
-            starStats: res.data.starStats,
-            reviews: reviews as typeof prev.data.reviews,
-          },
-          count: res.data.count,
-        }
-      })
-
-      setOpen(false)
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        setError(error.response?.data.error ?? 'Unknown error')
-      }
-      console.error(error)
-    } finally{
-      setLoading(false)
-    }
+    deleteReview()
   }
 
   const handleAddTag = () => {
@@ -233,14 +129,14 @@ export default function ReviewModal ({
   }
 
   useEffect(() => {
-    if (!review) return
+    if (!userReview) return
 
-    setTags(review.tags ?? [])
-    setTitle(review.title ?? "")
-    setRating(Number(review.rating) ?? 0)
-    setReviewText(review.review ?? "")
+    setTags(userReview.tags ?? [])
+    setTitle(userReview.title ?? "")
+    setRating(Number(userReview.rating) ?? 0)
+    setReviewText(userReview.review ?? "")
 
-  }, [review])
+  }, [userReview])
 
   if (!open) return null
 
@@ -252,12 +148,12 @@ export default function ReviewModal ({
         p-4 w-[90%] max-w-lg relative
       `}>
 
-        <div className={`flex ${review?.status ? 'justify-between' : 'justify-end'} border-b border-gray-500 pb-2`}>
-          {review?.status &&
+        <div className={`flex ${userReview?.status ? 'justify-between' : 'justify-end'} border-b border-gray-500 pb-2`}>
+          {userReview?.status &&
             <div className="text-xs flex gap-1 items-end tracking-wide font-semibold">
               Status: 
-              <span className={`${review?.status === 'DRAFT' ? "text-orange-500" : "text-teal-500"}`}>
-                {review?.status}
+              <span className={`${userReview?.status === 'DRAFT' ? "text-orange-500" : "text-teal-500"}`}>
+                {userReview?.status}
               </span>
             </div>
           }
@@ -284,7 +180,7 @@ export default function ReviewModal ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={MAX_TITLE_LENGTH}
-              disabled={loading}
+              disabled={isPending}
             />
             {error.title && <p className="text-xs text-red-500 font-mono">{error.title}</p>}
           </div>
@@ -315,7 +211,7 @@ export default function ReviewModal ({
               className="bg-black/50 border-black px-2 py-1 w-full text-xs input-glow"
               maxLength={MAX_REVIEW_LENGTH}
               rows={15}
-              disabled={loading}
+              disabled={isPending}
             />
             {error.reviewText && <p className="text-xs text-red-500 font-mono">{error.reviewText}</p>}
           </div>
@@ -332,10 +228,12 @@ export default function ReviewModal ({
                 onChange={(e) => setTag(e.target.value)}
                 className="w-1/2 bg-black/50 px-2 py-1 text-sm input-glow"
                 maxLength={24}
+                disabled={isPending}
               />
               <button 
                 className="text-xs bg-teal-950 border border-teal-300 text-teal-300 hover:bg-teal-900 active:bg-teal-800 rounded px-2 py-1 cursor font-semibold interactive-button"
                 onClick={handleAddTag}
+                disabled={isPending}
               >
                 Add
               </button>
@@ -366,15 +264,15 @@ export default function ReviewModal ({
               <button 
                 className="text-white font-semibold px-2 py-1 border rounded hover:bg-gray-800 cursor-pointer"
                 onClick={() => handleSubmittion('DRAFT')}
-                disabled={loading}
+                disabled={isSaving || isDeleting || isPending}
               >
                 Save as Draft
               </button>  
-              {review &&
+              {userReview &&
                 <button
                   className="text-red-500 px-2 py-1 border border-red-500 bg-red-950 rounded hover:bg-red-900 active:bg-red-800 interactive-button font-semibold"
                   onClick={handleDeletion}
-                  disabled={loading}
+                  disabled={isSaving || isDeleting || isPending}
                 >
                   Remove
                 </button>
@@ -384,7 +282,7 @@ export default function ReviewModal ({
               <button 
                 className="text-teal-300  bg-teal-950 px-2 py-1 border rounded cursor-pointer hover:bg-teal-900 font-semibold"
                 onClick={() => handleSubmittion('PUBLISHED')}
-                disabled={loading}
+                disabled={isSaving || isDeleting || isPending}
               >
                 Publish
               </button>    
@@ -392,8 +290,11 @@ export default function ReviewModal ({
           </div>
 
         </div>
-        {loading &&
+        {isSaving &&
           <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
+        }
+        {isDeleting &&
+          <IndeterminateLoadingBar bgColor="bg-red-100" mainColor="bg-red-500"/>
         }
 
       </div>

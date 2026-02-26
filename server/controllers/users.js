@@ -581,7 +581,6 @@ const reviewPanel = async (req, res) => {
     }
 
     let review
-    let like
     if (type === 'artist') {
       review = await prisma.userArtistReviews.findUnique({
         where: { userId_artistId: { userId: req.user.id, artistId: itemId }},
@@ -593,37 +592,31 @@ const reviewPanel = async (req, res) => {
           }
         }
       })
-      like = await prisma.userLikedArtist.findUnique({
-        where: { 
-          userId_artistId: { userId: req.user.id, artistId: itemId } 
-        }
-      })
     } else if (type === 'release') {
       review = await prisma.userReleaseReviews.findUnique({
         where: { userId_releaseId: { userId: req.user.id, releaseId: itemId }},
-      })
-      like = await prisma.userLikedRelease.findUnique({
-        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId}}
       })
 
     } else if (type === 'song') {
       review = await prisma.userSongReviews.findUnique({
         where: { userId_songId: { userId: req.user.id, songId: itemId }},
       })
-      like = await prisma.userLikedSong.findUnique({
-        where: { userId_songId: { userId: req.user.id, songId: itemId }}
-      })
     }
     
-    let formattedReview = null;
+    let formattedReview = null
 
     if (review) {
-      const tags = review.tags?.map(t => t.tag.name) || [];
-      formattedReview = { ...review, tags };
+      const tags = review.tags?.map(t => t.tag.name) || []
+      formattedReview = { ...review, tags }
+      successApiCall(req)
+      res.json({...formattedReview})
     }
 
-    successApiCall(req)
-    res.json({review: formattedReview, like})
+    if (!review) {
+      successApiCall(req)
+      res.json(null)
+    }
+
   } catch (error) {
     errorApiCall(req, error)
   }

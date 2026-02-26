@@ -3,7 +3,6 @@
 import About from "@/app/components/pages/artist/About"
 import Reviews from "@/app/components/reviews/Reviews"
 import { useSession } from "next-auth/react"
-import { useState } from "react"
 import IndeterminateLoadingBar from "@/app/components/ui/loading/IndeterminateLoadingBar"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import RefreshPage from "@/app/components/ui/RefreshPage"
@@ -12,24 +11,24 @@ import useFetchArtist from "@/app/hooks/musicbrainz/useFetchArtist"
 import Pagination from "@/app/components/ui/Pagination"
 import StarStatistics from "../../ui/starStatistics"
 import UserReviewPanel from "../../reviews/UserReviewPanel"
-import { ReviewTypes } from "@/app/lib/types/api"
 import YourReviewSection from "../../reviews/YourReview"
+import useFetchUserReview from "@/app/hooks/musicbrainz/useFetchUserReview"
 
 export default function ArtistPage ({
   artistId,
-  star
 } : {
   artistId: string,
-  star: number | null
 }) {
 
   const { status } = useSession()
   const { 
-    artist, reviewsload, artistLoad, fetchData, 
-    error, data, setData, starStats, setStarStats
-  } = useFetchArtist(artistId, star)
+    artist, artistLoad,
+    reviews, reviewsLoad,
+    error, starStats, 
+    refetchReviews, refetchArtists
+  } = useFetchArtist(artistId)
 
-  const [review, setReview] = useState<ReviewTypes | null>(null)
+  const {userReview} = useFetchUserReview(artistId, 'artist')
 
   if (artistLoad) {
     return (
@@ -72,21 +71,21 @@ export default function ArtistPage ({
   if (error) {
     return (
       <RefreshPage
-        func={() => fetchData(1)}
+        func={async () => { await refetchArtists ()}}
         title={'Artist Page'}
         loading={artistLoad}
-        note={error}
+        note={error.message}
       />
     )
   }
-
+  
   return (
     <div className="flex flex-col gap-2">
 
       <div className="flex gap-10">
         {/* About */}
         {artist &&
-          <About artist={artist} reviews={data?.data ?? null}/>
+          <About artist={artist} reviews={reviews?.data ?? null}/>
         }
       </div>
 
@@ -98,30 +97,26 @@ export default function ArtistPage ({
               item={artist} 
               itemId={artistId} 
               type="artist"
-              review={review}
-              setReview={setReview}
-              setData={setData}
-              setStarStats={setStarStats}
             />
           }
         </div>
       }
 
-      {status === 'authenticated' && review &&
+      {status === 'authenticated' && userReview &&
         <YourReviewSection
-          review={review}
+          review={userReview}
         />
       }
 
-      {reviewsload &&
+      {reviewsLoad &&
         <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
       }
 
-      {data &&
+      {reviews &&
         <>
-          <Reviews data={data}/>
-          {data.count > data.limit && (
-            <Pagination data={data} fetchData={fetchData} />
+          <Reviews data={reviews}/>
+          {reviews.count > reviews.limit && (
+            <Pagination totalPages={reviews.pages}/>
           )}          
         </>
       }

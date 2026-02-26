@@ -1,10 +1,11 @@
 import { ReviewTypes } from "@/app/lib/types/api"
 import StarRatingVisual from "../ui/StarVisual"
+import { timeAgo } from "@/app/hooks/timeAgo"
 
 export default function YourReviewSection ({
   review, 
 }:{
-  review: ReviewTypes | null
+  review: ReviewTypes | undefined
 }) {
 
   if (!review) return null
@@ -38,7 +39,7 @@ export default function YourReviewSection ({
         >
           {review.review ? review.review : 'No Description'}
         </p>          
-        <p className="text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+        <p className="text-gray-500">{timeAgo(review.createdAt)}</p>
       </div>
 
     </div>
