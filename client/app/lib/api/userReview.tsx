@@ -7,7 +7,7 @@ export const getUserReview = async <
   T extends ReviewKind
 > (
   params: {
-    itemId: string, 
+    itemId: string | undefined, 
     type: T
   },
   token: string | null | undefined
@@ -41,7 +41,7 @@ export const saveReview = async (
 
 export const deleteReview = async (
   params: {
-    itemId: string,
+    itemId: string | undefined,
     type: "artist" | "release" | "song"
   },
   token: string

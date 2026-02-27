@@ -37,7 +37,8 @@ export default function SongPage ({
     refetchReviews,
     refetchsong
   } = useFetchSong(songId)
-  const {userReview} = useFetchUserReview(songId, 'song')
+
+  const { userReview } = useFetchUserReview(song?.workId || song?.id, 'song')
 
   if (songLoad) {
     return (
@@ -88,6 +89,8 @@ export default function SongPage ({
     )
   }
 
+  console.log(userReview)
+  
   return (
     <div className="flex flex-col gap-2">
 

@@ -432,6 +432,7 @@ const discography = async (req, res) => {
     }
 
     console.log(sorted)
+    successApiCall(req)
     res.json(data)
 
   } catch (error) {

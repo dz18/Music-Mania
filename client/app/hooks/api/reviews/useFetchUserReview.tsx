@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
 export default function useFetchUserReview (
-  itemId: string, 
+  itemId: string | undefined, 
   type: ReviewKind
 ) {
 

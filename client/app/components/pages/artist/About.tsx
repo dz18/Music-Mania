@@ -99,7 +99,7 @@ export default function About ({
         <ExternalResources artist={artist}/>
       }
       <div>
-        <Link href={`${pathname}/discography`} className="inline-flex text-teal-500 font-bold hover:underline active:opacity-80">
+        <Link href={`${pathname}/discography?active=album`} className="inline-flex text-teal-500 font-bold hover:underline active:opacity-80">
           See discography
         </Link>
       </div>

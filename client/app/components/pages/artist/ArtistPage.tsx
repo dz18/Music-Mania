@@ -71,7 +71,9 @@ export default function ArtistPage ({
   if (error) {
     return (
       <RefreshPage
-        func={async () => { await refetchArtists ()}}
+        func={async () => { 
+          await refetchArtists ()
+        }}
         title={'Artist Page'}
         loading={artistLoad}
         note={error.message}
