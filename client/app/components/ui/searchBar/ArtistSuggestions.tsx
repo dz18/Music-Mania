@@ -1,13 +1,21 @@
 import { useRouter } from "next/navigation"
 import NoResults from "./NoResults"
+import useDropdown from "@/app/hooks/useSearchDropdown"
 
 export default function ArtistSuggestions ({
   data,
+  closeDropdown
 } : {
   data : ArtistQuery | null
+  closeDropdown: () => void
 }) {
 
   const router = useRouter()
+
+  const handleClick = (itemId: string) => {
+    router.push(`/artist/${itemId}`)
+    closeDropdown()
+  }
 
   return (
     <>
@@ -18,9 +26,9 @@ export default function ArtistSuggestions ({
               <div 
                 key={item.id} 
                 className="interactive-button interactive-dark"
-                onClick={() => router.push(`/artist/${item.id}`)}
+                onClick={() => handleClick(item.id)}
               >
-                <div className="border-t-1 border-gray-500 mx-2 py-2">
+                <div className="border-t border-gray-500 mx-2 py-2">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-white truncate">{item.name}</h3>
                     {item.type && (

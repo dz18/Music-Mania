@@ -44,7 +44,6 @@ export default function IndividualFollowing ({
     : defaultAvatar
   const [avatarUrl, setAvatarUrl] = useState(initialAvatar)
 
-  console.log('followingMap:', isFollowingMap)
   return (
     <div 
       className={`

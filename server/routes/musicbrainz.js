@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const musicBrainzController = require('../controllers/musicbrainz')
 
-// Queries
+// Queries (no song query is intentional. API Limitations)
 router.get('/artists', musicBrainzController.artists)
 router.get('/releases', musicBrainzController.releases)
 

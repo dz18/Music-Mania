@@ -15,30 +15,43 @@ import StarStatistics from "../../ui/starStatistics";
 import UserReviewPanel from "../../reviews/UserReviewPanel";
 import { ReviewTypes } from "@/app/lib/types/api";
 import YourReviewSection from "../../reviews/YourReview";
+import { useSearchParams } from "next/navigation";
+import useFetchUserReview from "@/app/hooks/api/reviews/useFetchUserReview";
 
 export default function ReleasePage ({
   releaseId,
-  star
 } : {
   releaseId: string,
-  star: number | null
 }) {
 
   const { status } = useSession()
+  const searchParams = useSearchParams()
+
   const [active, setActive] = useState('reviews')
+
+  // const {
+  //   coverArt,
+  //   data,
+  //   loading,
+  //   error,
+  //   release,
+  //   releaseLoad,
+  //   setData,
+  //   fetchData,
+  //   starStats,
+  //   setStarStats
+  // } = useFetchRelease(releaseId, star)
+
   const {
-    coverArt,
-    data,
-    loading,
-    error,
-    release,
-    releaseLoad,
-    setData,
-    fetchData,
-    starStats,
-    setStarStats
-  } = useFetchRelease(releaseId, star)
-  const [review, setReview] = useState<ReviewTypes | null>(null)
+    release, releaseLoad,
+    reviews, reviewsLoad,
+    starStats, error,
+    refetchRelease, refetchReviews
+  } = useFetchRelease(releaseId)
+
+  const {
+    userReview
+  } = useFetchUserReview(releaseId, 'release')
 
   if (releaseLoad) {
     return (
@@ -81,10 +94,10 @@ export default function ReleasePage ({
   if (error) {
     return (
       <RefreshPage
-        func={() => fetchData(1)}
+        func={async () => { await refetchRelease()}}
         title={'Release Page'}
-        loading={loading}
-        note={error}
+        loading={releaseLoad}
+        note={error.message}
       />
     )
   }
@@ -93,12 +106,12 @@ export default function ReleasePage ({
     <div className="flex flex-col gap-2">
       <div className="flex justify-between">
         {/* Text content */}
-        {data &&
+        {reviews &&
           <TextContent
-            album={release}
-            reviews={data?.data}
-            coverArt={coverArt}
-            loading={loading}
+            release={release?.release}
+            reviews={reviews.data}
+            coverArt={release?.coverArtUrl}
+            loading={releaseLoad}
           />
         }
       </div>
@@ -110,21 +123,17 @@ export default function ReleasePage ({
           <StarStatistics stats={starStats}/>
           {status === 'authenticated' &&
             <UserReviewPanel 
-              item={release} 
+              item={release?.release} 
               itemId={releaseId} 
               type="release"
-              review={review}
-              setReview={setReview}
-              setData={setData}
-              coverArtUrl={coverArt}
-              setStarStats={setStarStats}
+              coverArtUrl={release?.coverArtUrl}
             />
           }
         </div>
       }
 
-      {review &&
-        <YourReviewSection review={review}/>
+      {userReview &&
+        <YourReviewSection review={userReview}/>
       }
 
       <ul className="flex list-none flex-wrap gap-4 text font-mono font-bold mt-2">
@@ -145,12 +154,14 @@ export default function ReleasePage ({
 
       {active === 'reviews' &&
         <>
-        {loading ?
+        {reviewsLoad ?
           <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
-        : data &&
+        : reviews &&
           <>
-            <Reviews data={data}/>
-            <Pagination data={data} fetchData={fetchData}/>
+            <Reviews data={reviews}/>
+            {reviews.count > reviews.limit && (
+              <Pagination totalPages={reviews.pages}/>
+            )}            
           </>
         }
         </>
@@ -158,11 +169,11 @@ export default function ReleasePage ({
 
       {active === 'tracklist' &&
         <>
-        {loading &&
+        {releaseLoad &&
           <IndeterminateLoadingBar bgColor="bg-teal-100" mainColor="bg-teal-500"/>
         }
         {release &&
-          <Tracklist album={release}/>
+          <Tracklist release={release.release}/>
         }
         </>
       }

@@ -5,43 +5,40 @@ import ReleaseSuggestions from "./ReleaseSuggestions"
 import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
 import { RefreshCcw } from "lucide-react"
 import { ApiPageResponse, SearchTypes } from "@/app/lib/types/api"
+import useDropdown from "@/app/hooks/useSearchDropdown"
 
 
 export default function SearchDropdown ({
   open,
+  closeDropdown,
   type,
   setType,
   data,
-  setData,
   loading,
   error,
   fetch
 } : {
-  open : boolean
+  open: boolean
+  closeDropdown: () => void
   type : string
   setType : Dispatch<SetStateAction<string>>
   data: ApiPageResponse<Suggestion> | null
-  setData: Dispatch<SetStateAction<ApiPageResponse<Suggestion> | null>>
   loading: boolean
-  error: string | null
+  error: string | undefined
   fetch: () => Promise<void>
 }) {
 
   const suggestionComponents: Record<SearchTypes, JSX.Element> = {
-    artists: <ArtistSuggestions data={(data?.data as ArtistQuery)}/>,
+    artists: <ArtistSuggestions data={(data?.data as ArtistQuery)} closeDropdown={closeDropdown}/>,
     releases: <ReleaseSuggestions data={(data?.data as ReleaseQuery)}/>,
     users: <UserSuggestions data={(data?.data as UserQuery)}/>
   }
-
-  useEffect(() => {
-    setData(null)
-  }, [type])
 
   if (!open) return
 
   return (
     <div 
-      className="absolute z-10 max-w-[600px] w-full h-fit mt-2 bg-surface border border-gray-700 rounded-xl shadow-md max-h-100 overflow-y-auto "
+      className="absolute z-10 max-w-150 w-full h-fit mt-2 bg-surface border border-gray-700 rounded-xl shadow-md max-h-100 overflow-y-auto "
     >
       
       {/* Select Search Type */}

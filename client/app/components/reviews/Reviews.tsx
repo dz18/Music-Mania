@@ -21,7 +21,7 @@ export default function Reviews ({
 
       {data.count !== 0 ? 
         data.data.reviews.map((r, i) => (
-          <IndividualReview review={r} index={i} key={r.userId}/>
+          <IndividualReview review={r} index={i} key={i}/>
         ))
       :
         <p className="p-2 text-sm font-mono text-gray-500">Start the conversation!</p>

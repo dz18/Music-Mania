@@ -1,67 +1,64 @@
-import { Artist } from "@/app/lib/types/artist";
-import { DiscographyResponse, DiscographyType } from "@/app/lib/types/discography";
-import axios, { AxiosError } from "axios";
-import { useCallback, useEffect, useState } from "react";
+'use client'
 
-export default function useFetchDiscography(
-  artistId: string,
-) {
-  
+import { getDiscography, getArtist } from "@/app/lib/api/discography"
+import { DiscographyType } from "@/app/lib/types/discography"
+import { useQuery } from "@tanstack/react-query"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useEffect } from "react"
 
-  const [artist, setArtist] = useState<Artist | null>(null)
-  const [data, setData] = useState<DiscographyResponse | null>(null)
-  const [artistLoad, setArtistLoad] = useState(false)
-  const [tableLoad, setTableLoad] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [active, setActive] = useState<DiscographyType>('album')
+const VALID_TYPES: DiscographyType[] = ['album', 'ep', 'single']
 
-  const fetchData = useCallback(async(page: number = 1) => {
-    if (!artistId || !page) {
-      setError('Missing required parameters')
-      return
-    }
+export default function useFetchDiscography(artistId: string) {
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
 
-    try {
-      setTableLoad(true)
-      if (!artist) { setArtistLoad(true) }
+  // Page number from URL
+  const page = Number(searchParams.get('page')) || 1
 
-      let discog = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/discography${active === 'single' ? 'Singles': ''}`, {
-        params: { artistId, type: active, page: page }
-      })
-      
-      setData(discog.data)
-      setError(null)
+  // Active tab from URL with validation
+  const rawActive = searchParams.get('active')
+  const active: DiscographyType = VALID_TYPES.includes(rawActive as DiscographyType)
+    ? (rawActive as DiscographyType)
+    : 'album'
 
-      if (!artist) {
-        const artistRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/musicbrainz/getArtist`, {
-          params: { id: artistId }
-        })
-        setArtist(artistRes.data)
-      }
-
-    } catch (error : any) {
-      const err = error as AxiosError<{error: string}>
-      console.error("Review fetch failed", err.response?.data.error)
-      setError(err.response?.data.error ?? err.message)
-    } finally {
-      setArtistLoad(false)
-      setTableLoad(false)
-    }   
-  }, [artistId, active])
-
+  // Normalize URL if invalid
   useEffect(() => {
-    fetchData(1)
-  }, [fetchData])
+    if (!VALID_TYPES.includes(rawActive as DiscographyType)) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('active', 'album')
+      params.set('page', '1')
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    }
+  }, [rawActive, pathname, router, searchParams])
 
-  return { 
-    artist,
-    artistLoad,
-    tableLoad,
-    fetchData,
-    error,
-    data,
+  // Artist query
+  const artistQuery = useQuery({
+    queryKey: ['artist', artistId],
+    queryFn: () => getArtist(artistId),
+    enabled: !!artistId,
+  })
+
+  // Discography query
+  const discographyQuery = useQuery({
+    queryKey: ['discography', artistId, active, page],
+    queryFn: () => getDiscography(artistId, active, page),
+    enabled: !!artistId,
+    staleTime: 1000 * 60 * 5, // cache 5min
+    placeholderData: undefined, // ensure empty on new tab
+  })
+
+  return {
+    artist: artistQuery.data,
+    loadingArtist: artistQuery.isLoading,
+    errorArtist: artistQuery.error,
+    discography: discographyQuery.data,
+    loadingDiscography: discographyQuery.isLoading,
+    errorDiscography: discographyQuery.error,
+    error: artistQuery.isError || discographyQuery.isError,
+    refetchArtist: artistQuery.refetch,
+    refetchDiscography: discographyQuery.refetch,
     active,
-    setActive
+    page,
   }
-
 }

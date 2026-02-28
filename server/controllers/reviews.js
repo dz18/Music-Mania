@@ -10,7 +10,6 @@ const artistReviews = async (req, res) => {
   let page = Number(req.query.page) || 1
   let star = Number(req.query.star) || null
 
-  const limit = 10
   logApiCall(req)
 
   try {
@@ -145,7 +144,7 @@ const songReviews = async(req, res) => {
       return res.status(400).json({error : 'Missing Page Number'})
     }
 
-    const id = songId === workId ? songId : workId
+    const id = workId || songId
     const [reviews, allStats, filteredStats, songStats] = await Promise.all([
       prisma.userSongReviews.findMany({
         where: { songId: id, status: 'PUBLISHED', ...(star ? {rating: star}: {})},
@@ -443,13 +442,13 @@ const deleteReview = async (req, res) => {
 }
 
 const userArtists = async (req, res) => {
-  const userId = req.query.userId
+  const profileId = req.query.profileId
   const page = Number(req.query.page) || null
   const star = Number(req.query.star) || null
 
   const limit = 25
 
-  if (!userId || !page) {
+  if (!profileId || !page) {
     // error handling
   }
 
@@ -463,20 +462,20 @@ const userArtists = async (req, res) => {
       reviewStats
     ] = await Promise.all([
       prisma.userArtistReviews.findMany({
-        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
+        where: { userId: profileId, status: 'PUBLISHED', ...(star && {rating: star})},
         include: { artist: true },
         take: limit,
         skip: (page - 1) * limit,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.userArtistReviews.aggregate({
-        where: { userId: userId, status: 'PUBLISHED', ...(star && {rating: star})},
+        where: { userId: profileId, status: 'PUBLISHED', ...(star && {rating: star})},
         _count: true
       }),
       prisma.userArtistReviews.groupBy({
         by: ['rating'],
         _count: { rating: true },
-        where: { userId: userId, status: 'PUBLISHED' }
+        where: { userId: profileId, status: 'PUBLISHED' }
       })
     ])
 

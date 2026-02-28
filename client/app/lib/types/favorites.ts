@@ -1,4 +1,6 @@
-export interface FavoritesResponse {
+import { LikedArtist, LikedRelease, LikedSong } from "./profile"
+
+export interface LikesResponse {
     userLikedArtist: LikedArtist[]
     userLikedRelease: LikedRelease[]
     userLikedSong: LikedSong[]

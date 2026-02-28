@@ -21,11 +21,19 @@ export default function SearchPage ({
   const router = useRouter()
   const [query, setQuery] = useState(params.q ?? '')
   const [tab, setTab] = useState(params.tab ?? 'artists')
+  const [artistType, setArtistType] = useState('')
+  const [releaseType, setReleaseType] = useState('')
 
   const {
-    data, error, loading, artistType, releaseType,
-    fetchSuggestions, setData, setArtistType, setReleaseType
-  } = useSearchQuery(query, tab)
+    searchResults,
+    isLoading,
+    isError,
+    error,
+    refetch
+  } = useSearchQuery(query, tab, {
+    artistType,
+    releaseType
+  })
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -35,10 +43,6 @@ export default function SearchPage ({
     router.replace(`/search?${params.toString()}`)
   }, [query, tab])
 
-  useEffect(() => {
-    setData(null)
-  }, [tab])
-
   const tabs = [
     {tab: 'Artists', id: 'artists'},
     {tab: 'Releases', id: 'releases'},
@@ -46,14 +50,14 @@ export default function SearchPage ({
   ]
 
   const suggestionComponents: Record<SearchTypes, JSX.Element> = {
-    artists: <ArtistSearch data={(data?.data as ArtistQuery)}/>,
-    releases: <ReleaseSearch data={(data?.data as ReleaseQuery)}/>,
-    users: <UserSearch data={(data?.data as UserQuery)}/>
+    artists: <ArtistSearch data={(searchResults?.data as ArtistQuery)}/>,
+    releases: <ReleaseSearch data={(searchResults?.data as ReleaseQuery)}/>,
+    users: <UserSearch data={(searchResults?.data as UserQuery)}/>
   }
 
   const handleSubmit = (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    fetchSuggestions()
+    refetch()
   }
 
   return (
@@ -124,7 +128,7 @@ export default function SearchPage ({
         </ul>
 
         <div>
-          <span className="font-mono text-sm text-gray-500">{data?.count ? data.count : '0'} total results</span>
+          <span className="font-mono text-sm text-gray-500">{searchResults?.count ? searchResults.count : '0'} total results</span>
         </div>
       </section>
 
@@ -138,7 +142,7 @@ export default function SearchPage ({
         </div>
 
         {tab &&
-          loading ? (
+          isLoading ? (
             <div className="flex flex-col gap-1 py-1">
               {Array.from({ length: 15 }).map((_, index) => (
                 <LoadingBox key={index} className="rounded-none h-15" />
@@ -147,11 +151,11 @@ export default function SearchPage ({
           ) : (
             error ? 
               <div className="flex items-center flex-col p-2 gap-2">
-                <p className="font-mono">{error}</p>
+                <p className="font-mono">{error.message}</p>
                 <div>   
                   <button
                     className="px-2 py-1 bg-teal-500 text-black font-mono cursor-pointer flex gap-2 items-center rounded"
-                    onClick={() => fetchSuggestions(1)}
+                    onClick={async () => {await refetch()}}
                   >
                     Refresh <RefreshCcw size={18}/>
                   </button>
@@ -163,11 +167,11 @@ export default function SearchPage ({
               </ul>
           )
         }
-        {data && data?.data.suggestions.length !== 0 ?
-          <Pagination data={data} fetchData={fetchSuggestions}/>
+        {searchResults && searchResults?.data.suggestions.length !== 0 ?
+          <Pagination totalPages={searchResults.pages}/>
         :
-          !error  && !loading &&
-            <div className="flex items-center justify-center font-mono my-[5rem] gap-2 text-gray-500">
+          !error  && !isLoading &&
+            <div className="flex items-center justify-center font-mono my-20 gap-2 text-gray-500">
               <FileX2/> No data found
             </div>
         }

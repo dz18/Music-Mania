@@ -4,9 +4,9 @@ import TracklistRatingsBlock from "./TracklistRatingsBlock"
 import { Fragment } from "react/jsx-runtime"
 
 export default function Tracklist ({
-  album
+  release
 } : {
-  album: Release | null
+  release: Release | null
 }) {
 
   const router = useRouter()
@@ -30,12 +30,12 @@ export default function Tracklist ({
         className="flex justify-between px-4 py-2 bg-surface-elevated text-sm font-mono font-semibold tracking-wide text-center"
       >
         <p>
-          {album?.title}
+          {release?.title}
         </p>
         <p
           className="text-gray-500"
         >
-          {album?.media.reduce((sum, m) => sum + m.trackCount, 0)} total tracks
+          {release?.media.reduce((sum, m) => sum + m.trackCount, 0)} total tracks
         </p>
       </div>
 
@@ -56,10 +56,10 @@ export default function Tracklist ({
           </tr>
         </thead>
         <tbody>
-        {album?.media.map((media, mediaIndex) => (
+        {release?.media.map((media, mediaIndex) => (
           <Fragment key={mediaIndex}>
             {/* Optional disc header */}
-            {album.media.length > 1 && (
+            {release.media.length > 1 && (
               <tr className="bg-black/50 border-b border-white/5">
                 <td colSpan={5} className="px-4 py-2 text-sm font-semibold opacity-60">
                   Disc {mediaIndex + 1}

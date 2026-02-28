@@ -1,3 +1,4 @@
+import { LikedSong } from "@/app/lib/types/profile"
 import { ImageOff, TriangleAlert } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -22,7 +23,7 @@ export default function LikedSongs ({
   return (
     <ul className="list-none px-4 py-2">
       <li className="flex items-center gap-2 flex-wrap">
-        {likes?.map((f, i) => (
+        {likes?.map((l: LikedSong, i) => (
           <button 
             key={i} 
             className="flex items-center gap-2 px-2 py-2 border bg-surface-elevated border-white/5 rounded"
@@ -30,13 +31,13 @@ export default function LikedSongs ({
             <div
               className="w-20 h-20 overflow-hidden bg-surface flex items-center justify-center"
             >
-              {f.song.coverArt ?
-                <img 
-                  src={f.song.coverArt} 
-                  className="w-full h-full object-cover"
-                />
+              {l.song.coverArt ?
+                <img src={l.song.coverArt} className="w-full h-full border-2 border-white/5 object-cover"/>
               :
-                <ImageOff className="text-white/5"/>
+                <div className="w-40 h-40 flex items-center justify-center text-white/5 border-white/5 border-2 border-dashed flex-col rounded-lg">
+                  <ImageOff size={24}/>
+                  <p className="font-mono text-sm font-bold">N/A</p>
+                </div>
               }
             </div>
             <div
@@ -45,10 +46,10 @@ export default function LikedSongs ({
               <p 
                 className="font-mono font-semibold text-sm tracking-wide"
               >
-                {f.song.title}
+                {l.song.title}
               </p>
               <div>
-                {f.song.artistCredit.map((ac, i) =>
+                {l.song.artistCredit.map((ac, i) =>
                   <p
                     key={i}
                     className="text-xs tracking-wide text-white/50"

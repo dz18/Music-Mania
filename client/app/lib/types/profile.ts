@@ -1,4 +1,6 @@
-interface LikedArtist {
+import { ApiPageResponse } from "./api"
+
+export interface LikedArtist {
   userId: string
   artistId: string
   since: Date
@@ -8,7 +10,7 @@ interface LikedArtist {
   }
 }
 
-interface LikedRelease {
+export interface LikedRelease {
   userId: string
   releaseId: string
   since: Date
@@ -23,7 +25,7 @@ interface LikedRelease {
   }
 }
 
-interface LikedSong {
+export interface LikedSong {
   userId: string
   songId: string
   since: Date
@@ -38,22 +40,22 @@ interface LikedSong {
   }
 }
 
-interface ProfileArtistReview {
+export interface ProfileArtistReview {
   reviews: UserArtistReview[]
   starStats: StarCount[]
 }
 
-interface ProfileReleaseReview {
+export interface ProfileReleaseReview {
   reviews: UserReleaseReview[]
   starStats: StarCount[]
 }
 
-interface ProfileSongReview {
+export interface ProfileSongReview {
   reviews: UserSongReview[]
   starStats: StarCount[]
 }
 
-interface UserProfile {
+export interface UserProfile {
   id: string
   username: string
   createdAt: Date
@@ -95,3 +97,12 @@ interface UserProfile {
   // }
   starStats: StarCount[]
 }
+
+export type TabKeys = "artistReviews" | "releaseReviews" | "songReviews" | "starStats";
+
+export type TabDataMap = {
+  artistReviews: ApiPageResponse<ProfileArtistReview>;
+  releaseReviews: ApiPageResponse<ProfileReleaseReview>;
+  songReviews: ApiPageResponse<ProfileSongReview>;
+  starStats: null
+};
