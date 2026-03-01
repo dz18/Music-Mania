@@ -13,16 +13,13 @@ export default function useFetchDiscography(artistId: string) {
   const pathname = usePathname()
   const router = useRouter()
 
-  // Page number from URL
   const page = Number(searchParams.get('page')) || 1
 
-  // Active tab from URL with validation
   const rawActive = searchParams.get('active')
   const active: DiscographyType = VALID_TYPES.includes(rawActive as DiscographyType)
     ? (rawActive as DiscographyType)
     : 'album'
 
-  // Normalize URL if invalid
   useEffect(() => {
     if (!VALID_TYPES.includes(rawActive as DiscographyType)) {
       const params = new URLSearchParams(searchParams.toString())
@@ -32,20 +29,20 @@ export default function useFetchDiscography(artistId: string) {
     }
   }, [rawActive, pathname, router, searchParams])
 
-  // Artist query
   const artistQuery = useQuery({
     queryKey: ['artist', artistId],
     queryFn: () => getArtist(artistId),
     enabled: !!artistId,
+    retry: 3,
+    retryDelay: 3000
   })
 
-  // Discography query
   const discographyQuery = useQuery({
     queryKey: ['discography', artistId, active, page],
     queryFn: () => getDiscography(artistId, active, page),
     enabled: !!artistId,
-    staleTime: 1000 * 60 * 5, // cache 5min
-    placeholderData: undefined, // ensure empty on new tab
+    staleTime: 1000 * 60 * 5,
+    placeholderData: undefined,
   })
 
   return {
