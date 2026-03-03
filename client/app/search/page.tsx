@@ -1,4 +1,5 @@
 import SearchPage from "../components/pages/search/SearchPage"
+import { connection } from "next/server"
 
 export default async function Search ({
   searchParams
@@ -7,6 +8,8 @@ export default async function Search ({
     tab: string, q: string
   }>
 }) {
+
+  await connection()
 
   const params = await searchParams
 

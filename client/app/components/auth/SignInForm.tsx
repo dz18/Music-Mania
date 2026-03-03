@@ -14,18 +14,26 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState({
     email : '',
-    password : ''
+    password : '',
+    general: ''
   })
+
+  const isError = Object.values(error).some(e => e !== '')
 
   const handleSignIn = async (e : FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!email || !password) return;
     if (error.email || error.password) return;
-    
 
     try {
       setSubmitting(true)
+      setError({
+        email : '',
+        password : '',
+        general: ''
+      })
+
       const result = await signIn("credentials", {
         email, 
         password,
@@ -39,7 +47,7 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
         } else if (result.error.toLowerCase().includes("user")) {
           setError(prev => ({ ...prev, email: result.error || '' }))
         } else {
-          setError(prev => ({ ...prev, email: "Sign In failed" }));
+          setError(prev => ({ ...prev, general: "Sign-In failed" }));
         }
       }
       
@@ -48,7 +56,7 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
       }
 
     } catch (error) {
-      alert(`Email: ${email}\nPassword: ${password}`)
+      console.error(error)
     } finally {
       setSubmitting(false)
     }
@@ -94,7 +102,9 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
         }
       </div>
       <button 
-        className="bg-teal-950 text-teal-300 border border-teal-300 input-glow px-1 py-2 rounded interactive-button font-mono text-sm font-semibold"
+        className={`
+          ${isError ? 'bg-red-950 text-red-500 border-red-500' : 'bg-teal-950 text-teal-300 border-teal-300'}
+           input-glow px-1 py-2 rounded interactive-button font-mono text-sm font-semibold border`}
         disabled={submitting}
       >
         {submitting ? 
@@ -102,9 +112,14 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
             <Loader size={19} className="animate-spin"/> 
           </div>
         : 
-          'Sign In'
+          <p>{isError ? 'Try Again' : "Sign-In"}</p>
         }
       </button>
+      {error.general && 
+        <p className="font-mono text-xs text-red-500 font-semibold text-center">
+          <span>Error: </span>{error.general}
+        </p>
+      }
     </form>
   )
 }

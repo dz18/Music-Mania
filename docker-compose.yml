@@ -1,0 +1,24 @@
+services:
+
+  db:
+    image: postgres:latest
+    volumes:
+      - 'postgres_data:/var/lib/postgresql'
+    ports:
+      - '5432:5432'
+    env_file:
+      - ./server/.env
+
+  server:
+    build: ./server
+    ports:
+      - '5000:5000'
+    depends_on:
+      - db
+    volumes:
+      - ./server:/app
+    env_file:
+      - ./server/.env
+
+volumes:
+  postgres_data: 

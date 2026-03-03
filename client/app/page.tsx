@@ -1,8 +1,12 @@
 'use client'
 
 import Footer from "./components/ui/Footer";
-import Nav from "./components/ui/NavigationBar";
+const Nav = dynamic(
+  () => import('./components/ui/NavigationBar'),
+  { ssr: false }
+)
 import Welcome from "./components/root/Welcome";
+import dynamic from "next/dynamic";
 
 export default function Index () {
   return (

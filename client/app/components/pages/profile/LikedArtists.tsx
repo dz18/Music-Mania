@@ -1,3 +1,4 @@
+import { LikedArtist } from "@/app/lib/types/profile"
 import { Star, TriangleAlert } from "lucide-react"
 import Link from "next/link"
 

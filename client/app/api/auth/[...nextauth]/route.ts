@@ -13,13 +13,14 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
+          
           const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in`, {
             email: credentials?.email,
             password: credentials?.password
           })
 
+          console.log("user data:", res.data);
           const data = res.data
-          // console.log(data)
 
           if (data) {
 
@@ -42,6 +43,7 @@ const handler = NextAuth({
           }
           return null
         } catch (error: any) {
+          console.error(error)
           const message = error.response?.data?.error || "Sign In failed"
           throw new Error(message)
         }

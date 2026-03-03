@@ -7,7 +7,6 @@ import Security from "@/app/components/pages/profile/edit/security"
 import LoadingBox from "@/app/components/ui/loading/loadingBox"
 import LoadingText from "@/app/components/ui/loading/LoadingText"
 import RefreshPage from "@/app/components/ui/RefreshPage"
-import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { Loader } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -192,7 +191,6 @@ export default function EditProfilePage () {
         setAvatarFile={setAvatarFile}
         setData={setData}
         errors={errors}
-
       />
 
       <GeneralInformation
@@ -213,7 +211,6 @@ export default function EditProfilePage () {
 
       <Security
         email={originalData.email}
-        setData={setData}
       />
 
       <div className="flex bg-surface p-4 justify-end items-center gap-2 border border-gray-500 rounded-lg">

@@ -1,14 +1,12 @@
-import axios, { AxiosError } from "axios"
+import axios from "axios"
 import { Loader } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
-import { usePathname, useRouter } from "next/navigation"
-import { Dispatch, SetStateAction, useState } from "react"
+import { useState } from "react"
 
 export default function Security ({
-  email, setData
+  email
 } : {
   email: string
-  setData: Dispatch<SetStateAction<EditProfileForm>>
 }) {
 
   const { data: session } = useSession()
@@ -24,8 +22,6 @@ export default function Security ({
 
   const [secondError, setSecondError] = useState('')
   const [secondLoading, setSecondLoading] = useState(false)
-
-  const [result, setResult] = useState('')
 
   const handlePasswordConfirm = async () => {
 

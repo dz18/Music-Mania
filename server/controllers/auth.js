@@ -93,7 +93,7 @@ const signIn = async (req, res) => {
     })
   } catch (error) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'Signin failed' })
+    return res.status(500).json({ error: 'Sign-In failed' })
   }
 
 }
