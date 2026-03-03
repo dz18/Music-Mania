@@ -43,9 +43,7 @@ export default function ArtistReviews ({
           ))}
           {data && data.count > data.limit && 
             <Pagination 
-              currentPage={data.currentPage} 
               totalPages={data.pages}
-              onPageChange={onPageChange}
             />
           }
         </div>

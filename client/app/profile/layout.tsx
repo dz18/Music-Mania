@@ -1,12 +1,12 @@
 import Container from '@/app/components/ui/Container'
 import Footer from '@/app/components/ui/Footer'
 import Nav from '@/app/components/ui/NavigationBar'
-import React, { ReactNode } from 'react'
+import { ReactNode } from 'react'
+export const dynamic = 'force-dynamic'
 
 interface ProfileLayoutProps {
   children: ReactNode
 }
-
 export default function ProfileLayout({ children }: ProfileLayoutProps) {
   return (
     <div>

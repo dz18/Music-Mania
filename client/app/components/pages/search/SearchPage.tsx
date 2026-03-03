@@ -1,13 +1,12 @@
 'use client'
 
-import { DOMAttributes, FormEvent, FormEventHandler, JSX, useEffect, useState } from "react"
+import { FormEvent, JSX, useEffect, useState } from "react"
 import useSearchQuery from "../../../hooks/musicbrainz/useSearchQuery"
 import ArtistSearch from "./ArtistSearch"
 import ReleaseSearch from "./ReleaseSearch"
 import UserSearch from "./UserSearch"
 import { SearchTypes } from "../../../lib/types/api"
 import Pagination from "../../ui/Pagination"
-import IndeterminateLoadingBar from "../../ui/loading/IndeterminateLoadingBar"
 import { FileX2, RefreshCcw, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import LoadingBox from "../../ui/loading/loadingBox"

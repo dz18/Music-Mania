@@ -1,5 +1,4 @@
-import { useSession } from "next-auth/react"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
+import { Dispatch, SetStateAction } from "react"
 
 export default function PrivateInformation ({
   email, age, setData, errors

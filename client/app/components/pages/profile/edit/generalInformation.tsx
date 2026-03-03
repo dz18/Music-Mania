@@ -1,6 +1,5 @@
-import axios from "axios"
 import { useSession } from "next-auth/react"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
+import { Dispatch, SetStateAction, useEffect } from "react"
 
 export default function GeneralInformation ({
   id, username, aboutMe, setData, createdAt, errors

@@ -61,7 +61,7 @@ export default function MainDisplay ({
           {isOwnProfile ? (
             <Link
               className="font-semibold text-sm text-teal-500 hover:underline"
-              href={`/profile/${profile.id}/edit`}
+              href={`/profile/edit`}
             >
               Edit Profile
             </Link>

@@ -2,6 +2,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import StarRatingVisual from "../ui/StarVisual"
 import { timeAgo } from "@/app/hooks/timeAgo"
+import { UserArtistReview, UserReleaseReview, UserSongReview } from "@/app/lib/types/reviews"
 
 export default function IndividualReview({
   review,

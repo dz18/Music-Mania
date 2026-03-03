@@ -80,9 +80,7 @@ export default function Followers ({
 
       {results?.pages > 1 && 
         <Pagination 
-          currentPage={results.currentPage}
           totalPages={results.pages}
-          onPageChange={goToPage}
         /> 
       }
         

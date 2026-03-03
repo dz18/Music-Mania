@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react"
 import { Dispatch, SetStateAction, useRef } from "react"
 
 export default function Avatar ({

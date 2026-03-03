@@ -1,4 +1,5 @@
 import { ApiPageResponse } from "./api"
+import { UserArtistReview, UserReleaseReview, UserSongReview } from "./reviews"
 
 export interface LikedArtist {
   userId: string

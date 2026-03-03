@@ -83,9 +83,7 @@ export default function Followings ({
       {results?.pages > 1 &&
         <section>
           <Pagination 
-            currentPage={results.currentPage}
             totalPages={results.pages}
-            onPageChange={goToPage}
           />
         </section>
       }
