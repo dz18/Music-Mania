@@ -19,7 +19,7 @@ export default function SongReviews ({
         <div className="overflow-hidden rounded-lg border border-gray-500">
           {data?.data.reviews.map((r : UserSongReview, i) => (
             <div key={r.songId} 
-              className={`${i % 2 == 0 ? 'bg-surface-elevated' : 'bg-surface'}
+              className={`${i % 2 == 0 ? 'bg-surface' : ''}
                 py-2 px-4 text-sm flex flex-col gap-1 border border-white/5
               `}
             >

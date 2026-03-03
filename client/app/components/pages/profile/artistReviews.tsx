@@ -23,7 +23,7 @@ export default function ArtistReviews ({
           {data?.data.reviews.map((r, i) => (
             <div key={r.artistId} 
               className={`
-                ${i % 2 == 0 ? 'bg-surface-elevated' : 'bg-surface'} 
+                ${i % 2 == 0 ? 'bg-surface' : ''} 
                 py-2 px-4 text-sm flex flex-col gap-1 border border-white/5
               `}
             >
