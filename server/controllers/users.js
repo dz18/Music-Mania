@@ -2,7 +2,7 @@ const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging');
 const { getSignedURL, deleteObject } = require('./AWS/actions');
 const { calcStarStats } = require('./hooks/calcStarStats');
-const { getGradientColors } = require('./hooks/getDominateColor');
+// const { getGradientColors } = require('./hooks/getDominateColor');
 
 // Gets all users
 const getUsers = async (req, res) => {
@@ -97,7 +97,7 @@ const getLikes = async (req, res) => {
       })
     }
 
-    console.log(liked)
+    // console.log(liked)
 
     successApiCall(req)
     res.json(liked)
@@ -109,13 +109,13 @@ const getLikes = async (req, res) => {
 // Get a batch of users
 const query = async (req, res) => {
   const { q } = req.query
-  const page = Number(req.query.page) ?? 1
+  const page = Number(req.query.page) || 1
 
-  limit = 50
+  const limit = 50
 
   logApiCall(req)
 
-  if (q.length === 0) {
+  if (q === '' || !q) {
     errorApiCall(req, 'Query term length 0')
     return res.status(400).json({error: 'Query term length 0'})
   }
@@ -162,7 +162,9 @@ const query = async (req, res) => {
     })
 
   } catch (error) {
+    console.error(error)
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to query users' })
   }
 }
 
@@ -172,7 +174,6 @@ const profile = async (req, res) => {
 
   logApiCall(req)
   try {
-
   
     const promises = [
       prisma.user.findUnique({
@@ -268,12 +269,14 @@ const profile = async (req, res) => {
       followingSince: req.user && isFollowing ? isFollowingRes.createdAt : null
     }
 
-    console.log(profile)
+    // console.log(profile)
 
     successApiCall(req)
     res.json(profile)
   } catch (error) {
+    console.error(error)
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to fetch profile' })  
   }
 }
 
@@ -321,7 +324,9 @@ const follow = async (req, res) => {
     successApiCall(req)
     res.json(follow)
   } catch (error) {
+    console.error(error)
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to follow user' })  
   }
 
 }
@@ -336,6 +341,10 @@ const unfollow = async (req, res) => {
     return res.status(403).json({error: 'Unauthorized'})
   }
 
+  if (!profileId) {
+    return res.status(400).json({ error: 'profileId required' })
+  }
+
   try {
     await prisma.follow.delete({
       where: {
@@ -348,8 +357,10 @@ const unfollow = async (req, res) => {
 
     res.json({ success: true })
     successApiCall(req)
-  } catch (error) {
+  } catch (error) { 
+    console.error(error)
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to unfollow user' })  
   }
 }
 
@@ -629,16 +640,17 @@ const checkLike = async (req, res) => {
 
   if (!itemId || !type) {
     errorApiCall(req, 'Missing a required query parameter')
-    return res.status(400).json({error: 'Missing a required query parameter'})
+    return res.status(400).json({ error: 'Missing a required query parameter' })
   }
 
   if (!req.user) {
     errorApiCall(req, 'Unauthorized User')
-    return res.status(401).json({error: 'Unauthorized User'})
+    return res.status(401).json({ error: 'Unauthorized User' })
   }
 
   try {
     let like = null
+
     if (type === 'artist') {
       like = await prisma.userLikedArtist.findUnique({
         where: {
@@ -649,6 +661,7 @@ const checkLike = async (req, res) => {
         }
       })
     }
+
     if (type === 'release') {
       like = await prisma.userLikedRelease.findFirst({
         where: {
@@ -657,6 +670,7 @@ const checkLike = async (req, res) => {
         }
       })
     }
+
     if (type === 'song') {
       like = await prisma.userLikedSong.findFirst({
         where: {
@@ -666,12 +680,13 @@ const checkLike = async (req, res) => {
       })
     }
 
-    res.json(like ?? null)
     successApiCall(req)
+    return res.json({ liked: Boolean(like) })
 
   } catch (error) {
     console.error(error)
-  } 
+    return res.status(500).json({ error: 'Failed to check like status' })
+  }
 }
 
 const like = async (req, res) => {

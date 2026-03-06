@@ -210,7 +210,7 @@ const user = async (req, res) => {
       })
     }
 
-    console.log(review)
+    // console.log(review)
     successApiCall(req)
     return res.json(review)
   } catch (error) {
@@ -351,7 +351,7 @@ const publishOrDraft = async (req, res) => {
 
     }
     
-    console.log(newAvg)
+    // console.log(newAvg)
     const average = newAvg._avg.rating
     const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
     const starStats = calcStarStats(stats)
@@ -364,7 +364,7 @@ const publishOrDraft = async (req, res) => {
       count: newAvg._count,
       limit: limit
     }
-    console.log(data)
+    // console.log(data)
     return res.json(data)
   } catch (error) {
     errorApiCall(req, error)
@@ -492,7 +492,7 @@ const userArtists = async (req, res) => {
       limit: limit
     }
 
-    console.log(data.data.reviews)
+    // console.log(data.data.reviews)
 
     res.json(data)
     successApiCall(req)
@@ -554,7 +554,7 @@ const userReleases = async (req, res) => {
       limit: limit
     }
 
-    console.log(data)
+    // console.log(data)
 
     res.json(data)
     successApiCall(req)
@@ -616,7 +616,7 @@ const userSongs = async (req, res) => {
       limit: limit
     }
 
-    console.log(data.data.reviews)
+    // console.log(data.data.reviews)
 
     res.json(data)
     successApiCall(req)

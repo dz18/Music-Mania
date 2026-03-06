@@ -431,7 +431,7 @@ const discography = async (req, res) => {
       limit: limit
     }
 
-    console.log(sorted)
+    // console.log(sorted)
     successApiCall(req)
     res.json(data)
 
@@ -544,7 +544,7 @@ const discographySingles = async (req, res) => {
       pages: Math.ceil(rgData['release-group-count'] / 100),
       limit: limit
     }
-    console.log(response)
+    // console.log(response)
     res.json(response)
   } catch (error) {
     if (error.cause && error.cause.code === 'ECONNRESET') {
@@ -729,11 +729,12 @@ const getSong = async (req, res) => {
         if (coverArt) {
           coverArtUrl = coverArt.image
         }
-      } else {
-        console.log(
-          `No cover art found for release-group ${albumId}`
-        )
-      }
+      } 
+      // else {
+      //   console.log(
+      //     `No cover art found for release-group ${albumId}`
+      //   )
+      // }
     }
 
     let partOf
@@ -756,7 +757,7 @@ const getSong = async (req, res) => {
       rel => rel['target-type'] === 'work' && rel.work?.id
     )
     const workId = workRel?.work?.id ?? song.id
-    songFormatted = {
+    const songFormatted = {
       id: song.id,
       artistCredit: song['artist-credit'],
       genres: song.genres,
@@ -768,7 +769,7 @@ const getSong = async (req, res) => {
       video: song.video,
       workId: workId
     }
-    console.log(songFormatted)
+    // console.log(songFormatted)
     successApiCall(req)
     return res.json({
       song: songFormatted, 
