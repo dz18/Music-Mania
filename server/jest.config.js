@@ -1,0 +1,8 @@
+module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/tests/**/*.test.js'],
+  transform: {
+    '^.+\\.js$': 'babel-jest',
+  },
+  resolver: './jest.resolver.js',
+}

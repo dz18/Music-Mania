@@ -12,11 +12,11 @@ export async function verifyUser(req, res, next) {
 
   try {
     const user =  jwt.verify(token, process.env.NEXTAUTH_SECRET)
-    console.log('ACCESS GRANTED: authenticated')
+    // console.log('ACCESS GRANTED: authenticated')
     req.user = user
     next()
   } catch (err) {
-    console.error('DENIED ACCESS: unauthenticated')
+    // console.error('DENIED ACCESS: unauthenticated')
     return res.status(401).json({ error: "Invalid token" })
   }
 }

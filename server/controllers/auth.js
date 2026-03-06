@@ -55,7 +55,7 @@ const register = async (req, res) => {
     return res.status(500).json({ error: 'registering account failed' })
   }
 
-} 
+}
 
 const signIn = async (req, res) => {
   const {email, password} = req.body

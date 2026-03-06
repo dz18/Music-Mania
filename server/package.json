@@ -15,11 +15,18 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "babel-jest": "^27.5.1",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.10",
-    "prisma": "^6.13.0"
+    "prisma": "^6.13.0",
+    "supertest": "^7.2.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
     "start": "node --watch server.js",
     "artistAlbums": "node ./tests/musicbrainz/musicbrainz-albums.js",
     "artistEPs": "node ./tests/musicbrainz/EPs.js",
