@@ -216,7 +216,7 @@ export default function EditProfilePage () {
       <div className="flex bg-surface p-4 justify-end items-center gap-2 border border-gray-500 rounded-lg">
         <p className="text-gray-500">{result}</p>
         <button
-          className="px-2 py-1 bg-teal-500 rounded cursor-pointer disabled:opacity-40"
+          className="px-2 py-1 bg-teal-950 hover:bg-teal-900 active:bg-teal-800 text-teal-300 border border-teal-300 disabled:hover:bg-teal-950 disabled:active:bg-teal-950 disabled:cursor-auto rounded cursor-pointer disabled:opacity-40"
           disabled={unsaved}
           onClick={handleSubmit}
         >
