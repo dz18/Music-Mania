@@ -268,7 +268,7 @@ const profile = async (req, res) => {
       followingSince: req.user && isFollowing ? isFollowingRes.createdAt : null
     }
 
-    console.log(profile)
+    // console.log(profile)
 
     successApiCall(req)
     res.json(profile)

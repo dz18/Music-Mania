@@ -7,10 +7,11 @@ import { useSession } from "next-auth/react"
 import UserDropdown from "./navigationBar/UserDropdown"
 import AlertsDropdown from "./navigationBar/AlertsDropdown"
 import { usePathname } from "next/navigation"
+import LoadingBox from "./loading/loadingBox"
 
 export default function Nav() {
 
-  const {data : session} = useSession()
+  const {data : session, status} = useSession()
   const pathname = usePathname()
 
   return (
@@ -36,17 +37,22 @@ export default function Nav() {
           </button>
         </div>
 
-        {session ?
-          <div className="flex items-center gap-2">
-            <UserDropdown/>
+        {status === 'loading' ?
+          <div className="relative inline-block justify-center items-center">
+            <div className="bg-surface-elevated animate-pulse rounded-md w-30 h-10"/>
           </div>
         :
-          <Link 
-            className="border border-teal-300 text-teal-300 bg-teal-950 hover:bg-teal-900 active:bg-teal-800 px-2 py-1 rounded font-mono font-semibold text-sm"
-            href={`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`}
-          >
-            Sign In
-          </Link>
+          status === 'authenticated' ? 
+            <div className="flex items-center gap-2">
+              <UserDropdown/>
+            </div>
+          :
+            <Link 
+              className="border border-teal-300 text-teal-300 bg-teal-950 hover:bg-teal-900 active:bg-teal-800 px-2 py-1 rounded font-mono font-semibold text-sm"
+              href={`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`}
+            >
+              Sign In
+            </Link>
         }
 
 

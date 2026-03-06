@@ -105,7 +105,7 @@ export default function Security ({
           />
           <p className="mt-2 text-red-500">{firstError}</p>
           <button
-            className="bg-teal-500 px-2 py-1 rounded cursor-pointer justify-center flex disabled:opacity-40 disabled:cursor-auto"
+            className="bg-teal-950 text-teal-300 border border-teal-300 hover:bg-teal-900 active:bg-teal-800 px-2 py-1 rounded interactive-button justify-center flex disabled:opacity-40 disabled:cursor-auto"
             onClick={handlePasswordConfirm}
             disabled={confirmed}
           >
@@ -137,7 +137,7 @@ export default function Security ({
 
         <div>
           <button
-            className="bg-red-500 px-2 py-1 rounded cursor-pointer disabled:opacity-40 disabled:cursor-auto"
+            className="bg-red-950 border border-red-500 text-red-500 hover:bg-red-900 active:bg-red-800 disabled:active:bg-red-950 disabled:hover:bg-red-950 px-2 py-1 rounded cursor-pointer disabled:opacity-40 disabled:cursor-auto"
             disabled={!confirmed}
             onClick={handlePasswordChange}
           >
