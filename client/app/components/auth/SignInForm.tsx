@@ -55,8 +55,8 @@ export default function SignInForm ({callbackUrl} : {callbackUrl: string}) {
         router.push(callbackUrl)
       }
 
-    } catch (error) {
-      console.error(error)
+    } catch {
+      setError(prev => ({ ...prev, general: "An unexpected error occurred. Please try again." }))
     } finally {
       setSubmitting(false)
     }

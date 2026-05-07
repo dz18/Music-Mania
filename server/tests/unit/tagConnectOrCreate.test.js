@@ -1,4 +1,4 @@
-import { tagConnectOrCreate } from '../../../controllers/hooks/tagConnectOrCreate.js'
+import { tagConnectOrCreate } from '../../controllers/hooks/tagConnectOrCreate.js'
 
 describe('tagConnectOrCreate', () => {
   it('returns undefined for null input', () => {

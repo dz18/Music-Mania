@@ -2,6 +2,7 @@ const prisma = require('../prisma/client')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 const { formatMedia } = require('./hooks/formatMedia')
 const { scoreRelease } = require('./hooks/scoreRelease')
+const { mbQueue } = require('../utils/musicbrainzQue')
 
 const userAgent = process.env.USER_AGENT
 
@@ -24,11 +25,11 @@ const artists = async (req, res) => {
   }
 
   try {
-    const query = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}${type && ` AND (type:${type})`}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
+    const query = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}${type && ` AND (type:${type})`}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
-    })
+    }))
 
     if (!query.ok) {
       errorApiCall(req, `MusicBrainz error: ${query.status}`)
@@ -78,11 +79,11 @@ const releases = async (req, res) => {
 
   try {
 
-    const query = await fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND ${type ? `(primarytype:${type})` : '(primarytype:album OR primarytype:ep)'}&inc=artist-credits&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
+    const query = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND ${type ? `(primarytype:${type})` : '(primarytype:album OR primarytype:ep)'}&inc=artist-credits&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
-    })
+    }))
 
     if (!query.ok) {
       errorApiCall(req, `MusicBrainz error: ${query.status}`)
@@ -151,11 +152,11 @@ const getArtist = async (req, res) => {
 
   try {
 
-    const fetchArtist = await fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels+url-rels&fmt=json`, {
+    const fetchArtist = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels+url-rels&fmt=json`, {
       headers: {
         'User-Agent' : userAgent
       }
-    })
+    }))
 
     if (!fetchArtist.ok) {
       errorApiCall(req, `MusicBrainz error: ${fetchArtist.status}`)
@@ -373,11 +374,11 @@ const discography = async (req, res) => {
 
   try {
 
-    const releases = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
+    const releases = await mbQueue.add(() => fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
-    }) 
+    }))
 
     if (!releases.ok) {
       errorApiCall(req, `MusicBrainz error: ${releases.status}`)
@@ -459,18 +460,18 @@ const discographySingles = async (req, res) => {
   const limit = 100
 
   try {
-    const releases = await fetch(`https://musicbrainz.org/ws/2/release?artist=${artistId}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}&inc=release-groups+recordings+recording-level-rels+work-rels+work-level-rels&status=official&type=single`, {
+    const releases = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/release?artist=${artistId}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}&inc=release-groups+recordings+recording-level-rels+work-rels+work-level-rels&status=official&type=single`, {
       headers: {
         'User-Agent' : userAgent
       }
-    }) 
+    }))
     const data = await releases.json()
 
-    const rgInfo = await fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=single&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
+    const rgInfo = await mbQueue.add(() => fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=single&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
       headers: {
         'User-Agent' : userAgent
       }
-    }) 
+    }))
     const rgData = await rgInfo.json()
     
     const singles = []
@@ -566,11 +567,11 @@ const getRelease = async (req, res) => {
 
   try {
 
-    const albums = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${releaseId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups+recording-level-rels+work-rels+work-level-rels&fmt=json&limit=100&offset=0`, {
+    const albums = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/release?release-group=${releaseId}&type=album&status=official&inc=recordings+artist-credits+genres+release-groups+recording-level-rels+work-rels+work-level-rels&fmt=json&limit=100&offset=0`, {
       headers: {
         'User-Agent' : userAgent
       }
-    })
+    }))
 
     if (!albums.ok) {
       errorApiCall(req, `MusicBrainz error: ${albums.status}`)
@@ -654,7 +655,7 @@ const getRelease = async (req, res) => {
       })
     }))
 
-    const FetchCoverArt = await fetch(`https://coverartarchive.org/release-group/${releaseId}`)
+    const FetchCoverArt = await mbQueue.add(() => fetch(`https://coverartarchive.org/release-group/${releaseId}`))
 
     let coverArt = null
     if (FetchCoverArt.ok) {
@@ -693,11 +694,11 @@ const getSong = async (req, res) => {
 
   try {
 
-    const fetchSong = await fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups+work-rels&status=official`, {
+    const fetchSong = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/recording/${songId}?fmt=json&inc=artist-rels+artist-credits+genres+releases+release-groups+work-rels&status=official`, {
       headers: {
         'User-Agent': userAgent
       }
-    })
+    }))
 
     if (!fetchSong.ok) {
       errorApiCall(req, `MusicBrainz error: ${fetchSong.status}`)
@@ -715,9 +716,9 @@ const getSong = async (req, res) => {
     if (song.releases.length !== 0) {
       const albumId = song.releases[0]['release-group'].id
 
-      const fetchCoverArt = await fetch(
+      const fetchCoverArt = await mbQueue.add(() => fetch(
         `https://coverartarchive.org/release-group/${albumId}`
-      )
+      ))
 
       if (fetchCoverArt.ok) {
         const coverArtJSON = await fetchCoverArt.json()
@@ -794,11 +795,11 @@ const findSingleId = async (req, res) => {
   logApiCall(req)
 
   try {
-    const fetchSingle = await fetch(`https://musicbrainz.org/ws/2/release?release-group=${rgId}&status=official&type=single&inc=release-groups+recordings&fmt=json`, {
+    const fetchSingle = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/release?release-group=${rgId}&status=official&type=single&inc=release-groups+recordings&fmt=json`, {
       headers: {
         'User-Agent': userAgent
       }
-    })
+    }))
 
     if (!fetchSingle.ok) {
       errorApiCall(req, `MusicBrainz error: ${fetchSingle.status}`)

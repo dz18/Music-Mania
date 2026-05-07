@@ -12,6 +12,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "next-auth": "^4.24.13",
+    "p-queue": "^9.2.0",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
@@ -25,8 +26,8 @@
   },
   "scripts": {
     "test": "jest",
-    "test:unit": "jest --testPathPattern=tests/unit",
-    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:unit": "jest --testPathPatterns=tests/unit",
+    "test:integration": "jest --testPathPatterns=tests/integration",
     "start": "node --watch server.js",
     "artistAlbums": "node ./tests/musicbrainz/musicbrainz-albums.js",
     "artistEPs": "node ./tests/musicbrainz/EPs.js",

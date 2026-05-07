@@ -19,7 +19,10 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
     email: '',
     username: '',
     confirmPassword: '',
+    general: '',
   })
+
+  const isError = Object.values(error).some(e => e !== '')
 
   const register = async (e : FormEvent<HTMLFormElement  >) => {
     e.preventDefault()
@@ -37,6 +40,7 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
 
     try {
       setSubmitting(true)
+      setErrors({ email: '', username: '', confirmPassword: '', general: '' })
 
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         email: email,
@@ -53,18 +57,20 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
       })
 
     } catch (error : any) {
-    
       if (error.response) {
         const {status, data} = error.response
         if (status === 409) {
           if (data.error.email) {
             setErrors(prev => ({...prev, email: data.error.email}))
-          } 
+          }
           if (data.error.username) {
             setErrors(prev => ({...prev, username: data.error.username}))
           }
+        } else {
+          setErrors(prev => ({...prev, general: data?.error || 'Registration failed. Please try again.'}))
         }
-
+      } else {
+        setErrors(prev => ({...prev, general: 'Network error. Please check your connection and try again.'}))
       }
     } finally {
       setSubmitting(false)
@@ -143,18 +149,23 @@ export default function RegisterForm ({callbackUrl} : {callbackUrl : string}) {
           <p className="text-sm text-red-500">{error.confirmPassword}</p>
         }
       </div>
-      <button 
-        className="bg-teal-950 text-teal-300 border border-teal-300 input-glow px-1 py-2 rounded interactive-button font-mono text-sm font-semibold"
+      <button
+        className={`${isError ? 'bg-red-950 text-red-500 border-red-500' : 'bg-teal-950 text-teal-300 border-teal-300'} input-glow px-1 py-2 rounded interactive-button font-mono text-sm font-semibold border`}
         disabled={submitting}
       >
-        {submitting ? 
+        {submitting ?
           <div className="flex justify-center">
-            <Loader size={19} className="animate-spin"/> 
+            <Loader size={19} className="animate-spin"/>
           </div>
-        : 
-          'Submit'
+        :
+          <p>{isError ? 'Try Again' : 'Submit'}</p>
         }
       </button>
+      {error.general &&
+        <p className="font-mono text-xs text-red-500 font-semibold text-center">
+          <span>Error: </span>{error.general}
+        </p>
+      }
     </form>
   )
 }

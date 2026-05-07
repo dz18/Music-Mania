@@ -17,7 +17,7 @@ const handler = NextAuth({
           const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in`, {
             email: credentials?.email,
             password: credentials?.password
-          })
+          }, { timeout: 5000 })
 
           console.log("user data:", res.data);
           const data = res.data

@@ -3,45 +3,38 @@ const bcrypt = require('bcrypt')
 const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
 
 const register = async (req, res) => {
-  const { 
-    email, 
+  const {
+    email,
     username,
-    password, 
+    password,
   } = req.body
 
   logApiCall(req)
 
-  if (!email || !password) {
-    errorApiCall(req, 'Missing email or password')
+  if (!email || !username || !password) {
+    errorApiCall(req, 'Missing required fields')
+    return res.status(400).json({ error: 'Email, username, and password are required' })
   }
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
-    if (existingUser) {
-      errorApiCall(req, 'Email already in use')
-    }
-
     const existingUsername = await prisma.user.findUnique({ where: { username } })
-    if (existingUsername) {
-      errorApiCall(req, 'Username already in use')
-    }
 
     if (existingUser || existingUsername) {
-      errorApiCall(req, 'Username already in use')
+      errorApiCall(req, 'Email or username already in use')
       return res.status(409).json({ error: {
-        email : existingUser ? 'Email already in use' : null,
-        username : existingUsername ? 'Username already in use' : null,
+        email: existingUser ? 'Email already in use' : null,
+        username: existingUsername ? 'Username already in use' : null,
       } })
     }
-
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
     const user = await prisma.user.create({
-      data: { 
+      data: {
         email,
-        username, 
-        password: hashedPassword, 
+        username,
+        password: hashedPassword,
         createdAt: new Date(),
         updatedAt: new Date(),
         role: 'USER'
@@ -52,7 +45,7 @@ const register = async (req, res) => {
     return res.status(201).json({ message: 'User created', user: { id: user.id, email: user.email } })
   } catch (error) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'registering account failed' })
+    return res.status(500).json({ error: 'Registration failed' })
   }
 
 }
@@ -66,11 +59,8 @@ const signIn = async (req, res) => {
     errorApiCall(req, 'Missing email or password')
     return res.status(400).json({ error: 'Email and password are required' })
   }
-  
-  try {
-    console.log(`Attempting Sign In into ${email}`)
-    console.log(`pw: ${password}`)
 
+  try {
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
       errorApiCall(req, 'User not found')
@@ -83,67 +73,82 @@ const signIn = async (req, res) => {
       return res.status(401).json({ error: 'Invalid password' })
     }
 
-    console.log('Passwords match. Signing user in...')
-
     successApiCall(req)
-    return res.json({ 
-      id: user.id, 
-      email: user.email ,
+    return res.json({
+      id: user.id,
+      email: user.email,
       username: user.username,
     })
   } catch (error) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'Sign-In failed' })
+    return res.status(500).json({ error: 'Sign-in failed' })
   }
 
 }
 
 const confirmPassword = async (req, res) => {
+  const { email, password } = req.body
+
+  logApiCall(req)
+
+  if (!email || !password) {
+    errorApiCall(req, 'Missing email or password')
+    return res.status(400).json({ error: 'Email and password are required' })
+  }
 
   try {
-    const {email, password} = req.body
-
-    logApiCall(req)
-    const user = await prisma.user.findUnique({ 
-      where: { email }, 
+    const user = await prisma.user.findUnique({
+      where: { email },
       select: { password: true }
     })
-    const passwordMatch = await bcrypt.compare(password, user.password)
 
+    if (!user) {
+      errorApiCall(req, 'User not found')
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) {
       errorApiCall(req, 'Invalid password')
       return res.status(401).json({ error: 'Invalid password' })
     }
 
-    res.json({success: true})
-
     successApiCall(req)
+    return res.json({ success: true })
   } catch (error) {
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Password confirmation failed' })
   }
 
 }
 
 const changePassword = async (req, res) => {
   const { email, newPassword, confirmNewPassword } = req.body
-  
+
   logApiCall(req)
 
-  try {
+  if (!email || !newPassword || !confirmNewPassword) {
+    errorApiCall(req, 'Missing required fields')
+    return res.status(400).json({ error: 'Email, new password, and confirmation are required' })
+  }
 
+  if (newPassword !== confirmNewPassword) {
+    errorApiCall(req, 'Passwords do not match')
+    return res.status(400).json({ error: 'Passwords do not match' })
+  }
+
+  try {
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await prisma.user.update({ 
+    await prisma.user.update({
       where: { email },
-      data: {
-        password: hashedPassword
-      }
+      data: { password: hashedPassword }
     })
 
-    res.json()
-
     successApiCall(req)
+    return res.json({ success: true })
   } catch (error) {
-    console.error(req, error)
+    errorApiCall(req, error)
+    return res.status(500).json({ error: 'Password change failed' })
   }
 }
 

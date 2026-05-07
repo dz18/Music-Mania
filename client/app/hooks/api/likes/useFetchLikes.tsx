@@ -57,8 +57,10 @@ export default function useFetchLikes (
     }
   })
 
+  console.log(checkLikeQuery.data)
+
   return {
-    isLiked: !!checkLikeQuery.data,
+    isLiked: !checkLikeQuery.data?.liked ? checkLikeQuery.data?.like : checkLikeQuery.data,
     LikeData: checkLikeQuery.data,
     loadingLike: checkLikeQuery.isLoading,
     like: likeItemMutate.mutateAsync,
