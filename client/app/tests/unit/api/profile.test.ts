@@ -106,15 +106,15 @@ describe('fetchUserSongReviews', () => {
 describe('fetchLikes', () => {
   it('calls the likes endpoint with profileId and active type', async () => {
     mockGet.mockResolvedValue({ data: {} })
-    await fetchLikes('profile-1', 'artist')
+    await fetchLikes('profile-1', 'artists')
     expect(mockGet).toHaveBeenCalledWith(`${BASE}/api/users/likes`, {
-      params: { id: 'profile-1', active: 'artist' },
+      params: { id: 'profile-1', active: 'artists' },
     })
   })
 
   it('returns the response data', async () => {
     const payload = { likes: [] }
     mockGet.mockResolvedValue({ data: payload })
-    expect(await fetchLikes('profile-1', 'release')).toEqual(payload)
+    expect(await fetchLikes('profile-1', 'releases')).toEqual(payload)
   })
 })
