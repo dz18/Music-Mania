@@ -8,7 +8,7 @@ on:
 
 jobs:
   client:
-    name: Client — Lint, Type Check & Tests
+    name: Client — Type Check & Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,6 +32,9 @@ jobs:
 
       - name: Unit tests
         run: npm test -- --passWithNoTests
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000
+        
 
   server:
     name: Server — Unit Tests
