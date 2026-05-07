@@ -1,4 +1,4 @@
-import { calcStarStats } from '../../../controllers/hooks/calcStarStats.js'
+import { calcStarStats } from '../../controllers/hooks/calcStarStats.js'
 
 describe('calcStarStats', () => {
   it('returns 10 rating entries for empty input', () => {

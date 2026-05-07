@@ -43,8 +43,6 @@ const landingStats = async (req, res) => {
     const artistLikeMap = Object.fromEntries(likedArtists.map(a => [a.id, a]))
     const releaseMap = Object.fromEntries(likedReleases.map(r => [r.id, r]))
 
-    console.log(releaseMap)
-
     return res.json({
       topReviewedArtists: reviewedGroups.map(g => ({
         id: g.artistId,

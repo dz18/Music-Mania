@@ -1,4 +1,4 @@
-const { formatMedia } = require('../../../controllers/hooks/formatMedia.js')
+const { formatMedia } = require('../../controllers/hooks/formatMedia.js')
 
 const makeArtistCredit = (name = 'Artist') => ({
   name,
