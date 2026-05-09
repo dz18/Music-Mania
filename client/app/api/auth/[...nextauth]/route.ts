@@ -63,10 +63,10 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ user, token }) {
       if (user) {
-        token.id = user.id,
+        token.id = user.id ?? null,
         token.username = user.username
         token.email = user.email
-        token.createdAt = new Date(user.createdAt)
+        token.createdAt = user.createdAt
         token.raw = user.rawToken
       }
       return token
