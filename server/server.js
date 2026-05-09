@@ -17,12 +17,14 @@ const auth = require('./routes/auth.js')
 const musicbrainz = require('./routes/musicbrainz.js')
 const reviews = require('./routes/reviews.js')
 const stats = require('./routes/stats.js')
+const health = require('./routes/healthcheck.js')
 
 app.use('/api/musicbrainz', musicbrainz)
 app.use('/api/auth', auth)
 app.use('/api/reviews', reviews)
 app.use('/api/users', users)
 app.use('/api/stats', stats)
+app.use('/api/health', health)
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`)
