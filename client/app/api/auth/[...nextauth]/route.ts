@@ -14,12 +14,12 @@ const handler = NextAuth({
       async authorize(credentials) {
         try {
           
+          console.log(process.env.NEXT_PUBLIC_API_URL)
           const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in`, {
             email: credentials?.email,
             password: credentials?.password
           }, { timeout: 5000 })
 
-          console.log("user data:", res.data);
           const data = res.data
 
           if (data) {
@@ -38,6 +38,7 @@ const handler = NextAuth({
               id : data.id,
               username: data.username,
               email: data.email,
+              createdAt: data.createdAt,
               rawToken
             }
           }
@@ -65,33 +66,19 @@ const handler = NextAuth({
         token.id = user.id,
         token.username = user.username
         token.email = user.email
+        token.createdAt = new Date(user.createdAt)
         token.raw = user.rawToken
       }
       return token
     },
     async session({ session, token }) {
       try {
-        if (session.user && token.id) {
-          const user = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/find`, {
-            headers: {
-              Authorization: `Bearer ${token.raw}`
-            }
-          });
-
-          if (!user) {
-            console.warn("Fetch find user failed with status:")
-            return session
-          }
-
-          const data = user.data
-
-          session.user.id = data.id
-          session.user.username = data.username
-          session.user.avatar = data.avatar
-          session.user.createdAt = data.createdAt
+        if (session.user && token) {
+          session.user.id = token.id
+          session.user.username = token.username
+          session.user.email = token.email
+          session.user.createdAt = token.createdAt
           session.user.token = token.raw
-
-          console.log('session:', session)
           return session
         }
       } catch (e) {
