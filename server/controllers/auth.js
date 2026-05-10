@@ -62,7 +62,9 @@ const signIn = async (req, res) => {
   }
 
   try {
-    console.log('2. finding user...')
+    console.log('2. finding user ...')
+    console.log('2. finding user ...')
+
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
       errorApiCall(req, 'User not found')
