@@ -6,19 +6,29 @@ declare module "next-auth" {
     user: {
       email: string | null;
       username: string | null;
-      avatar?: string | null;
-      id?: string | null
-      createdAt: Date | null
-      favArtists?: userFavArtist[] | null
-      favSongs?: userFavSong[] | null
-      favReleases?: userFavRelease[] | null
+      // avatar?: string | null;
+      id: string | null
+      createdAt: string | null
       token: any
     };
   }
 
   interface User {
-    username?: string | null;
+    username: string | null;
     rawToken: string
-    id?: string | null
+    id: string | null
+    email: string | null
+    createdAt: string | null
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string | null
+    username: string | null
+    email: string | null
+    avatar: string | null
+    createdAt: string | null
+    raw: string | null
   }
 }

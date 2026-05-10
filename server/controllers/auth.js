@@ -51,6 +51,7 @@ const register = async (req, res) => {
 }
 
 const signIn = async (req, res) => {
+  console.log('1. signing-in...')
   const {email, password} = req.body
 
   logApiCall(req)
@@ -61,12 +62,16 @@ const signIn = async (req, res) => {
   }
 
   try {
+    console.log('2. finding user ...')
+    console.log('2. finding user ...')
+
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
       errorApiCall(req, 'User not found')
       return res.status(404).json({ error: 'User not found' })
     }
 
+    console.log('3. Checking passwords')
     const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) {
       errorApiCall(req, 'Invalid password')
@@ -74,10 +79,19 @@ const signIn = async (req, res) => {
     }
 
     successApiCall(req)
+
+    console.log({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      createdAt: user.createdAt,
+    })
+
     return res.json({
       id: user.id,
       email: user.email,
       username: user.username,
+      createdAt: user.createdAt
     })
   } catch (error) {
     errorApiCall(req, error)
