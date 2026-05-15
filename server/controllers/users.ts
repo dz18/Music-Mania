@@ -57,16 +57,11 @@ const findUserById = async (req: Request, res: Response) => {
   }
 }
 
-// Get all favorites by user
+// Get all likes by user
 const getLikes = async (req: Request, res: Response) => {
-  const { id, active } = req.validatedQuery as z.infer<typeof likesSchemac>
+  const { id, active } = req.validatedQuery as z.infer<typeof likesSchema>
   try {
     logApiCall(req)
-
-    if (!id) {
-      errorApiCall(req, 'Missing Id')
-      return
-    }
 
     const [countArtists, countReleases, countSongs] = await Promise.all([
       prisma.userLikedArtist.count({ where: { userId: id } }),
@@ -116,11 +111,6 @@ const query = async (req: Request, res: Response) => {
   const limit = 50
 
   logApiCall(req)
-
-  if (q === '' || !q) {
-    errorApiCall(req, 'Query term length 0')
-    return res.status(400).json({error: 'Query term length 0'})
-  }
 
   try {
 
@@ -309,11 +299,6 @@ const follow = async (req: Request, res: Response) => {
   const { profileId } = req.validatedBody as z.infer<typeof followSchema>
 
   logApiCall(req)
-
-  if (!req.user) {
-    errorApiCall(req, 'Unauthorized')
-    return res.status(403).json({error: 'Unauthorized'})
-  }
   
   try {
     const follow = await prisma.follow.create({
@@ -338,14 +323,6 @@ const unfollow = async (req: Request, res: Response) => {
   const { profileId } = req.validatedBody as z.infer<typeof unfollowSchema>
 
   logApiCall(req)
-  
-  if (!req.user) {
-    return res.status(403).json({error: 'Unauthorized'})
-  }
-
-  if (!profileId) {
-    return res.status(400).json({ error: 'profileId required' })
-  }
 
   try {
     await prisma.follow.delete({
@@ -461,11 +438,6 @@ const allFollowers = async (req: Request, res: Response) => {
 const editInfo = async (req: Request, res: Response) => {
   logApiCall(req)
 
-  if (!req.user) {
-    errorApiCall(req, "Unauthorized user token.")
-    return res.status(403).json({ error: "Unauthorized user token." })
-  }
-
   try {
 
     const user = await prisma.user.findUnique({
@@ -579,11 +551,6 @@ const reviewPanel = async (req: Request, res: Response) => {
   try {
     const {itemId, type} = req.validatedQuery as z.infer<typeof reviewPanelSchema>
 
-    if (!itemId || !type) {
-      errorApiCall(req, 'Missing parameters')
-      return res.status(500).json({error: 'Missing parameters'})
-    }
-
     let review
     if (type === 'artist') {
       review = await prisma.userArtistReviews.findUnique({
@@ -630,16 +597,6 @@ const checkLike = async (req: Request, res: Response) => {
   logApiCall(req)
 
   const { itemId, type } = req.validatedQuery as z.infer<typeof checkLikeSchema>
-
-  if (!itemId || !type) {
-    errorApiCall(req, 'Missing a required query parameter')
-    return res.status(400).json({ error: 'Missing a required query parameter' })
-  }
-
-  if (!req.user) {
-    errorApiCall(req, 'Unauthorized User')
-    return res.status(401).json({ error: 'Unauthorized User' })
-  }
 
   try {
     let like = null
@@ -691,11 +648,6 @@ const like = async (req: Request, res: Response) => {
       title, artistCredit, coverArt 
     } = req.validatedBody as z.infer<typeof likeSchema>
     const userId = req.user.id
-
-    if (!itemId || !type) {
-      errorApiCall(req, 'Missing itemId or type')
-      return res.status(400).json({ error: 'Missing itemId or type' })
-    }
 
     let newLike
 
@@ -763,6 +715,7 @@ const like = async (req: Request, res: Response) => {
     res.json({ success: true, like: newLike });
   } catch (error) {
     errorApiCall(req, error)
+    res.status(500).json({error: 'Unknown Error.'})
   }
 }
 

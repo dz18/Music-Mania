@@ -14,11 +14,6 @@ const register = async (req: Request, res: Response) => {
 
   logApiCall(req)
 
-  if (!email || !username || !password) {
-    errorApiCall(req, 'Missing required fields')
-    return res.status(400).json({ error: 'Email, username, and password are required' })
-  }
-
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
     const existingUsername = await prisma.user.findUnique({ where: { username } })
@@ -54,14 +49,8 @@ const register = async (req: Request, res: Response) => {
 }
 
 const signIn = async (req: Request, res: Response) => {
-
   logApiCall(req)  
   const {email, password} = req.body
-
-  if (!email || !password) {
-    errorApiCall(req, 'Missing email or password')
-    return res.status(400).json({ error: 'Email and password are required' })
-  }
 
   try {
     const user = await prisma.user.findUnique({ where: { email } })
@@ -70,7 +59,6 @@ const signIn = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
-    console.log('3. Checking passwords')
     const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) {
       errorApiCall(req, 'Invalid password')
@@ -96,11 +84,6 @@ const confirmPassword = async (req: Request, res: Response) => {
   const { email, password } = req.body
 
   logApiCall(req)
-
-  if (!email || !password) {
-    errorApiCall(req, 'Missing email or password')
-    return res.status(400).json({ error: 'Email and password are required' })
-  }
 
   try {
     const user = await prisma.user.findUnique({
