@@ -1,14 +1,25 @@
-const prisma = require('../prisma/client')
-const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
-const { calcStarStats } = require('./hooks/calcStarStats')
-const { tagConnectOrCreate } = require('./hooks/tagConnectOrCreate')
+import z from 'zod'
+import prisma from '../prisma/client'
+import { logApiCall, errorApiCall, successApiCall } from '../utils/logging'
+import { calcStarStats } from './hooks/calcStarStats'
+import { tagConnectOrCreate } from './hooks/tagConnectOrCreate'
+import { Request, Response } from 'express'
+import { 
+  artistReviewsSchema, 
+  deleteReviewSchema, 
+  publishOrDraftSchema, 
+  releaseReviewsSchema, 
+  songReviewsSchema,
+  userArtistsSchema,
+  userReleasesSchema,
+  userReviewSchema,
+  userSongsSchema
+} from '../schemas/reviews.schema'
 
 const limit = 25
 
-const artistReviews = async (req, res) => {
-  const { id } = req.query
-  let page = Number(req.query.page) || 1
-  let star = Number(req.query.star) || null
+const artistReviews = async (req: Request, res: Response) => {
+  const { id, page, star } = req.validatedQuery as z.infer<typeof artistReviewsSchema>
 
   logApiCall(req)
 
@@ -64,10 +75,8 @@ const artistReviews = async (req, res) => {
   }
 }
 
-const releaseReviews = async(req, res) => {
-  const { id } = req.query
-  let page = Number(req.query.page) || 0
-  let star = Number(req.query.star) || null
+const releaseReviews = async(req: Request, res: Response) => {
+  const { id, page, star} = req.validatedQuery as z.infer<typeof releaseReviewsSchema>
 
   logApiCall(req)
 
@@ -126,10 +135,8 @@ const releaseReviews = async(req, res) => {
   
 }
 
-const songReviews = async(req, res) => {
-  const { songId, workId } = req.query
-  let page = Number(req.query.page) || 0
-  let star = Number(req.query.star) || null
+const songReviews = async(req: Request, res: Response) => {
+  const { songId, workId, page, star} = req.validatedQuery as z.infer<typeof songReviewsSchema>
 
   logApiCall(req)
 
@@ -188,8 +195,8 @@ const songReviews = async(req, res) => {
 
 }
 
-const user = async (req, res) => {
-  const {userId, itemId, type, workId} = req.query
+const user = async (req: Request, res: Response) => {
+  const {userId, itemId, type, workId} = req.validatedQuery as z.infer<typeof userReviewSchema>
 
   logApiCall(req)
 
@@ -204,7 +211,7 @@ const user = async (req, res) => {
         where: { userId_releaseId: { userId, releaseId: itemId}}
       })
     } else if (type === 'song') {
-      const id = itemId === workId ? itemId : workId
+      const id = workId ?? itemId
       review = await prisma.userSongReviews.findUnique({
         where: { userId_songId: { userId, songId: id}}
       })
@@ -218,13 +225,13 @@ const user = async (req, res) => {
   }
 }
 
-const publishOrDraft = async (req, res) => {
+const publishOrDraft = async (req: Request, res: Response) => {
   const {
     itemId, title, 
     rating, review, type, 
     status, itemName, itemTitle, 
     artistCredit, coverArt, tags
-  } = req.body
+  } = req.validatedBody as z.infer<typeof publishOrDraftSchema>
   
   logApiCall(req)
 
@@ -371,8 +378,8 @@ const publishOrDraft = async (req, res) => {
   }
 }
 
-const deleteReview = async (req, res) => {
-  const { itemId, type } = req.query
+const deleteReview = async (req: Request, res: Response) => {
+  const { itemId, type } = req.validatedQuery as z.infer<typeof deleteReviewSchema>
 
   logApiCall(req)
 
@@ -441,10 +448,8 @@ const deleteReview = async (req, res) => {
   
 }
 
-const userArtists = async (req, res) => {
-  const profileId = req.query.profileId
-  const page = Number(req.query.page) || null
-  const star = Number(req.query.star) || null
+const userArtists = async (req: Request, res: Response) => {
+  const { profileId, page, star } = req.validatedQuery as z.infer<typeof userArtistsSchema>
 
   const limit = 25
 
@@ -503,10 +508,8 @@ const userArtists = async (req, res) => {
 
 }
 
-const userReleases = async (req, res) => {
-  const userId = req.query.userId
-  const page = Number(req.query.page) || null
-  const star = Number(req.query.star) || null
+const userReleases = async (req: Request, res: Response) => {
+  const { userId, page, star } = req.validatedQuery as z.infer<typeof userReleasesSchema>
 
   const limit = 25
 
@@ -565,10 +568,9 @@ const userReleases = async (req, res) => {
 
 }
 
-const userSongs = async (req, res) => {
-  const userId = req.query.userId
-  const page = Number(req.query.page) || null
-  const star = Number(req.query.star) || null
+const userSongs = async (req: Request, res: Response) => {
+  const { userId, page, star } = req.validatedQuery as z.infer<typeof userSongsSchema>
+
 
   const limit = 25
 
@@ -627,7 +629,7 @@ const userSongs = async (req, res) => {
 
 }
 
-module.exports = {
+export default {
   artistReviews,
   releaseReviews,
   songReviews,

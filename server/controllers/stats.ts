@@ -1,7 +1,8 @@
-const prisma = require('../prisma/client')
-const { logApiCall, errorApiCall } = require('../utils/logging')
+import prisma from '../prisma/client'
+import { logApiCall, errorApiCall } from '../utils/logging'
+import { Request, Response } from 'express'
 
-const landingStats = async (req, res) => {
+const landingStats = async (req: Request, res: Response) => {
   logApiCall(req)
 
   try {
@@ -69,4 +70,4 @@ const landingStats = async (req, res) => {
   }
 }
 
-module.exports = { landingStats }
+export { landingStats }

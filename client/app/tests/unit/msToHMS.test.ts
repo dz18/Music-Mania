@@ -1,4 +1,4 @@
-import { msToHMS } from '../../hooks/timeMs'
+import { msToHMS } from '../../utils/timeMs'
 
 describe('msToHMS', () => {
   it('returns all zeros for 0 ms', () => {

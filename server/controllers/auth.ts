@@ -1,8 +1,9 @@
-const prisma = require('../prisma/client')
-const bcrypt = require('bcrypt')
-const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
+import prisma from '../prisma/client'
+import bcrypt from 'bcrypt'
+import { logApiCall, errorApiCall, successApiCall } from '../utils/logging'
+import { Request, Response } from 'express'
 
-const register = async (req, res) => {
+const register = async (req: Request, res: Response) => {
   const {
     email,
     username,
@@ -50,11 +51,10 @@ const register = async (req, res) => {
 
 }
 
-const signIn = async (req, res) => {
-  console.log('1. signing-in...')
-  const {email, password} = req.body
+const signIn = async (req: Request, res: Response) => {
 
-  logApiCall(req)
+  logApiCall(req)  
+  const {email, password} = req.body
 
   if (!email || !password) {
     errorApiCall(req, 'Missing email or password')
@@ -62,9 +62,6 @@ const signIn = async (req, res) => {
   }
 
   try {
-    console.log('2. finding user ...')
-    console.log('2. finding user ...')
-
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
       errorApiCall(req, 'User not found')
@@ -80,13 +77,6 @@ const signIn = async (req, res) => {
 
     successApiCall(req)
 
-    console.log({
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      createdAt: user.createdAt,
-    })
-
     return res.json({
       id: user.id,
       email: user.email,
@@ -100,7 +90,7 @@ const signIn = async (req, res) => {
 
 }
 
-const confirmPassword = async (req, res) => {
+const confirmPassword = async (req: Request, res: Response) => {
   const { email, password } = req.body
 
   logApiCall(req)
@@ -136,7 +126,7 @@ const confirmPassword = async (req, res) => {
 
 }
 
-const changePassword = async (req, res) => {
+const changePassword = async (req: Request, res: Response) => {
   const { email, newPassword, confirmNewPassword } = req.body
 
   logApiCall(req)
@@ -166,7 +156,7 @@ const changePassword = async (req, res) => {
   }
 }
 
-module.exports = {
+export default {
   register,
   signIn,
   confirmPassword,

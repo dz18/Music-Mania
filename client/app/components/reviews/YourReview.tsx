@@ -1,6 +1,6 @@
 import { ReviewTypes } from "@/app/lib/types/api"
 import StarRatingVisual from "../ui/StarVisual"
-import { timeAgo } from "@/app/hooks/timeAgo"
+import { timeAgo } from "@/app/utils/timeAgo"
 
 export default function YourReviewSection ({
   review, 

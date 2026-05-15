@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation"
 import NoResults from "./NoResults"
-import useDropdown from "@/app/hooks/useSearchDropdown"
+import useDropdown from "@/app/utils/useSearchDropdown"
 
 export default function ArtistSuggestions ({
   data,

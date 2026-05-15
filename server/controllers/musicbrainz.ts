@@ -1,18 +1,23 @@
-const prisma = require('../prisma/client')
-const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging')
-const { formatMedia } = require('./hooks/formatMedia')
-const { scoreRelease } = require('./hooks/scoreRelease')
-const { mbQueue } = require('../utils/musicbrainzQue')
+import prisma from '../prisma/client'
+import { logApiCall, errorApiCall, successApiCall } from '../utils/logging'
+import { formatMedia } from './hooks/formatMedia'
+import { scoreRelease } from './hooks/scoreRelease'
+import { mbQueue } from '../utils/musicbrainzQue'
+import { Request, Response } from 'express'
+import z from 'zod'
+import { artistsSchema, discographySchema, discographySinglesSchema, findSingleIdSchema, getArtistsSchema, getReleaseSchema, getSongSchema, releasesSchema } from '../schemas/musicbrainz.schema'
 
 const userAgent = process.env.USER_AGENT
 
-const artists = async (req, res) => {
-  const { q, type } = req.query
-  const page = Number(req.query.page) ?? 1
+const artists = async (req: Request, res: Response) => {
+  logApiCall(req) 
+  const { 
+    q, 
+    type, 
+    page 
+  } = req.validatedQuery as z.infer<typeof artistsSchema>
   
   const limit = 50
-
-  logApiCall(req)
 
   if (!q) {
     errorApiCall(req, 'Missing query parameter')
@@ -64,8 +69,8 @@ const artists = async (req, res) => {
   }
 }
 
-const releases = async (req, res) => {
-  const { q, type } = req.query
+const releases = async (req: Request, res: Response) => {
+  const { q, type } = req.validatedQuery as z.infer<typeof releasesSchema>
   const page = Number(req.query.page) ?? 1
 
   const limit = 50
@@ -122,8 +127,8 @@ const releases = async (req, res) => {
 
 }
 
-const getArtist = async (req, res) => {
-  const { id } = req.query
+const getArtist = async (req: Request, res: Response) => {
+  const { id } = req.validatedQuery as z.infer<typeof getArtistsSchema>
 
   logApiCall(req)
 
@@ -346,9 +351,8 @@ const getArtist = async (req, res) => {
 
 }
 
-const discography = async (req, res) => {
-  const { artistId, type } = req.query
-  let page = Number(req.query.page) || 0
+const discography = async (req: Request, res: Response) => {
+  const { artistId, type, page } = req.validatedQuery as z.infer<typeof discographySchema>
 
   logApiCall(req)
 
@@ -451,9 +455,8 @@ const discography = async (req, res) => {
   
 }
 
-const discographySingles = async (req, res) => {
-  const { artistId } = req.query
-  let page = Number(req.query.page) || 0
+const discographySingles = async (req: Request, res: Response) => {
+  const { artistId, page } = req.validatedQuery as z.infer<typeof discographySinglesSchema>
 
   logApiCall(req)
 
@@ -560,8 +563,8 @@ const discographySingles = async (req, res) => {
   }
 }
 
-const getRelease = async (req, res) => {
-  const { releaseId } = req.query
+const getRelease = async (req: Request, res: Response) => {
+  const { releaseId } = req.validatedQuery as z.infer<typeof getReleaseSchema>
   
   logApiCall(req)
 
@@ -682,8 +685,8 @@ const getRelease = async (req, res) => {
   }
 }
 
-const getSong = async (req, res) => {
-  const { songId } = req.query
+const getSong = async (req: Request, res: Response) => {
+  const { songId } = req.validatedQuery as z.infer<typeof getSongSchema>
 
   logApiCall(req)
 
@@ -789,8 +792,8 @@ const getSong = async (req, res) => {
   }
 }
 
-const findSingleId = async (req, res) => {
-  const { rgId } = req.query
+const findSingleId = async (req: Request, res: Response) => {
+  const { rgId } = req.validatedQuery as z.infer<typeof findSingleIdSchema>
 
   logApiCall(req)
 
@@ -825,7 +828,7 @@ const findSingleId = async (req, res) => {
   }
 }
 
-module.exports = {
+export default {
   artists,
   releases,
   getArtist,

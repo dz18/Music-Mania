@@ -1,4 +1,4 @@
-import { timeAgo } from '../../hooks/timeAgo'
+import { timeAgo } from '../../utils/timeAgo'
 
 // Pin "now" to a fixed point so all diffs are deterministic
 const NOW = new Date('2024-06-15T12:00:00.000Z')

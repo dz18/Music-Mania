@@ -3,10 +3,10 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 const s3 = new S3Client({
-  region: process.env.AWS_REGION,
+  region: process.env.AWS_REGION!,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   }
 })
 
@@ -15,13 +15,27 @@ const acceptedTypes = [
   'image/png',
   'image/webp',
   'image/gif',
-]
+] as const
+
+type AcceptedTypes = typeof acceptedTypes[number]
+
+type SignedUrlResult =
+  | { success: { url: string }; error?: never }
+  | { error: string; success?: never }
+
+type DeleteResult =
+  | { success: true; error?: never }
+  | { error: string; success?: never }
 
 const maxFileSize = 1024 * 1024 * 10 // 10MB
 
-export async function getSignedURL (key, type, size) {
+export async function getSignedURL (
+  key: string, 
+  type: string,
+  size: number
+): Promise<SignedUrlResult> {
 
-  if (!acceptedTypes.includes(type)) {
+  if (!acceptedTypes.includes(type as AcceptedTypes)) {
     return { error: `Invalid file type: ${type}`}
   }
 
@@ -49,7 +63,7 @@ export async function getSignedURL (key, type, size) {
   
 }
 
-export async function deleteObject(key) {
+export async function deleteObject(key: string): Promise<DeleteResult> {
   console.log('deleting object now...')
   if (!key) {
     return { error: "Missing S3 object key" }

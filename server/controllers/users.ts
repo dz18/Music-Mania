@@ -1,11 +1,14 @@
-const prisma = require('../prisma/client')
-const { logApiCall, errorApiCall, successApiCall } = require('../utils/logging');
-const { getSignedURL, deleteObject } = require('./AWS/actions');
-const { calcStarStats } = require('./hooks/calcStarStats');
-// const { getGradientColors } = require('./hooks/getDominateColor');
+import z from 'zod';
+import prisma from '../prisma/client';
+import { logApiCall, errorApiCall, successApiCall } from '../utils/logging';
+import { getSignedURL, deleteObject } from './AWS/actions';
+import { calcStarStats } from './hooks/calcStarStats';
+
+import { Request, Response } from 'express';
+import { allFollowersSchema, checkLikeSchema, deleteLikeSchema, editSchema, followSchema, isFollowingSchema, likeSchema, likesSchema, profileSchema, querySchema, reviewPanelSchema, unfollowSchema } from '../schemas/user.schema';
 
 // Gets all users
-const getUsers = async (req, res) => {
+const getUsers = async (req: Request, res: Response) => {
 
   logApiCall(req)
 
@@ -21,7 +24,10 @@ const getUsers = async (req, res) => {
 }
 
 // Find a user
-const findUserById = async (req, res) => {
+const findUserById = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" })
+  }
 
   try {
     
@@ -43,7 +49,6 @@ const findUserById = async (req, res) => {
       username: user.username,
       email: user.email,
       id: user.id,
-      avatar: user.avatar,
       createdAt: user.createdAt,
     })
   } catch (error) {
@@ -53,10 +58,10 @@ const findUserById = async (req, res) => {
 }
 
 // Get all favorites by user
-const getLikes = async (req, res) => {
+const getLikes = async (req: Request, res: Response) => {
+  const { id, active } = req.validatedQuery as z.infer<typeof likesSchemac>
   try {
     logApiCall(req)
-    const { id, active } = req.query
 
     if (!id) {
       errorApiCall(req, 'Missing Id')
@@ -97,8 +102,6 @@ const getLikes = async (req, res) => {
       })
     }
 
-    // console.log(liked)
-
     successApiCall(req)
     res.json(liked)
   } catch (error) {
@@ -107,9 +110,8 @@ const getLikes = async (req, res) => {
 }
 
 // Get a batch of users
-const query = async (req, res) => {
-  const { q } = req.query
-  const page = Number(req.query.page) || 1
+const query = async (req: Request, res: Response) => {
+  const { q, page } = req.validatedQuery as z.infer<typeof querySchema>
 
   const limit = 50
 
@@ -169,8 +171,8 @@ const query = async (req, res) => {
 }
 
 // Get profile page details for a user
-const profile = async (req, res) => {
-  const { profileId } = req.query
+const profile = async (req: Request, res: Response) => {
+  const { profileId } = req.validatedQuery as z.infer<typeof profileSchema>
 
   logApiCall(req)
   try {
@@ -280,8 +282,8 @@ const profile = async (req, res) => {
   }
 }
 
-const isFollowing = async (req, res) => {
-  const { userId, profileId } = req.query
+const isFollowing = async (req: Request, res: Response) => {
+  const { userId, profileId } = req.validatedQuery as z.infer<typeof isFollowingSchema>
 
   logApiCall(req)
 
@@ -303,8 +305,8 @@ const isFollowing = async (req, res) => {
 }
 
 // Follow a user
-const follow = async (req, res) => {
-  const { profileId } = req.body
+const follow = async (req: Request, res: Response) => {
+  const { profileId } = req.validatedBody as z.infer<typeof followSchema>
 
   logApiCall(req)
 
@@ -332,8 +334,8 @@ const follow = async (req, res) => {
 }
 
 // Unfollow a user
-const unfollow = async (req, res) => {
-  const { profileId } = req.body
+const unfollow = async (req: Request, res: Response) => {
+  const { profileId } = req.validatedBody as z.infer<typeof unfollowSchema>
 
   logApiCall(req)
   
@@ -364,12 +366,10 @@ const unfollow = async (req, res) => {
   }
 }
 
-const allFollowers = async (req, res) => {
-  const { profileId, page = '1', userId, following } = req.query
+const allFollowers = async (req: Request, res: Response) => {
+  const { profileId, page, userId, following } = req.validatedQuery as z.infer<typeof allFollowersSchema>
 
   const limit = 25
-  const pageNumber = parseInt(page, 10) || 1
-  const isFollowingMode = following === 'true'
 
   logApiCall(req)
 
@@ -385,16 +385,16 @@ const allFollowers = async (req, res) => {
     }
 
     const total = await prisma.follow.count({
-      where: isFollowingMode
+      where: following
         ? { followerId: profileId }
         : { followingId: profileId },
     })
 
     const follows = await prisma.follow.findMany({
-      where: isFollowingMode
+      where: following
         ? { followerId: profileId }
         : { followingId: profileId },
-      include: isFollowingMode
+      include: following
         ? {
             following: {
               omit: { password: true, email: true, aboutMe: true },
@@ -405,13 +405,13 @@ const allFollowers = async (req, res) => {
               omit: { password: true, email: true, aboutMe: true },
             },
           },
-      skip: (pageNumber - 1) * limit,
+      skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: 'desc' },
     })
 
     const targetIds = follows
-      .map(f => (isFollowingMode ? f.followingId : f.followerId))
+      .map(f => (following ? f.followingId : f.followerId))
       .filter(id => id !== userId)
 
     let isFollowingMap = {}
@@ -437,7 +437,7 @@ const allFollowers = async (req, res) => {
       },
       pages: Math.ceil(total / limit),
       limit: limit,
-      currentPage: pageNumber,
+      currentPage: page,
       count: total
     }
 
@@ -458,7 +458,7 @@ const allFollowers = async (req, res) => {
   }
 }
 
-const editInfo = async (req, res) => {
+const editInfo = async (req: Request, res: Response) => {
   logApiCall(req)
 
   if (!req.user) {
@@ -497,19 +497,12 @@ const editInfo = async (req, res) => {
   }
 }
 
-const edit = async (req, res) => {
+const edit = async (req: Request, res: Response) => {
   logApiCall(req)
 
   const id = req.user.id
   const avatar = req.file
-  const {
-    username,
-    aboutMe,
-    updatedAt
-  } = req.body
-  const age = req.body.age !== undefined && req.body.age !== '' 
-    ? Number(req.body.age) : null
-  const resetAvatar = req.body.resetAvatar === 'true'
+  const { username, aboutMe, age, resetAvatar, updatedAt } = req.validatedBody as z.infer<typeof editSchema>
 
   // Validation
   let hasError = false
@@ -582,9 +575,9 @@ const edit = async (req, res) => {
 
 }
 
-const reviewPanel = async (req, res) => {
+const reviewPanel = async (req: Request, res: Response) => {
   try {
-    const {itemId, type} = req.query
+    const {itemId, type} = req.validatedQuery as z.infer<typeof reviewPanelSchema>
 
     if (!itemId || !type) {
       errorApiCall(req, 'Missing parameters')
@@ -633,10 +626,10 @@ const reviewPanel = async (req, res) => {
   }
 }
 
-const checkLike = async (req, res) => {
+const checkLike = async (req: Request, res: Response) => {
   logApiCall(req)
 
-  const { itemId, type } = req.query
+  const { itemId, type } = req.validatedQuery as z.infer<typeof checkLikeSchema>
 
   if (!itemId || !type) {
     errorApiCall(req, 'Missing a required query parameter')
@@ -689,14 +682,14 @@ const checkLike = async (req, res) => {
   }
 }
 
-const like = async (req, res) => {
+const like = async (req: Request, res: Response) => {
   try {
     logApiCall(req);
 
     const { 
       itemId, type, name, 
       title, artistCredit, coverArt 
-    } = req.body
+    } = req.validatedBody as z.infer<typeof likeSchema>
     const userId = req.user.id
 
     if (!itemId || !type) {
@@ -773,10 +766,10 @@ const like = async (req, res) => {
   }
 }
 
-const deleteLike = async (req, res) => {
+const deleteLike = async (req: Request, res: Response) => {
   try {
     logApiCall(req)
-    const { itemId, type } = req.body   
+    const { itemId, type } = req.validatedBody as z.infer<typeof deleteLikeSchema>   
 
     if (type === 'artist') {
       await prisma.userLikedArtist.deleteMany({
@@ -802,7 +795,7 @@ const deleteLike = async (req, res) => {
   }
 }
 
-module.exports = {
+export default {
   getUsers,
   query,
   getLikes,

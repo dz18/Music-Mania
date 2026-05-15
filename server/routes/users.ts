@@ -1,10 +1,11 @@
+import express from 'express'
+import userController from '../controllers/users'
+import { verifyUser, softVerifyUser } from '../middleware/auth'
+import multer from 'multer'
+import validateQuery from '../middleware/verifyQuery'
 
-const express = require('express')
-const router = express.Router()
-const userController = require('../controllers/users')
-const { verifyUser, softVerifyUser } = require('../middleware/auth')
-const multer = require('multer')
 const upload = multer({ storage: multer.memoryStorage() })
+const router = express.Router()
 
 // Public Use
 router.get('/total', userController.getUsers)
@@ -30,4 +31,4 @@ router.delete('/unfollow', verifyUser, userController.unfollow)
 router.delete('/like', verifyUser, userController.deleteLike)
 
 
-module.exports = router
+export default router

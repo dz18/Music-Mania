@@ -1,4 +1,4 @@
-function formatArtistCredit (artistCredit) {
+export function formatArtistCredit (artistCredit: any) {
   return {
     name: artistCredit.name, 
     joinphrase: artistCredit.joinphrase, 
@@ -8,5 +8,3 @@ function formatArtistCredit (artistCredit) {
     }
   }
 }
-
-module.exports = { formatArtistCredit }

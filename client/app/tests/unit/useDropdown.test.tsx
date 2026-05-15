@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import useDropdown from '../../hooks/useSearchDropdown'
+import useDropdown from '../../utils/useSearchDropdown'
 
 describe('useDropdown', () => {
   it('initialises with open as false', () => {

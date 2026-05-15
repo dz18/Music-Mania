@@ -1,6 +1,6 @@
-const { faker } = require('@faker-js/faker');
-const prisma = require('./client');
-const bcrypt = require('bcrypt');
+import { faker } from '@faker-js/faker';
+import prisma from './client';
+import bcrypt from 'bcrypt';
 
 const ratingOptions = [0.5,1,1.5,2,2.5,3,3.5,4,4.5,5];
 
@@ -14,10 +14,10 @@ async function createUsers() {
   const userlist = [];
 
   // Create TEST Admin User
-  const hashedPassword = await bcrypt.hash(process.env.PASSWORD, 10);
+  const hashedPassword = await bcrypt.hash(process.env.PASSWORD!, 10);
   userlist.push({
-    username: process.env.USERNAME,
-    email: process.env.EMAIL,
+    username: process.env.USERNAME!,
+    email: process.env.EMAIL!,
     password: hashedPassword,
     aboutMe: faker.lorem.sentences(3),
     age: faker.number.int({ min: 18, max: 60 })
@@ -79,29 +79,29 @@ async function createArtistReviews() {
   await Promise.all(reviews)
 }
 
-async function createFollows(users) {
-  const follow = [];
+// async function createFollows(users: any) {
+//   const follow = [];
 
-  for (let user of users) {
-    const count = Math.floor(Math.random() * (users.length - 1)) + 1;
-    const shuffled = [...users].sort(() => Math.random() - 0.5);
-    const followList = shuffled.slice(0, count);
+//   for (let user of users) {
+//     const count = Math.floor(Math.random() * (users.length - 1)) + 1;
+//     const shuffled = [...users].sort(() => Math.random() - 0.5);
+//     const followList = shuffled.slice(0, count);
 
-    for (let f of followList) {
-      if (user.id === f.id) continue;
+//     for (let f of followList) {
+//       if (user.id === f.id) continue;
 
-      follow.push({
-        followerId: user.id,
-        followingId: f.id
-      });
-    }
-  }
+//       follow.push({
+//         followerId: user.id,
+//         followingId: f.id
+//       });
+//     }
+//   }
 
-  await prisma.follow.createMany({
-    data: follow,
-    skipDuplicates: true
-  });
-}
+//   await prisma.follow.createMany({
+//     data: follow,
+//     skipDuplicates: true
+//   });
+// }
 
 async function createArtistLikes() {
   const users = await prisma.user.findMany({
@@ -135,7 +135,7 @@ async function createArtistLikes() {
   console.log(`Added ${artistLikes.length} random artist likes`)
 }
 
-async function createFollows(users) {
+async function createFollows(users: any) {
   const follows = []
 
   for (const user of users) {
@@ -145,7 +145,7 @@ async function createFollows(users) {
     })
 
     const candidates = users
-      .filter(u => u.id !== user.id)
+      .filter((u: any) => u.id !== user.id)
       .sort(() => Math.random() - 0.5)
       .slice(0, followCount)
 

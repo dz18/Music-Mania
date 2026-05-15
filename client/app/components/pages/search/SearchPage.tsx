@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, JSX, useEffect, useState } from "react"
+import { ChangeEvent, FormEvent, JSX, useEffect, useState } from "react"
 import useSearchQuery from "../../../hooks/musicbrainz/useSearchQuery"
 import ArtistSearch from "./ArtistSearch"
 import ReleaseSearch from "./ReleaseSearch"
@@ -10,6 +10,7 @@ import Pagination from "../../ui/Pagination"
 import { FileX2, RefreshCcw, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import LoadingBox from "../../ui/loading/loadingBox"
+import { release } from "os"
 
 export default function SearchPage ({
   params
@@ -54,7 +55,7 @@ export default function SearchPage ({
     users: <UserSearch data={(searchResults?.data as UserQuery)}/>
   }
 
-  const handleSubmit = (e : FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e : ChangeEvent) => {
     e.preventDefault()
     refetch()
   }

@@ -1,4 +1,4 @@
-const { formatArtistCredit } = require('./formatArtistCredit')
+import { formatArtistCredit } from './formatArtistCredit';
 
 function findWorkId (relation, fallback) {
   if (!relation) return
@@ -35,4 +35,6 @@ function formatMedia(media) {
   }
 }
 
-module.exports = { formatMedia }
+export {
+  formatMedia
+}
