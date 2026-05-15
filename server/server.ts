@@ -1,7 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-
+import swaggerUi from 'swagger-ui-express'
+import { generateOpenApiDoc } from './lib/openapi/index.js'
 import users from './routes/users.js'
 import auth from './routes/auth.js'
 import musicbrainz from './routes/musicbrainz.js'
@@ -25,6 +26,8 @@ app.use('/api/reviews', reviews)
 app.use('/api/users', users)
 app.use('/api/stats', stats)
 app.use('/api/health', health)
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(generateOpenApiDoc()))
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`)

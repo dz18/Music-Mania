@@ -2,13 +2,15 @@ import prisma from '../prisma/client'
 import bcrypt from 'bcrypt'
 import { logApiCall, errorApiCall, successApiCall } from '../utils/logging'
 import { Request, Response } from 'express'
+import z from 'zod'
+import { registerSchema } from '../schemas/auth.schema'
 
 const register = async (req: Request, res: Response) => {
   const {
     email,
     username,
     password,
-  } = req.body
+  } = req.validatedBody as z.infer<typeof registerSchema>
 
   logApiCall(req)
 
