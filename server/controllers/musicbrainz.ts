@@ -5,62 +5,51 @@ import { scoreRelease } from './hooks/scoreRelease'
 import { mbQueue } from '../utils/musicbrainzQue'
 import { Request, Response } from 'express'
 import z from 'zod'
-import { artistsSchema, discographySchema, discographySinglesSchema, findSingleIdSchema, getArtistsSchema, getReleaseSchema, getSongSchema, releasesSchema } from '../schemas/musicbrainz.schema'
+import { 
+    artistsSchema, 
+    discographySchema, 
+    discographySinglesSchema, 
+    findSingleIdSchema, 
+    getArtistsSchema, 
+    getReleaseSchema, 
+    getSongSchema, 
+    releasesSchema 
+} from '../schemas/musicbrainz.schema'
+import { 
+    buildArtistQueryUrl, 
+    buildArtistUrl, 
+    buildDiscographyUrl, 
+    buildReleaseQueryUrl
+} from '../utils/musicbrainz/buildUrl'
+import { 
+  formatArtist,
+    formatQueryArtist, 
+    formatQueryRelease,
+    sortAndFormatReleaseGroups
+} from '../utils/musicbrainz/format'
+import { mbFetch } from '../utils/musicbrainz/fetch'
+import { ur } from 'zod/locales'
 
 const userAgent = process.env.USER_AGENT
 
 const artists = async (req: Request, res: Response) => {
   logApiCall(req) 
-  const { 
-    q, 
-    type, 
-    page 
-  } = req.validatedQuery as z.infer<typeof artistsSchema>
-  
+
+  const { q, type, page } = req.validatedQuery as z.infer<typeof artistsSchema>
   const limit = 50
 
-  if (!q) {
-    errorApiCall(req, 'Missing query parameter')
-    return res.status(400).json({error : 'Missing query parameter'})
-  }
-
-  if (page < 0) {
-    errorApiCall(req, 'Invalid Page number')
-    return res.status(400).json({error : 'Invalid Page number'})
-  }
-
   try {
-    const query = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}${type && ` AND (type:${type})`}&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
-      headers: {
-        'User-Agent' : userAgent
-      }
-    }))
 
-    if (!query.ok) {
-      errorApiCall(req, `MusicBrainz error: ${query.status}`)
-      return res.status(query.status).json({error: `MusicBrainz server returned an error. Try again later.`})
-    }
-
-    const data = await query.json()
-
-    const artists = []
-    for (const artist of data.artists) {
-      const filtered = {
-        id: artist.id,
-        type: artist.type,
-        name: artist.name,
-        disambiguation: artist.disambiguation
-      }
-      artists.push(filtered)
-    }
-
+    const url = buildArtistQueryUrl(q, type, page, limit)
+    const data = await mbFetch(url)
     successApiCall(req)
+
     return res.json({
-      data: {suggestions: artists},
+      data: { suggestions: data.artists.map(formatQueryArtist) },
       count: data.count,
       currentPage: page,
       pages: Math.ceil(data.count / limit),
-      limit: limit
+      limit,
     })
 
   } catch (error) {
@@ -70,50 +59,19 @@ const artists = async (req: Request, res: Response) => {
 }
 
 const releases = async (req: Request, res: Response) => {
-  const { q, type } = req.validatedQuery as z.infer<typeof releasesSchema>
-  const page = Number(req.query.page) ?? 1
-
-  const limit = 50
-
   logApiCall(req)
 
-  if (!q) {
-    errorApiCall(req, 'Missing query parameter')
-    return res.status(400).json({error : 'Missing query parameter'})
-  }
+  const { q, type, page} = req.validatedQuery as z.infer<typeof releasesSchema>
+  const limit = 50
 
   try {
 
-    const query = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/release-group/?query=${q} AND ${type ? `(primarytype:${type})` : '(primarytype:album OR primarytype:ep)'}&inc=artist-credits&fmt=json&limit=${limit}&offset=${(page - 1) * limit}`, {
-      headers: {
-        'User-Agent' : userAgent
-      }
-    }))
-
-    if (!query.ok) {
-      errorApiCall(req, `MusicBrainz error: ${query.status}`)
-      return res.status(query.status).json({error: `MusicBrainz server returned an error. Try again later or check the release ID.`})
-    }
-
-    const data = await query.json()
-
-    const filtered = []
-    for (const f of data['release-groups']) {
-      filtered.push({
-        id: f.id,
-        type: f.type,
-        title: f.title,
-        artistCredit: f['artist-credit'].map(ac => ({
-          joinphrase: ac.joinphrase, name: ac.name
-        })),
-        primaryType: f['primary-type'],
-        firstReleaseDate: f['first-release-date']
-      })
-    }
+    const url = buildReleaseQueryUrl(q, type, page, limit)
+    const data = await mbFetch(url)
 
     successApiCall(req)
     return res.json({
-      data: { suggestions: filtered },
+      data: { suggestions: data['release-groups'].map(formatQueryRelease) },
       count: data.count,
       limit: limit,
       currentPage: page,
@@ -128,329 +86,53 @@ const releases = async (req: Request, res: Response) => {
 }
 
 const getArtist = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { id } = req.validatedQuery as z.infer<typeof getArtistsSchema>
 
-  logApiCall(req)
-
-  if (!id) {
-    errorApiCall(req, 'Missing query parameter')
-    return res.status(400).json({error : 'Missing query parameter'})
-  }
-
-  const validURLTypes = [
-    'allmusic',
-    'IMDb',
-    'myspace',
-    'official homepage',
-    'social network',
-    'songkick',
-    'soundcloud',
-    'streaming',
-    'video channel',
-    'wikidata',
-    'wikipedia',
-    'youtube',
-    'youtube music',
-    'lyrics',
-    'image'
-  ]
-
   try {
-
-    const fetchArtist = await mbQueue.add(() => fetch(`https://musicbrainz.org/ws/2/artist/${id}?inc=aliases+genres+artist-rels+url-rels&fmt=json`, {
-      headers: {
-        'User-Agent' : userAgent
-      }
-    }))
-
-    if (!fetchArtist.ok) {
-      errorApiCall(req, `MusicBrainz error: ${fetchArtist.status}`)
-      return res.status(fetchArtist.status).json({error: `MusicBrainz API server returned an error. Try again later or check the artist ID.`})
-    }
-
-    const artistData = await fetchArtist.json()
-
-    if (!artistData) {
-      errorApiCall(req, 'Musicbrainz API failed')
-    }
-
-    const membersOfband = []
-    const URLRelations = []
-    const membersSet = new Set()
-    for(const relation of artistData.relations) {
-      if(relation.type.includes('member')) {
-        if (membersSet.has(relation.artist.id)) continue
-
-        membersOfband.push({
-          lifeSpan: {
-            begin: relation.begin,
-            end: relation.end,
-            ended: relation.ended
-          },
-          artist: {
-            type: relation.artist.type,
-            id: relation.artist.id,
-            name: relation.artist.name,
-            country: relation.artist.country,
-            disambiguation: relation.artist.disambiguation
-          }
-        })
-
-        membersSet.add(relation.artist.id)
-      } else if (validURLTypes.includes(relation.type) && relation.url) {
-        if (relation.type === 'social network') {
-          if (relation.url.resource.includes('instagram') ) {
-            URLRelations.push({
-              type: 'instagram',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('twitter')) {
-            URLRelations.push({
-              type: 'twitter',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('myspace')) {
-            URLRelations.push({
-              type: 'myspace',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('google')) {
-            URLRelations.push({
-              type: 'google',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('tiktok')) {
-            URLRelations.push({
-              type: 'tiktok',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('snapchat')) {
-            URLRelations.push({
-              type: 'snapchat',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('vk')) {
-            URLRelations.push({
-              type: 'vk',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('facebook')) {
-            URLRelations.push({
-              type: 'facebook',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('threads')) {
-            URLRelations.push({
-              type: 'threads',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('weibo')) {
-            URLRelations.push({
-              type: 'threads',
-              url: relation.url.resource
-            })
-          } else {
-            URLRelations.push({
-              type: 'social network',
-              url: relation.url.resource
-            })
-          }
-        } else if (relation.type === 'streaming') {
-          if (relation.url.resource.includes('amazon')) {
-            URLRelations.push({
-              type: 'amazon',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('spotify')) {
-            URLRelations.push({
-              type: 'spotify',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('napster')) {
-            URLRelations.push({
-              type: 'napster',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('apple')) {
-            URLRelations.push({
-              type: 'apple',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('tidal')) {
-            URLRelations.push({
-              type: 'tidal',
-              url: relation.url.resource
-            })
-          } else {
-            URLRelations.push({
-              type: 'streaming',
-              url: relation.url.resource
-            })
-          }
-        } else if (relation.type === 'lyrics') {
-          if (relation.url.resource.includes('genius')) {
-            URLRelations.push({
-              type: 'genius',
-              url: relation.url.resource
-            })
-          } else {
-            URLRelations.push({
-              type: 'lyrics',
-              url: relation.url.resource
-            })
-          }
-        } else if (relation.type === 'video channel'){
-          if (relation.url.resource.includes('dailymotion')) {
-            URLRelations.push({
-              type: 'dailymotion',
-              url: relation.url.resource
-            })
-          } else if (relation.url.resource.includes('vimeo')){
-            URLRelations.push({
-              type: 'vimeo',
-              url: relation.url.resou
-            })
-          } else {
-            URLRelations.push({
-              type: 'video channel',
-              url: relation.url.resource
-            })
-          }
-        } else {
-          URLRelations.push({
-            type: relation.type,
-            url: relation.url.resource
-          })
-        }
-      }
-    }
-
-    const artist = {
-      id: artistData.id,
-      gender: artistData.gender,
-      name: artistData.name,
-      lifeSpan: artistData['life-span'],
-      beginArea: artistData['begin-area'],
-      endArea: artistData['end-area'],
-      type: artistData.type,
-      country: artistData.country,
-      disambiguation: artistData.disambiguation,
-      relations: artistData.relations,
-      aliases: artistData.aliases,
-      genres: artistData.genres,
-      membersOfband: membersOfband,
-      urls: URLRelations
-    }
-
+    const url = buildArtistUrl(id)
+    const artistData = await mbFetch(url)
     successApiCall(req)
-    res.json(artist)
-  } catch (error) {
+    
+    return res.json(formatArtist(artistData))
+  } catch (error: any) {
+    if (error.status) {
+      errorApiCall(req, `MusicBrainz error: ${error.status}`)
+      return res.status(error.status).json({ error: 'MusicBrainz API server returned an error. Try again later or check the artist ID.' })
+    }
     errorApiCall(req, error)
-    return res.status(400).json({error : 'Error fetching Artist'})
+    return res.status(400).json({ error: 'Error fetching Artist' })
   }
-
 }
 
 const discography = async (req: Request, res: Response) => {
-  const { artistId, type, page } = req.validatedQuery as z.infer<typeof discographySchema>
-
   logApiCall(req)
 
+  const { artistId, type, page } = req.validatedQuery as z.infer<typeof discographySchema>
   const limit = 25
-
-  if (!artistId) {
-    errorApiCall(req, 'Missing artistId')
-    res.status(400).json({error: 'Missing parameters'})
-    return
-  }
-
-  if (type !== 'album' && type !== 'single' && type !==  'ep') {
-    errorApiCall(req, 'Incorrect type')
-    res.status(400).json({error: 'Incorrect type'})
-    return
-  }
-
-  if (page < 1) {
-    errorApiCall(req, "Page number doesn't exist.")
-    res.status(400).json({error: "Page number doesn't exist."})
-    return
-  }
 
   try {
 
-    const releases = await mbQueue.add(() => fetch(`http://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&type=${type}&limit=${limit}&release-group-status=website-default&offset=${(page - 1) * limit}`, {
-      headers: {
-        'User-Agent' : userAgent
-      }
-    }))
+    const url = buildDiscographyUrl(artistId, type, page, limit)
+    const data = await mbFetch(url)
+    const sorted = await sortAndFormatReleaseGroups(data['release-groups'], type)
 
-    if (!releases.ok) {
-      errorApiCall(req, `MusicBrainz error: ${releases.status}`)
-      return res.status(releases.status).json({error: `MusicBrainz API server returned an error. Try again later or check the artist ID.`})
-    }
-
-    const releasesData = await releases.json()
-    const releaseGroups = releasesData['release-groups']
-    const sorted = await Promise.all(
-      [...releaseGroups].sort((a, b) => {
-        const lenA = a['secondary-types']?.length || 0
-        const lenB = b['secondary-types']?.length || 0
-        return lenA - lenB
-      }).map(async (releaseGroup) => {
-        
-        let nums
-        if (type === 'single') {
-          nums = await prisma.userSongReviews.aggregate({
-            where: {songId: releaseGroup.id},
-            _avg: {rating: true},
-            _count: {rating: true}
-          })
-        } else if (type === 'album' || type === 'ep') {
-          nums = await prisma.userReleaseReviews.aggregate({
-            where: {releaseId: releaseGroup.id},
-            _avg: {rating: true},
-            _count: {rating: true}
-          })
-        }
-
-        
-        const average = nums._avg.rating
-        const avgRounded = average !== null && average !== undefined ? +average.toFixed(2) : 0
-        return {
-          type: releaseGroup['secondary-types']?.join(' + ') || releaseGroup['primary-type'] || "Unknown",
-          id: releaseGroup.id,
-          firstReleaseDate: releaseGroup['first-release-date'] || "",
-          disambiguation: releaseGroup.disambiguation || "",
-          title: releaseGroup.title,
-          averageRating: nums._avg.rating ? avgRounded : null,
-          totalReviews: nums._count.rating ?? 0,
-        }
-      }
-    )) 
-
-    const data = {
-      data: sorted,
-      count: releasesData['release-group-count'],
-      currentPage: page,
-      pages: Math.ceil(releasesData['release-group-count'] / limit),
-      limit: limit
-    }
-
-    // console.log(sorted)
     successApiCall(req)
-    res.json(data)
+      return res.json({
+      data: sorted,
+      count: data['release-group-count'],
+      currentPage: page,
+      pages: Math.ceil(data['release-group-count'] / limit),
+      limit,
+    })
 
-  } catch (error) {
-     
-    if (error.cause && error.cause.code === 'ECONNRESET') {
-      console.error('[NETWORK ERROR] MusicBrainz connection reset:', error);
-      errorApiCall(req, error.message)
-      return res.status(502).json({ error: 'Upstream MusicBrainz connection reset'})
+  } catch (error: any) {
+    if (error.status) {
+      errorApiCall(req, `MusicBrainz error: ${error.status}`)
+      return res.status(error.status).json({ error: 'MusicBrainz API server returned an error. Try again later or check the artist ID.' })
     }
-    
-    console.error('[UNEXPECTED ERROR] Failed fetching discography:', error)
-    errorApiCall(req, error.message)
-    return res.status(500).json({ error: 'Musicbrainz API Failed to fetch discography data. Please try again later.' })
+    errorApiCall(req, error)
+    return res.status(400).json({ error: 'Error fetching Artist' })
   }
   
 }

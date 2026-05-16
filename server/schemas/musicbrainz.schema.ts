@@ -1,15 +1,16 @@
 import z, { string } from "zod";
+import { pageValidation } from "./validations";
 
 export const artistsSchema = z.object({
     q: z.string(),
     type: z.enum(['person', 'group', 'character']).optional(),
-    page: z.number().positive().default(1),
+    page: pageValidation,
 })
 
 export const releasesSchema = z.object({
     q: z.string(),
     type: z.enum(['Album', 'EP']).optional(),
-    page: z.number().positive().default(1),
+    page: pageValidation,
 })
 
 export const getArtistsSchema = z.object({
@@ -19,12 +20,12 @@ export const getArtistsSchema = z.object({
 export const discographySchema = z.object({
     artistId: z.string(),
     type: z.string(),
-    page: z.number().positive().default(0)
+    page: pageValidation
 })
 
 export const discographySinglesSchema = z.object({
     artistId: z.string(),
-    page: z.number().positive().default(0)
+    page: pageValidation
 })
 
 export const getReleaseSchema = z.object({
