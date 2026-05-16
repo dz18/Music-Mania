@@ -1,4 +1,4 @@
-import { registry } from '../registry'
+import registry from '../registry'
 import { 
   changePasswordSchema,
   confirmPasswordSchema,
@@ -59,10 +59,11 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Password confirmed' },
     400: { description: 'Request Error' },
-    401: { description: 'Invalid password' },
+    401: { description: 'Unauthorized' },
     404: { description: 'User not found' },
     500: { description: 'Server Error' }
   }
@@ -73,6 +74,7 @@ registry.registerPath({
   method: 'post',
   path: '/auth/changePassword',
   tags: ['Auth'],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {
@@ -83,6 +85,7 @@ registry.registerPath({
   responses: {
     200: { description: 'Password changed' },
     400: { description: 'Missing fields or passwords do not match' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server Error' }
   }
 })

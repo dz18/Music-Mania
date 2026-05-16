@@ -1,4 +1,4 @@
-import { registry } from "../registry";
+import registry from '../registry'
 import { 
   allFollowersSchema,
   checkLikeSchema,
@@ -108,6 +108,7 @@ registry.registerPath({
   method: 'get',
   path: '/users/find',
   tags: ['Users'],
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Authenticated user returned' },
     400: { description: 'User does not exist' },
@@ -121,9 +122,11 @@ registry.registerPath({
   method: 'get',
   path: '/users/edit',
   tags: ['Users'],
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'User edit info returned' },
     400: { description: 'Request Error' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })
@@ -136,9 +139,11 @@ registry.registerPath({
   request: {
     query: reviewPanelSchema
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: "User's review for item returned" },
     400: { description: 'Request Error' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })
@@ -151,6 +156,7 @@ registry.registerPath({
   request: {
     query: checkLikeSchema
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Like status returned' },
     400: { description: 'Missing required query parameter' },
@@ -171,10 +177,11 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Profile updated' },
     400: { description: 'Request Error' },
-    403: { description: 'Unauthorized' },
+    401: { description: 'Unauthorized' },
     409: { description: 'Username taken or avatar upload failed' },
     500: { description: 'Server error' }
   }
@@ -192,10 +199,11 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'User followed' },
     400: { description: 'Request Error' },
-    403: { description: 'Unauthorized' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })
@@ -212,9 +220,11 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Item liked' },
     400: { description: 'Missing itemId or type' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })
@@ -231,10 +241,11 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'User unfollowed' },
     400: { description: 'Request Error' },
-    403: { description: 'Unauthorized' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })
@@ -251,9 +262,11 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Like removed' },
     400: { description: 'Request Error' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })

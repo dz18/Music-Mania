@@ -55,6 +55,6 @@
     "searchReleases": "tsx ./tests/musicbrainz/SearchSong.ts"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "tsx prisma/seed.ts"
   }
 }

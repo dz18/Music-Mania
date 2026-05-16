@@ -1,2 +1,12 @@
 import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi'
-export const registry = new OpenAPIRegistry()
+
+const registry = new OpenAPIRegistry()
+
+// JWT Security Check middleware
+registry.registerComponent('securitySchemes', 'bearerAuth', {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT'
+})
+
+export default registry

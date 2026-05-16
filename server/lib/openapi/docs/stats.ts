@@ -1,4 +1,4 @@
-import { registry } from "../registry";
+import registry from '../registry'
 
 registry.registerPath({
   description: "Get stats displayed on the landing page",

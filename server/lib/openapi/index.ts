@@ -1,5 +1,5 @@
 import { OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi'
-import { registry } from './registry'
+import registry from './registry'
 import './docs/auth'
 import './docs/users'
 import './docs/musicbrainz'

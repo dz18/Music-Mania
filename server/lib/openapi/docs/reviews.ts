@@ -1,4 +1,4 @@
-import { registry } from '../registry'
+import registry from '../registry'
 import { 
   artistReviewsSchema, 
   deleteReviewSchema, 
@@ -23,6 +23,7 @@ registry.registerPath({
       }
     }
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Review published or saved as draft' },
     400: { description: 'Request Error' },
@@ -39,9 +40,11 @@ registry.registerPath({
   request: {
     query: deleteReviewSchema
   },
+  security: [{ bearerAuth: [] }],
   responses: {
     200: { description: 'Review deleted' },
     400: { description: 'Request Error' },
+    401: { description: 'Unauthorized' },
     500: { description: 'Server error' }
   }
 })
