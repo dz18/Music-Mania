@@ -9,7 +9,6 @@ import { allFollowersSchema, checkLikeSchema, deleteLikeSchema, editSchema, foll
 import { checkUsernameDuplicate, createFollow, deleteFollow, getFollows, getFollowStatus, getIsFollowingMap, getLikeCounts, getLikedByType, getProfileReviewStats, getReviewPanel, getUserById, getUserEditInfo, getUserProfile, searchUsers, updateUser } from '../utils/prisma/users';
 import { checkLikeStatus, createLike, deleteLikeByType } from '../utils/prisma/likes';
 
-// Gets all users
 const getUserCount = async (req: Request, res: Response) => {
   logApiCall(req)
   try {
@@ -22,7 +21,6 @@ const getUserCount = async (req: Request, res: Response) => {
   }
 }
 
-// Find a user
 const findUserById = async (req: Request, res: Response) => {
 
   try {
@@ -63,7 +61,10 @@ const getLikes = async (req: Request, res: Response) => {
       }
     }
 
-    if (active) liked[`userLiked${active.charAt(0).toUpperCase() + active.slice(1)}`] = await getLikedByType(id, active)
+    if (active) {
+      const type = active.charAt(0).toUpperCase() + active.slice(1, -1)
+      liked[`userLiked${type}`] = await getLikedByType(id, active)
+    }
 
     successApiCall(req)
     return res.json(liked)

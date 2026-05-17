@@ -1,6 +1,5 @@
-const request = require('supertest')
-const jwt = require('jsonwebtoken')
-
+import request from 'supertest'
+import jwt from 'jsonwebtoken'
 process.env.NEXTAUTH_SECRET = 'test-secret'
 
 jest.mock('../../prisma/client', () => ({
@@ -58,7 +57,7 @@ jest.mock('../../prisma/client', () => ({
   },
 }))
 
-jest.mock('../../utils/logging', () => ({
+jest.mock('../../utils/logging/logging', () => ({
   logApiCall: jest.fn(),
   errorApiCall: jest.fn(),
   successApiCall: jest.fn(),
@@ -73,8 +72,19 @@ jest.mock('../../controllers/hooks/getDominateColor', () => ({
   getGradientColors: jest.fn().mockResolvedValue(['#000000', '#111111']),
 }))
 
-const prisma = require('../../prisma/client')
-const app = require('./app')
+import prisma from '../../prisma/client'
+import app from './app'
+const prismaMock = prisma as unknown as {
+  user: { count: jest.Mock; findUnique: jest.Mock; findMany: jest.Mock; aggregate: jest.Mock }
+  userLikedArtist: { count: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; create: jest.Mock; delete: jest.Mock }
+  userLikedRelease: { count: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; create: jest.Mock; delete: jest.Mock }
+  userLikedSong: { count: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; create: jest.Mock; delete: jest.Mock }
+  follow: { findUnique: jest.Mock; create: jest.Mock; delete: jest.Mock; findMany: jest.Mock; count: jest.Mock }
+  userArtistReviews: { aggregate: jest.Mock; groupBy: jest.Mock; findMany: jest.Mock; count: jest.Mock }
+  userReleaseReviews: { aggregate: jest.Mock; groupBy: jest.Mock; findMany: jest.Mock; count: jest.Mock }
+  userSongReviews: { aggregate: jest.Mock; groupBy: jest.Mock; findMany: jest.Mock; count: jest.Mock }
+}
+
 
 const validToken = jwt.sign({ id: 'user-1', email: 'test@example.com' }, 'test-secret')
 const authHeader = `Bearer ${validToken}`
@@ -85,7 +95,7 @@ beforeEach(() => jest.clearAllMocks())
 
 describe('GET /api/users/total', () => {
   it('returns the total user count', async () => {
-    prisma.user.count.mockResolvedValue(42)
+    prismaMock.user.count.mockResolvedValue(42)
 
     const res = await request(app).get('/api/users/total')
     expect(res.status).toBe(200)
@@ -99,12 +109,14 @@ describe('GET /api/users/query', () => {
   it('returns 400 when q is empty', async () => {
     const res = await request(app).get('/api/users/query?q=')
     expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/query term/i)
+    expect(res.body.error).toMatch(/missing query term/i)
   })
 
   it('returns user search results', async () => {
-    prisma.user.findMany.mockResolvedValue([{ id: 'user-1', username: 'john', createdAt: new Date() }])
-    prisma.user.aggregate.mockResolvedValue({ _count: 1 })
+    prismaMock.user.findMany.mockResolvedValue(
+      [{ id: 'user-1', username: 'john', createdAt: new Date() }]
+    )
+    prismaMock.user.aggregate.mockResolvedValue({ _count: 1 })
 
     const res = await request(app).get('/api/users/query?q=john&page=1')
     expect(res.status).toBe(200)
@@ -116,9 +128,9 @@ describe('GET /api/users/query', () => {
 
 describe('GET /api/users/likes', () => {
   it('returns like counts for a user', async () => {
-    prisma.userLikedArtist.count.mockResolvedValue(3)
-    prisma.userLikedRelease.count.mockResolvedValue(5)
-    prisma.userLikedSong.count.mockResolvedValue(10)
+    prismaMock.userLikedArtist.count.mockResolvedValue(3)
+    prismaMock.userLikedRelease.count.mockResolvedValue(5)
+    prismaMock.userLikedSong.count.mockResolvedValue(10)
 
     const res = await request(app).get('/api/users/likes?id=user-1')
     expect(res.status).toBe(200)
@@ -128,10 +140,12 @@ describe('GET /api/users/likes', () => {
   })
 
   it('returns liked artists when active=artists', async () => {
-    prisma.userLikedArtist.count.mockResolvedValue(1)
-    prisma.userLikedRelease.count.mockResolvedValue(0)
-    prisma.userLikedSong.count.mockResolvedValue(0)
-    prisma.userLikedArtist.findMany.mockResolvedValue([{ id: 'like-1', artist: { id: 'a1', name: 'Radiohead' } }])
+    prismaMock.userLikedArtist.count.mockResolvedValue(1)
+    prismaMock.userLikedRelease.count.mockResolvedValue(0)
+    prismaMock.userLikedSong.count.mockResolvedValue(0)
+    prismaMock.userLikedArtist.findMany.mockResolvedValue(
+      [{ id: 'like-1', artist: { id: 'a1', name: 'Radiohead' } }]
+    )
 
     const res = await request(app).get('/api/users/likes?id=user-1&active=artists')
     expect(res.status).toBe(200)
@@ -148,19 +162,19 @@ describe('GET /api/users/profile', () => {
   }
 
   it('returns profile without auth token (softVerifyUser)', async () => {
-    prisma.user.findUnique.mockResolvedValue(mockUser)
-    prisma.userArtistReviews.groupBy.mockResolvedValue([
+    prismaMock.user.findUnique.mockResolvedValue(mockUser)
+    prismaMock.userArtistReviews.groupBy.mockResolvedValue([
       { rating: 4, _count: { rating: 3 } }
     ])
 
-    prisma.userReleaseReviews.groupBy.mockResolvedValue([
+    prismaMock.userReleaseReviews.groupBy.mockResolvedValue([
       { rating: 3, _count: { rating: 2 } }
     ])
 
-    prisma.userSongReviews.groupBy.mockResolvedValue([
+    prismaMock.userSongReviews.groupBy.mockResolvedValue([
       { rating: 5, _count: { rating: 4 } }
     ])
-    prisma.follow.findUnique.mockResolvedValue(null)
+    prismaMock.follow.findUnique.mockResolvedValue(null)
 
     const res = await request(app).get('/api/users/profile?profileId=user-1')
     expect(res.status).toBe(200)
@@ -176,7 +190,7 @@ describe('GET /api/users/find', () => {
   })
 
   it('returns user data with valid token', async () => {
-    prisma.user.findUnique.mockResolvedValue({
+    prismaMock.user.findUnique.mockResolvedValue({
       id: 'user-1', username: 'john', email: 'john@example.com',
       avatar: null, createdAt: new Date()
     })
@@ -197,7 +211,7 @@ describe('GET /api/users/like', () => {
   })
 
   it('returns like status with valid token', async () => {
-    prisma.userLikedArtist.findUnique.mockResolvedValue({ id: 'like-1' })
+    prismaMock.userLikedArtist.findUnique.mockResolvedValue({ id: 'like-1' })
 
     const res = await request(app)
       .get('/api/users/like?itemId=a1&type=artist')
@@ -216,7 +230,7 @@ describe('POST /api/users/follow', () => {
   })
 
   it('creates a follow with valid token', async () => {
-    prisma.follow.create.mockResolvedValue({ followerId: 'user-1', followingId: 'user-2' })
+    prismaMock.follow.create.mockResolvedValue({ followerId: 'user-1', followingId: 'user-2' })
 
     const res = await request(app)
       .post('/api/users/follow')
@@ -235,7 +249,7 @@ describe('DELETE /api/users/unfollow', () => {
   })
 
   it('deletes a follow with valid token', async () => {
-    prisma.follow.delete.mockResolvedValue({})
+    prismaMock.follow.delete.mockResolvedValue({})
 
     const res = await request(app)
       .delete('/api/users/unfollow')

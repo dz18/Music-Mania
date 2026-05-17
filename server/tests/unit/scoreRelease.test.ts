@@ -1,4 +1,4 @@
-import { scoreRelease } from '../../controllers/hooks/scoreRelease.js'
+import { scoreRelease } from '../../controllers/hooks/scoreRelease'
 
 // Base release with no scoring conditions met
 const base = {

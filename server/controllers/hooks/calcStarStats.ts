@@ -1,4 +1,4 @@
-export const calcStarStats = (stats) => {
+export const calcStarStats = (stats: any) => {
   const starCount = {
     0.5 : 0,
     1 : 0, 
@@ -13,7 +13,7 @@ export const calcStarStats = (stats) => {
   }
 
   for (const group of [...stats]) {
-    starCount[group.rating] += group._count.rating
+    starCount[group.rating as keyof typeof starCount] += group._count.rating
   }
 
   const starStats = Object.entries(starCount)

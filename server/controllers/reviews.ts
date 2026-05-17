@@ -160,7 +160,7 @@ const publishOrDraft = async (req: Request, res: Response) => {
 
 const deleteReview = async (req: Request, res: Response) => {
   logApiCall(req)
-  const { itemId, type } = req.validatedQuery as z.infer<typeof deleteReviewSchema>
+  const { itemId, type } = req.validatedBody as z.infer<typeof deleteReviewSchema>
 
   try {
     const [deleted, [newAvg, stats]] = await Promise.all([

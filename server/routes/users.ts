@@ -35,15 +35,15 @@ router.get('/follow', validateQuery(isFollowingSchema), userController.isFollowi
 // Private User-specific Data Retrievals
 router.get('/find', verifyUser, userController.findUserById)
 router.get('/edit', verifyUser, userController.editInfo) 
-router.get('/review', validateQuery(reviewPanelSchema), verifyUser, userController.reviewPanel)
-router.get('/like', validateQuery(checkLikeSchema), verifyUser, userController.checkLike)
+router.get('/review', verifyUser, validateQuery(reviewPanelSchema), userController.reviewPanel)
+router.get('/like', verifyUser, validateQuery(checkLikeSchema), userController.checkLike)
 
 // Prive User-specific Actions
-router.patch('/edit', validateBody(editSchema), verifyUser, upload.single('avatar'), userController.edit)
-router.post('/follow', validateBody(followSchema), verifyUser, userController.follow)
-router.post('/like', validateBody(likeSchema), verifyUser, userController.like)
-router.delete('/unfollow', validateBody(unfollowSchema), verifyUser, userController.unfollow)
-router.delete('/like', validateBody(deleteLikeSchema), verifyUser, userController.deleteLike)
+router.patch('/edit', verifyUser, validateBody(editSchema), upload.single('avatar'), userController.edit)
+router.post('/follow',  verifyUser, validateBody(followSchema), userController.follow)
+router.post('/like', verifyUser, validateBody(likeSchema), userController.like)
+router.delete('/unfollow', verifyUser, validateBody(unfollowSchema), userController.unfollow)
+router.delete('/like', verifyUser, validateBody(deleteLikeSchema), userController.deleteLike)
 
 
 export default router

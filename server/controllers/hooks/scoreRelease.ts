@@ -1,4 +1,4 @@
-export function scoreRelease(r) {
+export function scoreRelease(r: any) {
   let score = 0
   if (r.status === "Official") score += 50
 

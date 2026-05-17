@@ -1,10 +1,13 @@
-const express = require('express')
+import express from 'express'
+import musicbrainz from '../../routes/musicbrainz'
+import reviews from '../../routes/reviews'
+import users from '../../routes/users'
 
 const app = express()
 app.use(express.json())
 
-app.use('/api/musicbrainz', require('../../routes/musicbrainz'))
-app.use('/api/reviews', require('../../routes/reviews'))
-app.use('/api/users', require('../../routes/users'))
+app.use('/api/musicbrainz', musicbrainz)
+app.use('/api/reviews', reviews)
+app.use('/api/users', users)
 
-module.exports = app
+export default app

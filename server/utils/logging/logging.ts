@@ -31,6 +31,7 @@ export function notImplemented(req: Request) {
 }
 
 export const handleMbError = (req: Request, res: Response, error: any) => {
+  console.log('mbError:', error)
   if (error.status) {
     errorApiCall(req, `MusicBrainz error: ${error.status}`)
     return res.status(error.status).json({ error: 'MusicBrainz API server returned an error. Try again later.' })

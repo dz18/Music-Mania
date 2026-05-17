@@ -6,18 +6,27 @@ jest.mock('../../prisma/client', () => ({
   release: { findMany: jest.fn() },
 }))
 
-jest.mock('../../utils/logging', () => ({
+jest.mock('../../utils/logging/logging', () => ({
   logApiCall: jest.fn(),
   errorApiCall: jest.fn(),
 }))
 
-const prisma = require('../../prisma/client')
-const { landingStats } = require('../../controllers/stats')
+import prisma from '../../prisma/client'
+import { landingStats } from '../../controllers/stats'
+import { Request, Response } from 'express'
 
-const mockReq = { method: 'GET', originalUrl: '/api/stats/landing' }
+const prismaMock = prisma as unknown as {
+  userArtistReviews: { groupBy: jest.Mock }
+  userLikedArtist: { groupBy: jest.Mock }
+  userLikedRelease: { groupBy: jest.Mock }
+  artist: { findMany: jest.Mock }
+  release: { findMany: jest.Mock }
+}
+
+const mockReq = { method: 'GET', originalUrl: '/api/stats/landing' } as unknown as Request
 
 const mockRes = () => {
-  const res = {}
+  const res = {} as unknown as Response
   res.json = jest.fn().mockReturnValue(res)
   res.status = jest.fn().mockReturnValue(res)
   return res
@@ -47,13 +56,13 @@ const likedReleases = [
 
 beforeEach(() => {
   jest.clearAllMocks()
-  prisma.userArtistReviews.groupBy.mockResolvedValue(reviewedGroups)
-  prisma.userLikedArtist.groupBy.mockResolvedValue(likedArtistGroups)
-  prisma.userLikedRelease.groupBy.mockResolvedValue(likedReleaseGroups)
-  prisma.artist.findMany
+  prismaMock.userArtistReviews.groupBy.mockResolvedValue(reviewedGroups)
+  prismaMock.userLikedArtist.groupBy.mockResolvedValue(likedArtistGroups)
+  prismaMock.userLikedRelease.groupBy.mockResolvedValue(likedReleaseGroups)
+  prismaMock.artist.findMany
     .mockResolvedValueOnce(reviewedArtists)
     .mockResolvedValueOnce(likedArtists)
-  prisma.release.findMany.mockResolvedValue(likedReleases)
+  prismaMock.release.findMany.mockResolvedValue(likedReleases)
 })
 
 describe('landingStats', () => {
@@ -99,21 +108,21 @@ describe('landingStats', () => {
   })
 
   it('falls back to "Unknown" name when artist is not in lookup', async () => {
-    prisma.artist.findMany
+    prismaMock.artist.findMany
       .mockReset()
-      .mockResolvedValueOnce([]) // reviewed artists missing
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce(likedArtists)
     const res = mockRes()
     await landingStats(mockReq, res)
-    const { topReviewedArtists } = res.json.mock.calls[0][0]
+    const { topReviewedArtists } = (res.json as jest.Mock).mock.calls[0][0]
     expect(topReviewedArtists[0].name).toBe('Unknown')
   })
 
   it('falls back to "Unknown" title, empty artistCredit and null coverArt when release is not in lookup', async () => {
-    prisma.release.findMany.mockResolvedValue([])
+    prismaMock.release.findMany.mockResolvedValue([])
     const res = mockRes()
     await landingStats(mockReq, res)
-    const { topLikedReleases } = res.json.mock.calls[0][0]
+    const { topLikedReleases } = (res.json as jest.Mock).mock.calls[0][0]
     expect(topLikedReleases[0]).toEqual({
       id: 'r1',
       title: 'Unknown',
@@ -126,7 +135,7 @@ describe('landingStats', () => {
   it('queries reviewed artists with PUBLISHED status', async () => {
     const res = mockRes()
     await landingStats(mockReq, res)
-    expect(prisma.userArtistReviews.groupBy).toHaveBeenCalledWith(
+    expect(prismaMock.userArtistReviews.groupBy).toHaveBeenCalledWith(
       expect.objectContaining({ where: { status: 'PUBLISHED' } })
     )
   })
@@ -134,13 +143,13 @@ describe('landingStats', () => {
   it('limits each group query to 5 results', async () => {
     const res = mockRes()
     await landingStats(mockReq, res)
-    expect(prisma.userArtistReviews.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
-    expect(prisma.userLikedArtist.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
-    expect(prisma.userLikedRelease.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
+    expect(prismaMock.userArtistReviews.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
+    expect(prismaMock.userLikedArtist.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
+    expect(prismaMock.userLikedRelease.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
   })
 
   it('returns 500 and error message when prisma throws', async () => {
-    prisma.userArtistReviews.groupBy.mockRejectedValue(new Error('DB down'))
+    prismaMock.userArtistReviews.groupBy.mockRejectedValue(new Error('DB down'))
     const res = mockRes()
     await landingStats(mockReq, res)
     expect(res.status).toHaveBeenCalledWith(500)

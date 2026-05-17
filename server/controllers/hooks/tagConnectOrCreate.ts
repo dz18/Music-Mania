@@ -1,7 +1,7 @@
-export const tagConnectOrCreate = (tags) => {
+export const tagConnectOrCreate = (tags: any) => {
   if (!tags || tags.length === 0) return undefined
 
-  return tags.map(tagName => ({
+  return tags.map((tagName: any) => ({
     tag: {
       connectOrCreate: {
         where: { slug: tagName.toLowerCase().replace(/\s+/g, '-') },

@@ -1,4 +1,4 @@
-import { calcStarStats } from '../../controllers/hooks/calcStarStats.js'
+import { calcStarStats } from '../../controllers/hooks/calcStarStats'
 
 describe('calcStarStats', () => {
   it('returns 10 rating entries for empty input', () => {
@@ -21,13 +21,13 @@ describe('calcStarStats', () => {
   it('aggregates count for a single rating group', () => {
     const stats = [{ rating: 4, _count: { rating: 3 } }]
     const result = calcStarStats(stats)
-    expect(result.find((r) => r.rating === 4).count).toBe(3)
+    expect(result.find((r) => r.rating === 4)!.count).toBe(3)
   })
 
   it('leaves unmentioned ratings at 0', () => {
     const stats = [{ rating: 5, _count: { rating: 7 } }]
     const result = calcStarStats(stats)
-    expect(result.find((r) => r.rating === 3).count).toBe(0)
+    expect(result.find((r) => r.rating === 3)!.count).toBe(0)
   })
 
   it('aggregates counts for multiple rating groups', () => {
@@ -37,9 +37,9 @@ describe('calcStarStats', () => {
       { rating: 1, _count: { rating: 2 } },
     ]
     const result = calcStarStats(stats)
-    expect(result.find((r) => r.rating === 5).count).toBe(10)
-    expect(result.find((r) => r.rating === 3).count).toBe(5)
-    expect(result.find((r) => r.rating === 1).count).toBe(2)
+    expect(result.find((r) => r.rating === 5)!.count).toBe(10)
+    expect(result.find((r) => r.rating === 3)!.count).toBe(5)
+    expect(result.find((r) => r.rating === 1)!.count).toBe(2)
   })
 
   it('handles half-star ratings', () => {
@@ -49,9 +49,9 @@ describe('calcStarStats', () => {
       { rating: 2.5, _count: { rating: 3 } },
     ]
     const result = calcStarStats(stats)
-    expect(result.find((r) => r.rating === 0.5).count).toBe(1)
-    expect(result.find((r) => r.rating === 1.5).count).toBe(2)
-    expect(result.find((r) => r.rating === 2.5).count).toBe(3)
+    expect(result.find((r) => r.rating === 0.5)!.count).toBe(1)
+    expect(result.find((r) => r.rating === 1.5)!.count).toBe(2)
+    expect(result.find((r) => r.rating === 2.5)!.count).toBe(3)
   })
 
   it('returns rating values as numbers not strings', () => {

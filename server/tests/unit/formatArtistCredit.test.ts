@@ -1,4 +1,4 @@
-const { formatArtistCredit } = require('../../controllers/hooks/formatArtistCredit.js')
+import { formatArtistCredit } from '../../controllers/hooks/formatArtistCredit'
 
 const artistCredit = {
   name: 'The Beatles',

@@ -1,8 +1,4 @@
-import prisma from '../prisma/client'
-import { logApiCall, errorApiCall, successApiCall, handleMbError } from '../utils/logging/logging'
-import { formatMedia } from './hooks/formatMedia'
-import { scoreRelease } from './hooks/scoreRelease'
-import { mbQueue } from '../utils/musicbrainz/musicbrainzQue'
+import { logApiCall, successApiCall, handleMbError } from '../utils/logging/logging'
 import { Request, Response } from 'express'
 import z from 'zod'
 import { 
@@ -66,7 +62,7 @@ const artists = async (req: Request, res: Response) => {
       limit,
     })
 
-  } catch (error) {
+  } catch (error: any) {
     return handleMbError(req, res, error)  
   }
 }
