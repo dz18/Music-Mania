@@ -1,4 +1,4 @@
-import { Request } from 'express'
+import { Request, Response } from 'express'
 
 export function logApiCall(req: Request) {
   console.log(`\x1b[34m[API CALL]\x1b[0m -> ${req.method.toUpperCase()} ${req.originalUrl} @ ${new Date().toLocaleString()}`);
@@ -28,4 +28,17 @@ export function successApiCall(req: Request) {
 
 export function notImplemented(req: Request) {
   console.log(`\x1b[33m[API NOT IMPLEMENTED]\x1b[0m -> ${req.method.toUpperCase()} ${req.originalUrl} @ ${new Date().toLocaleString()}`);
+}
+
+export const handleMbError = (req: Request, res: Response, error: any) => {
+  if (error.status) {
+    errorApiCall(req, `MusicBrainz error: ${error.status}`)
+    return res.status(error.status).json({ error: 'MusicBrainz API server returned an error. Try again later.' })
+  }
+  if (error.cause?.code === 'ECONNRESET') {
+    errorApiCall(req, error.message)
+    return res.status(502).json({ error: 'Upstream MusicBrainz connection reset' })
+  }
+  errorApiCall(req, error.message)
+  return res.status(500).json({ error: 'Internal server error. Please try again later.' })
 }

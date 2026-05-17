@@ -69,13 +69,13 @@ export const userArtistsSchema = z.object({
 })
 
 export const userReleasesSchema = z.object({
-    userId: z.string(),
-    page: pageValidation,
-    star: starValidation
+  profileId: z.string(),
+  page: z.coerce.number().positive().default(1),
+  star: z.coerce.number().optional()
 })
 
 export const userSongsSchema = z.object({
-    userId: z.string(),
-    page: pageValidation,
-    star: starValidation 
+  profileId: z.string(),
+  page: z.coerce.number().positive().default(1),
+  star: z.coerce.number().optional()
 })

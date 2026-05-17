@@ -1,47 +1,39 @@
 import z from 'zod';
 import prisma from '../prisma/client';
-import { logApiCall, errorApiCall, successApiCall } from '../utils/logging';
-import { getSignedURL, deleteObject } from './AWS/actions';
+import { logApiCall, errorApiCall, successApiCall } from '../utils/logging/logging';
+import { getSignedURL, deleteObject, SignedUrlResult, DeleteResult } from './AWS/actions';
 import { calcStarStats } from './hooks/calcStarStats';
 
 import { Request, Response } from 'express';
 import { allFollowersSchema, checkLikeSchema, deleteLikeSchema, editSchema, followSchema, isFollowingSchema, likeSchema, likesSchema, profileSchema, querySchema, reviewPanelSchema, unfollowSchema } from '../schemas/user.schema';
+import { checkUsernameDuplicate, createFollow, deleteFollow, getFollows, getFollowStatus, getIsFollowingMap, getLikeCounts, getLikedByType, getProfileReviewStats, getReviewPanel, getUserById, getUserEditInfo, getUserProfile, searchUsers, updateUser } from '../utils/prisma/users';
+import { checkLikeStatus, createLike, deleteLikeByType } from '../utils/prisma/likes';
 
 // Gets all users
-const getUsers = async (req: Request, res: Response) => {
-
+const getUserCount = async (req: Request, res: Response) => {
   logApiCall(req)
-
   try {
-    const users = await prisma.user.count()
-
+    const count = await prisma.user.count()
     successApiCall(req)
-    return res.json(users)
-  } catch (error) {
+    return res.json(count)
+  } catch (error: any) {
     errorApiCall(req, error)
-    return res.status(500).json({error: 'Counting users failed.'})
+    return res.status(500).json({ error: 'Failed to count users.' })
   }
 }
 
 // Find a user
 const findUserById = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Unauthorized" })
-  }
 
   try {
     
     logApiCall(req)
 
-    const user = await prisma.user.findUnique({
-      where: { 
-        id: req.user.id
-      }
-    })
+    const user = await getUserById(req.user!.id)
 
     if (!user) {
       errorApiCall(req, 'User does not exist')
-      return res.status(400).json({error: 'User does not exist.'})
+      return res.status(404).json({error: 'User does not exist.'})
     }
 
     successApiCall(req)
@@ -57,402 +49,169 @@ const findUserById = async (req: Request, res: Response) => {
   }
 }
 
-// Get all likes by user
 const getLikes = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { id, active } = req.validatedQuery as z.infer<typeof likesSchema>
+
   try {
-    logApiCall(req)
-
-    const [countArtists, countReleases, countSongs] = await Promise.all([
-      prisma.userLikedArtist.count({ where: { userId: id } }),
-      prisma.userLikedRelease.count({ where: { userId: id } }),
-      prisma.userLikedSong.count({ where: { userId: id } }),
-    ])
-
-    const liked = {
+    const [countArtists, countReleases, countSongs] = await getLikeCounts(id)
+    const liked: any = {
       _count: {
         userLikedArtist: countArtists,
         userLikedRelease: countReleases,
         userLikedSong: countSongs,
-      },
+      }
     }
 
-    if (active === 'artists') {
-      liked.userLikedArtist = await prisma.userLikedArtist.findMany({
-        where: { userId: id },
-        include: { artist: true },
-      })
-    } else if (active === 'releases') {
-      liked.userLikedRelease = await prisma.userLikedRelease.findMany({
-        where: { userId: id },
-        include: { release: true },
-      })
-
-      console.log(liked.userLikedRelease)
-      
-    } else if (active === 'songs') {
-      liked.userLikedSong = await prisma.userLikedSong.findMany({
-        where: { userId: id },
-        include: { song: true },
-      })
-    }
+    if (active) liked[`userLiked${active.charAt(0).toUpperCase() + active.slice(1)}`] = await getLikedByType(id, active)
 
     successApiCall(req)
-    res.json(liked)
-  } catch (error) {
+    return res.json(liked)
+  } catch (error: any) {
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to fetch likes.' })
   }
 }
 
-// Get a batch of users
 const query = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { q, page } = req.validatedQuery as z.infer<typeof querySchema>
-
   const limit = 50
 
-  logApiCall(req)
-
   try {
-
-    const query = await prisma.user.findMany({
-      where: {
-        username: {
-          contains: q,
-          mode: 'insensitive'
-        }
-      },
-      select: {
-        username: true,
-        id: true,
-        createdAt: true
-      },
-      take: limit,
-      skip: (page - 1) * limit,
-    })
-
-    const count = await prisma.user.aggregate({
-      where: {
-        username: {
-          contains: q,
-          mode: 'insensitive'
-        }
-      },
-      _count: true
-    })
-
-    const data = {
-      suggestions: query
-    }
+    const [users, count] = await searchUsers(q, page, limit)
 
     successApiCall(req)
-    res.json({
-      data: data,
+    return res.json({
+      data: { suggestions: users },
       count: count._count,
-      limit: limit,
+      limit,
       pages: Math.ceil(count._count / limit),
       currentPage: page
     })
-
-  } catch (error) {
-    console.error(error)
+  } catch (error: any) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'Failed to query users' })
+    return res.status(500).json({ error: 'Failed to query users.' })
   }
 }
 
-// Get profile page details for a user
 const profile = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { profileId } = req.validatedQuery as z.infer<typeof profileSchema>
 
-  logApiCall(req)
   try {
-  
-    const promises = [
-      prisma.user.findUnique({
-        where: { id: profileId },
-        include: {
-          likedArtists: { include: { artist: true } },
-          likedReleases: { include: { release: true } },
-          likedSongs: { include: { song: true } },
-          _count: {
-            select: {
-              artistReviews: {
-                where: { status: 'PUBLISHED' }
-              },
-              releaseReviews:  {
-                where: { status: 'PUBLISHED' }
-              },
-              songReviews:  {
-                where: { status: 'PUBLISHED' }
-              },
-              followers: true,
-              following: true
-            }
-          }
-        },
-        omit: { password: true, email: true }
-      }),
-      prisma.userArtistReviews.groupBy({
-        by: ['rating'],
-        _count: { rating: true },
-        where: { userId: profileId, status: 'PUBLISHED' }
-      }),
-      prisma.userReleaseReviews.groupBy({
-        by: ['rating'],
-        _count: { rating: true },
-        where: { userId: profileId, status: 'PUBLISHED' }
-      }),
-      prisma.userSongReviews.groupBy({
-        by: ['rating'],
-        _count: { rating: true },
-        where: { userId: profileId, status: 'PUBLISHED' }
-      })
-    ]
-
-    // Only add follow check if userId exists
-    if (req.user) {
-      promises.push(
-        prisma.follow.findUnique({
-          where: {
-            followerId_followingId: {
-              followerId: req.user.id,
-              followingId: profileId
-            }
-          }
-        })
-      )
-    }
-
-    const results = await Promise.all(promises)
-
-    const [
-      userProfile,
-      artistStats,
-      releaseStats,
-      songStats,
-      isFollowingRes
-    ] = results
+    const [userProfile, [artistStats, releaseStats, songStats], followStatus] = await Promise.all([
+      getUserProfile(profileId),
+      getProfileReviewStats(profileId),
+      req.user ? getFollowStatus(req.user.id, profileId) : Promise.resolve(null)
+    ])
 
     if (!userProfile) {
       errorApiCall(req, 'User not found')
       return res.status(404).json({ error: 'User not found.' })
     }
 
-    const isFollowing = req.user ? Boolean(isFollowingRes) : null;
-
-    const starStats = calcStarStats(
-      [...artistStats, ...releaseStats, ...songStats]
-    )
-
-    const totalReviewCount =
-      userProfile._count.artistReviews +
-      userProfile._count.releaseReviews +
-      userProfile._count.songReviews 
-
+    const isFollowing = req.user ? Boolean(followStatus) : null
+    const starStats = calcStarStats([...artistStats, ...releaseStats, ...songStats])
+    const totalReviewCount = userProfile._count.artistReviews + userProfile._count.releaseReviews + userProfile._count.songReviews
     const { _count, ...rest } = userProfile
-    const counts = userProfile._count
-
-    const profile = {
-      ...rest,
-      totalReviewCount: totalReviewCount,
-      starStats,
-      ...counts,
-      isFollowing: isFollowing,
-      followingSince: req.user && isFollowing ? isFollowingRes.createdAt : null
-    }
-
-    // console.log(profile)
 
     successApiCall(req)
-    res.json(profile)
-  } catch (error) {
-    console.error(error)
+    return res.json({
+      ...rest,
+      ...userProfile._count,
+      totalReviewCount,
+      starStats,
+      isFollowing,
+      followingSince: req.user && isFollowing ? followStatus?.createdAt : null
+    })
+  } catch (error: any) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'Failed to fetch profile' })  
+    return res.status(500).json({ error: 'Failed to fetch profile.' })
   }
 }
 
 const isFollowing = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { userId, profileId } = req.validatedQuery as z.infer<typeof isFollowingSchema>
 
-  logApiCall(req)
-
   try {
-    const isFollowing = await prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: userId,
-          followingId: profileId
-        }
-      }
-    })
-
+    const follow = await getFollowStatus(userId, profileId)
     successApiCall(req)
-    res.json(isFollowing) 
-  } catch (error) {
+    return res.json(follow)
+  } catch (error: any) {
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to fetch follow status.' })
   }
 }
 
-// Follow a user
 const follow = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { profileId } = req.validatedBody as z.infer<typeof followSchema>
 
-  logApiCall(req)
-  
   try {
-    const follow = await prisma.follow.create({
-      data: {
-        followerId: req.user.id,
-        followingId: profileId
-      }
-    })
-
+    const follow = await createFollow(req.user!.id, profileId)
     successApiCall(req)
-    res.json(follow)
-  } catch (error) {
-    console.error(error)
+    return res.json(follow)
+  } catch (error: any) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'Failed to follow user' })  
+    return res.status(500).json({ error: 'Failed to follow user.' })
   }
-
 }
 
-// Unfollow a user
 const unfollow = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { profileId } = req.validatedBody as z.infer<typeof unfollowSchema>
 
-  logApiCall(req)
-
   try {
-    await prisma.follow.delete({
-      where: {
-        followerId_followingId: { 
-          followerId: req.user.id, 
-          followingId: profileId 
-        }
-      }
-    })
-
-    res.json({ success: true })
+    await deleteFollow(req.user!.id, profileId)
     successApiCall(req)
-  } catch (error) { 
-    console.error(error)
+    return res.json({ success: true })
+  } catch (error: any) {
     errorApiCall(req, error)
-    return res.status(500).json({ error: 'Failed to unfollow user' })  
+    return res.status(500).json({ error: 'Failed to unfollow user.' })
   }
 }
 
 const allFollowers = async (req: Request, res: Response) => {
+  logApiCall(req)
   const { profileId, page, userId, following } = req.validatedQuery as z.infer<typeof allFollowersSchema>
-
   const limit = 25
 
-  logApiCall(req)
-
   try {
-
     const profile = await prisma.user.findUnique({
       where: { id: profileId },
-      select: { username: true },
+      select: { username: true }
     })
+    if (!profile) return res.status(404).json({ error: 'Profile not found' })
 
-    if (!profile) {
-      return res.status(404).json({ error: 'Profile not found' })
-    }
-
-    const total = await prisma.follow.count({
-      where: following
-        ? { followerId: profileId }
-        : { followingId: profileId },
-    })
-
-    const follows = await prisma.follow.findMany({
-      where: following
-        ? { followerId: profileId }
-        : { followingId: profileId },
-      include: following
-        ? {
-            following: {
-              omit: { password: true, email: true, aboutMe: true },
-            },
-          }
-        : {
-            follower: {
-              omit: { password: true, email: true, aboutMe: true },
-            },
-          },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    })
-
+    const [total, follows] = await getFollows(profileId, following, page, limit)
     const targetIds = follows
-      .map(f => (following ? f.followingId : f.followerId))
-      .filter(id => id !== userId)
+      .map((f: any) => following ? f.followingId : f.followerId)
+      .filter((id: string) => id !== userId)
 
-    let isFollowingMap = {}
-    if (userId && targetIds.length > 0) {
-      const usersFollows = await prisma.follow.findMany({
-        where: { followerId: userId, followingId: { in: targetIds } },
-        select: { followingId: true },
-      })
+    const isFollowingMap = await getIsFollowingMap(userId, targetIds)
 
-      const followSet = new Set(usersFollows.map(f => f.followingId))
-      isFollowingMap = Object.fromEntries(
-        targetIds.map(id => [id, followSet.has(id)])
-      )
-    }
-    console.log("userId:", userId)
-    console.log("data:", isFollowingMap)
-
-    const data = {
-      data: {
-        isFollowingMap,
-        follows,
-        username: profile.username
-      },
+    successApiCall(req)
+    return res.json({
+      data: { isFollowingMap, follows, username: profile.username },
       pages: Math.ceil(total / limit),
-      limit: limit,
+      limit,
       currentPage: page,
       count: total
-    }
-
-    // const data = {
-    //   total,
-    //   pages: Math.ceil(total / limit),
-    //   page: pageNumber,
-    //   count: follows.length,
-    //   follows,
-    //   isFollowing: isFollowingMap,
-    //   username: profile.username
-    // }
-
-    successApiCall(req);
-    res.json(data);
-  } catch (error) {
-    errorApiCall(req, error);
+    })
+  } catch (error: any) {
+    errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to fetch followers.' })
   }
 }
 
 const editInfo = async (req: Request, res: Response) => {
   logApiCall(req)
-
   try {
+    const user = await getUserEditInfo(req.user!.id)
+    if (!user) return res.status(404).json({ error: 'User not found.' })
 
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { 
-        id: true,
-        username: true,
-        aboutMe: true,
-        age: true,
-        email: true,
-        createdAt: true
-      }
-    })
-
-    console.log(user)
     successApiCall(req)
     return res.json({
       avatar: '',
@@ -463,293 +222,130 @@ const editInfo = async (req: Request, res: Response) => {
       email: user.email,
       age: user.age ?? '',
     })
-
-  } catch (error) {
+  } catch (error: any) {
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to fetch user info.' })
   }
 }
 
 const edit = async (req: Request, res: Response) => {
   logApiCall(req)
-
-  const id = req.user.id
+  const id = req.user!.id
   const avatar = req.file
   const { username, aboutMe, age, resetAvatar, updatedAt } = req.validatedBody as z.infer<typeof editSchema>
 
-  // Validation
-  let hasError = false
-  let errors = {}
-  
+  const errors: Record<string, string> = {}
+
   try {
+    const [usernameDuplicate, avatarResult] = await Promise.all([
+      checkUsernameDuplicate(username, id),
+      avatar
+        ? getSignedURL(`avatars/${id}`, avatar.mimetype, avatar.size)
+        : resetAvatar
+          ? deleteObject(`avatars/${id}`)
+          : Promise.resolve(null)
+    ])
 
+    if (usernameDuplicate) errors.username = 'Username is already taken'
 
-    const usernameDuplicate = await prisma.user.findFirst({
-      where: { username: username, NOT: { id } }
-    })
-
-    if (usernameDuplicate) {
-      errors.username = 'Username is already taken'
-      hasError = true
-    }
-  
-    // Create Avatar URL
     let url = null
-    console.log(resetAvatar)
     if (avatar) {
-      const signedUrlRes = await getSignedURL(`avatars/${id}`, avatar.mimetype, avatar.size)
-      if (signedUrlRes.success) {
-        url = signedUrlRes.success.url
-      } else {
-        errors.avatar = signedUrlRes.error
-        hasError = true
-      }
+      const result = avatarResult as SignedUrlResult
+      if (result.error) errors.avatar = result.error
+      else url = result.success!.url
     } else if (resetAvatar) {
-      const deleteObjectRes = await deleteObject(`avatars/${id}`)
-      if (deleteObjectRes.error) {
-        errors.avatar = deleteObjectRes.error
-        hasError = true
-      }
+      const result = avatarResult as DeleteResult
+      if (result.error) errors.avatar = result.error
     }
 
-    if (hasError) {
-      return res.status(409).json({errors})
-    }
+    if (Object.keys(errors).length > 0) return res.status(409).json({ errors })
 
-    // Update information
-    const data = await prisma.user.update({
-      where: { id: id },
-      data: {
-        username, 
-        aboutMe,
-        age,
-        updatedAt
-      },
-      select: {
-        id: true,
-        username: true, 
-        aboutMe: true, 
-        createdAt: true,
-        email: true, 
-        age: true,
-      }
-    })
+    const data = await updateUser(id, { username, aboutMe, age, updatedAt: updatedAt ? new Date(updatedAt) : undefined  })
 
     successApiCall(req)
-    res.status(200).json({
-      message: "Profile Updated Successfully",
-      data: {...data, age: String(data.age), avatar: ''},
-      url: url
+    return res.status(200).json({
+      message: 'Profile Updated Successfully',
+      data: { ...data, age: String(data.age), avatar: '' },
+      url
     })
-  } catch (error) {
+  } catch (error: any) {
     errorApiCall(req, error)
-    return res.status(409).json({errors})
+    return res.status(500).json({ error: 'Failed to update profile.' })
   }
-
 }
 
 const reviewPanel = async (req: Request, res: Response) => {
+  logApiCall(req)
+  const { itemId, type } = req.validatedQuery as z.infer<typeof reviewPanelSchema>
+
   try {
-    const {itemId, type} = req.validatedQuery as z.infer<typeof reviewPanelSchema>
+    const review = await getReviewPanel(type, req.user!.id, itemId)
 
-    let review
-    if (type === 'artist') {
-      review = await prisma.userArtistReviews.findUnique({
-        where: { userId_artistId: { userId: req.user.id, artistId: itemId }},
-        include: {
-          tags: {
-            include: {
-              tag: true
-            }
-          }
-        }
-      })
-    } else if (type === 'release') {
-      review = await prisma.userReleaseReviews.findUnique({
-        where: { userId_releaseId: { userId: req.user.id, releaseId: itemId }},
-      })
+    if (!review) return res.json(null)
 
-    } else if (type === 'song') {
-      review = await prisma.userSongReviews.findUnique({
-        where: { userId_songId: { userId: req.user.id, songId: itemId }},
-      })
-    }
+    const tags = (review as any).tags?.map((t: any) => t.tag.name) ?? []
     
-    let formattedReview = null
-
-    if (review) {
-      const tags = review.tags?.map(t => t.tag.name) || []
-      formattedReview = { ...review, tags }
-      successApiCall(req)
-      res.json({...formattedReview})
-    }
-
-    if (!review) {
-      successApiCall(req)
-      res.json(null)
-    }
-
-  } catch (error) {
+    successApiCall(req)
+    return res.json({ ...review, tags })
+  } catch (error: any) {
     errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to fetch review panel.' })
   }
 }
 
 const checkLike = async (req: Request, res: Response) => {
   logApiCall(req)
-
   const { itemId, type } = req.validatedQuery as z.infer<typeof checkLikeSchema>
 
   try {
-    let like = null
-
-    if (type === 'artist') {
-      like = await prisma.userLikedArtist.findUnique({
-        where: {
-          userId_artistId: {
-            userId: req.user.id,
-            artistId: itemId
-          }
-        }
-      })
-    }
-
-    if (type === 'release') {
-      like = await prisma.userLikedRelease.findFirst({
-        where: {
-          userId: req.user.id,
-          releaseId: itemId
-        }
-      })
-    }
-
-    if (type === 'song') {
-      like = await prisma.userLikedSong.findFirst({
-        where: {
-          userId: req.user.id,
-          songId: itemId
-        }
-      })
-    }
-
+    const like = await checkLikeStatus(type, req.user!.id, itemId)
     successApiCall(req)
     return res.json({ liked: Boolean(like) })
-
-  } catch (error) {
-    console.error(error)
-    return res.status(500).json({ error: 'Failed to check like status' })
+  } catch (error: any) {
+    errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to check like status.' })
   }
 }
 
 const like = async (req: Request, res: Response) => {
+  logApiCall(req)
+  const { itemId, type, name, title, artistCredit, coverArt } = req.validatedBody as z.infer<typeof likeSchema>
+  const userId = req.user!.id
+
+  if (!['artist', 'release', 'song'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid type' })
+  }
+
   try {
-    logApiCall(req);
-
-    const { 
-      itemId, type, name, 
-      title, artistCredit, coverArt 
-    } = req.validatedBody as z.infer<typeof likeSchema>
-    const userId = req.user.id
-
-    let newLike
-
-    if (type === 'artist') {
-
-      await prisma.artist.upsert({
-        where: { id: itemId },
-        update: {},
-        create: {
-          id: itemId,
-          name: name,
-        }
-      })
-
-      newLike = await prisma.userLikedArtist.create({
-        data: {
-          userId,
-          artistId: itemId
-        }
-      })
-    } else if (type === 'release') {
-
-      await prisma.release.upsert({
-        where: { id: itemId },
-        update: {},
-        create: {
-          id: itemId,
-          title: title,
-          artistCredit: artistCredit,
-          coverArt: coverArt
-        }
-      })
-
-      newLike = await prisma.userLikedRelease.create({
-        data: {
-          userId,
-          releaseId: itemId
-        }
-      })
-    } else if (type === 'song') {
-
-      await prisma.song.upsert({
-        where: { id: itemId },
-        update: {},
-        create: {
-          id: itemId,
-          title: title,
-          artistCredit: artistCredit,
-          coverArt: coverArt
-        }
-      })
-
-      newLike = await prisma.userLikedSong.create({
-        data: {
-          userId,
-          songId: itemId
-        }
-      })
-    } else {
-      errorApiCall(req, 'Invalid type');
-      return res.status(400).json({ error: 'Invalid type' });
-    }
-
-    successApiCall(req);
-    res.json({ success: true, like: newLike });
-  } catch (error) {
+    const newLike = await createLike(type, userId, itemId, { name, title, artistCredit, coverArt })
+    successApiCall(req)
+    return res.json({ success: true, like: newLike })
+  } catch (error: any) {
     errorApiCall(req, error)
-    res.status(500).json({error: 'Unknown Error.'})
+    return res.status(500).json({ error: 'Failed to like item.' })
   }
 }
 
 const deleteLike = async (req: Request, res: Response) => {
+  logApiCall(req)
+  const { itemId, type } = req.validatedBody as z.infer<typeof deleteLikeSchema>
+
+  if (!['artist', 'release', 'song'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid type' })
+  }
+
   try {
-    logApiCall(req)
-    const { itemId, type } = req.validatedBody as z.infer<typeof deleteLikeSchema>   
-
-    if (type === 'artist') {
-      await prisma.userLikedArtist.deleteMany({
-        where: { userId: req.user.id, artistId: itemId}
-      })
-    } else if (type === 'release') {
-      await prisma.userLikedRelease.deleteMany({
-        where: { userId: req.user.id, releaseId: itemId}
-      })
-    } else if (type === 'song') {
-      await prisma.userLikedSong.deleteMany({
-        where: { userId: req.user.id, songId: itemId}
-      })
-    } else {
-      errorApiCall(req, 'Invalid type')
-      return res.status()
-    }
-
+    await deleteLikeByType(type, req.user!.id, itemId)
     successApiCall(req)
-    res.json({success: true})
-  } catch (error) {
-    console.error(error)
+    return res.json({ success: true })
+  } catch (error: any) {
+    errorApiCall(req, error)
+    return res.status(500).json({ error: 'Failed to delete like.' })
   }
 }
 
 export default {
-  getUsers,
+  getUserCount,
   query,
   getLikes,
   profile,

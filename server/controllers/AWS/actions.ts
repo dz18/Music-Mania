@@ -19,11 +19,11 @@ const acceptedTypes = [
 
 type AcceptedTypes = typeof acceptedTypes[number]
 
-type SignedUrlResult =
+export type SignedUrlResult =
   | { success: { url: string }; error?: never }
   | { error: string; success?: never }
 
-type DeleteResult =
+export type DeleteResult =
   | { success: true; error?: never }
   | { error: string; success?: never }
 

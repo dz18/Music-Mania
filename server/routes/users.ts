@@ -23,7 +23,7 @@ const upload = multer({ storage: multer.memoryStorage() })
 const router = express.Router()
 
 // Public Use
-router.get('/total', userController.getUsers)
+router.get('/total', userController.getUserCount)
 router.get('/query', validateQuery(querySchema), userController.query)
 
 // Public User-specific

@@ -1,6 +1,6 @@
 import prisma from '../prisma/client'
 import bcrypt from 'bcrypt'
-import { logApiCall, errorApiCall, successApiCall } from '../utils/logging'
+import { logApiCall, errorApiCall, successApiCall } from '../utils/logging/logging'
 import { Request, Response } from 'express'
 import z from 'zod'
 import { registerSchema } from '../schemas/auth.schema'
