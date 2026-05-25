@@ -1,14 +1,16 @@
 import { ArrowBigDown, ArrowBigUp, CirclePlus, MessageCircle, Tags, ThumbsUp } from "lucide-react";
 import StarRatingVisual from "../ui/StarVisual";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, lazy, SetStateAction, Suspense, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { ApiPageResponse, MusicTypes, ReviewResponse, ReviewTypes } from "@/app/lib/types/api";
 import LikeButton from "./LikeButton";
-import ReviewModal from "./ReviewModal";
 import useFetchUserReview from "@/app/hooks/api/reviews/useFetchUserReview";
 import { ReviewKind } from "@/app/lib/types/reviews";
  
+const ReviewModal = lazy(() => import("./ReviewModal"));
+
+
 export default function UserReviewPanel ({
   itemId, item, type, coverArtUrl
 } : {
@@ -101,14 +103,16 @@ export default function UserReviewPanel ({
       </div>
 
       {openReview &&
-        <ReviewModal
-          item={item}
-          itemId={itemId}
-          type={type}
-          open={openReview}
-          setOpen={setOpenReview}
-          coverArtUrl={coverArtUrl}
-        />
+        <Suspense fallback={null}>
+          <ReviewModal
+            item={item}
+            itemId={itemId}
+            type={type}
+            open={openReview}
+            setOpen={setOpenReview}
+            coverArtUrl={coverArtUrl}
+          />
+        </Suspense>
       }
 
     </div>
