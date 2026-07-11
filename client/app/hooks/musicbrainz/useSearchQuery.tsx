@@ -11,7 +11,6 @@ export default function useSearchQuery(
   }
 ) {
 
-
   const searchParams = useSearchParams()
 
   const page = Number(searchParams.get('page')) || 1
@@ -20,10 +19,11 @@ export default function useSearchQuery(
     queryKey: ['search', query, selectedTab, filters],
     queryFn: () => getSearchResults(
       { 
-        q: query, page, 
+        q: query, 
+        page, 
         type: selectedTab === 'artists' 
-          ? filters?.artistType 
-          : filters?.releaseType 
+          ? filters?.artistType || undefined
+          : filters?.releaseType || undefined
       },
       selectedTab
     ),

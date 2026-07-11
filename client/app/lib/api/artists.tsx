@@ -4,6 +4,11 @@ import { ApiPageResponse, ReviewResponse } from "../types/api"
 
 const API = process.env.NEXT_PUBLIC_API_URL
 
+/**
+ * Returns Artist data with a valid musicbrainz ID
+ * @param params.id - The MusicBrainz artist ID
+ * @returns Artist Data
+ */
 export const getArtist = async (
   params: {
     id: string

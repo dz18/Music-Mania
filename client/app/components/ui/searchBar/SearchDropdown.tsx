@@ -5,7 +5,7 @@ import ReleaseSuggestions from "./ReleaseSuggestions"
 import IndeterminateLoadingBar from "../loading/IndeterminateLoadingBar"
 import { RefreshCcw } from "lucide-react"
 import { ApiPageResponse, SearchTypes } from "@/app/lib/types/api"
-import useDropdown from "@/app/hooks/useSearchDropdown"
+import useDropdown from "@/app/utils/useSearchDropdown"
 
 
 export default function SearchDropdown ({

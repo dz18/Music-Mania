@@ -1,4 +1,4 @@
-import { msToHMS } from "@/app/hooks/timeMs"
+import { msToHMS } from "@/app/utils/timeMs"
 import { Release, ReviewResponse } from "@/app/lib/types/api"
 import { ImageOff, Loader, Star } from "lucide-react"
 import { useRouter } from "next/navigation"

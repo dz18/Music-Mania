@@ -1,47 +1,150 @@
-## About Music Mania
+# Music Mania
 
-Music Mania is a platform where music enthusiasts can share their opinions on songs, albums, and artists. Users can leave reviews, rate music, and explore metrics that offer a more analytical view of trends and audience engagement. It’s a space to connect with others who enjoy discussing music on a deeper level, beyond just listening.
+**[www.trymusicmania.com](https://www.trymusicmania.com)**
 
-### Features:
-- Reviews: Write and read reviews on songs, albums, and artists.
-- Metrics: Access music data like popularity, trends, and listener demographics.
-- Community: Discuss, share, and debate music with others who share your interests.
+Music Mania is a platform for music enthusiasts to discover, review, and discuss songs, albums, and artists. Share your opinions and connect with a community that takes music seriously.
 
-It’s about engaging with music in a more thoughtful way, whether you’re just listening or looking to dive into the numbers behind the tunes.
+---
+
+## Features
+
+- **Reviews** — Write and read reviews on songs, albums, and artists
+- **Ratings** — Rate music and see how your taste compares to others
+- **Community** — Discuss and debate music with people who care as much as you do
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, Tailwind CSS v4, TypeScript |
+| Backend | Express 5, TypeScript, Prisma ORM |
+| Database | PostgreSQL |
+| Auth | NextAuth.js, JWT |
+| Storage | AWS S3 |
+| API Docs | Swagger / OpenAPI |
+| Testing | Jest, React Testing Library, Supertest |
+
+---
+
+## Project Structure
+
+```
+music-mania/
+├── client/          # Next.js frontend
+├── server/          # Express API backend
+│   ├── controllers/
+│   ├── routes/
+│   ├── services/
+│   ├── repositories/
+│   ├── middleware/
+│   └── prisma/      # Database schema & migrations
+└── docker-compose.yml
+```
 
 ---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- Docker & Docker Compose (for the database)
+
+### 1. Clone the repo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-org/music-mania.git
+cd music-mania
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Start the database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker-compose up db
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Set up the server
 
-## Learn More
+```bash
+cd server
+cp .env.example .env   # fill in your environment variables
+npm install
+npx prisma migrate dev
+npx prisma db seed
+npm run dev            # runs on http://localhost:5000
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Set up the client
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cd client
+cp .env.example .env.local   # fill in your environment variables
+npm install
+npm run dev                  # runs on http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The REST API runs on port `5000`. Interactive API docs are available at:
+
+```
+http://localhost:5000/api-docs
+```
+
+Key routes:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/auth/register` | Register a new user |
+| POST | `/auth/login` | Log in |
+| GET | `/reviews` | List reviews |
+| POST | `/reviews` | Create a review |
+| GET | `/stats` | Music metrics & stats |
+| GET | `/users/:id` | User profile |
+
+---
+
+## Running Tests
+
+```bash
+# Frontend
+cd client && npm test
+
+# Backend (all)
+cd server && npm test
+
+# Backend (unit only)
+cd server && npm run test:unit
+
+# Backend (integration only)
+cd server && npm run test:integration
+```
+
+---
+
+## Environment Variables
+
+### Server (`server/.env`)
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret used to sign JWTs |
+| `AWS_ACCESS_KEY_ID` | AWS credentials for S3 |
+| `AWS_SECRET_ACCESS_KEY` | AWS credentials for S3 |
+| `AWS_REGION` | S3 bucket region |
+| `S3_BUCKET_NAME` | S3 bucket for media uploads |
+
+### Client (`client/.env.local`)
+
+| Variable | Description |
+|----------|-------------|
+| `NEXTAUTH_URL` | Base URL for NextAuth (e.g. `http://localhost:3000`) |
+| `NEXTAUTH_SECRET` | Secret for NextAuth session encryption |
+| `NEXT_PUBLIC_API_URL` | Backend API base URL |

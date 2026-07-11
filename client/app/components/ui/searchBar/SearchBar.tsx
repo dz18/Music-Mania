@@ -5,8 +5,8 @@ import { FormEvent, useEffect, useRef, useState } from "react"
 import SearchDropdown from "./SearchDropdown"
 import useSearchQuery from "@/app/hooks/musicbrainz/useSearchQuery"
 import { useRouter } from "next/navigation"
-import useDebounce from "@/app/hooks/debounce"
-import useDropdown from "@/app/hooks/useSearchDropdown"
+import useDebounce from "@/app/utils/debounce"
+import useDropdown from "@/app/utils/useSearchDropdown"
 
 export default function SearchBar () {
 
